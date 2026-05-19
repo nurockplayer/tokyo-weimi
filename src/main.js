@@ -195,14 +195,13 @@ const renderContact = () => `
     <div>
       <span class="section-kicker">Contact</span>
       <h2>聯絡方式</h2>
-      <p>舊站提醒近期通訊管控較嚴，建議優先電話預約，確認檔期、價格與集合方式。舊站公開 QR 目前解出來都是 LINE，其中 Mr. 源的用途先標記為待確認。</p>
+      <p>舊站提醒近期通訊管控較嚴，建議優先電話預約，確認檔期、價格與集合方式。舊站公開的聯絡 QR 先整理為 LINE 1號與 LINE 2號。</p>
     </div>
     <div class="contact-panel">
       <a class="phone-number" href="${phoneLink}">${contact.phone}</a>
       <dl>
         <div><dt>服務區域</dt><dd>${contact.area}</dd></div>
-        <div><dt>LINE</dt><dd><a href="${contact.line}" target="_blank" rel="noreferrer">LINE 1號</a> / <a href="${contact.temporaryLine}" target="_blank" rel="noreferrer">LINE 2號</a></dd></div>
-        <div><dt>Mr. 源</dt><dd><a href="${contact.mrYuanLine}" target="_blank" rel="noreferrer">掃碼結果為 LINE 帳號</a></dd></div>
+        <div><dt>LINE</dt><dd><a href="${contact.line}" target="_blank" rel="noreferrer">LINE 1號</a> / <a href="${contact.secondaryLine}" target="_blank" rel="noreferrer">LINE 2號</a></dd></div>
         <div><dt>WeChat</dt><dd>${contact.wechat}</dd></div>
         <div><dt>更新頻率</dt><dd>${contact.hours}</dd></div>
       </dl>
@@ -217,20 +216,11 @@ const renderContact = () => `
         </div>
       </article>
       <article class="qr-card">
-        <img src="${contact.temporaryLineQr}" alt="LINE 臨時 QR Code" loading="lazy" />
+        <img src="${contact.secondaryLineQr}" alt="LINE 2號 QR Code" loading="lazy" />
         <div>
           <span>LINE</span>
           <h3>LINE 2號</h3>
-          <a href="${contact.temporaryLine}" target="_blank" rel="noreferrer">開啟 LINE</a>
-        </div>
-      </article>
-      <article class="qr-card">
-        <img src="${contact.mrYuanQr}" alt="Mr. 源 LINE QR Code" loading="lazy" />
-        <div>
-          <span>LINE</span>
-          <h3>Mr. 源</h3>
-          <a href="${contact.mrYuanLine}" target="_blank" rel="noreferrer">開啟 LINE</a>
-          <p>掃碼顯示為 Mr. 源，實際用途待確認。</p>
+          <a href="${contact.secondaryLine}" target="_blank" rel="noreferrer">開啟 LINE</a>
         </div>
       </article>
     </div>
