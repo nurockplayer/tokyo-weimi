@@ -1,3 +1,4 @@
+import "./styles.css";
 import { contact, heroImages, hotels, navItems, pricePlans, profiles } from "./site-data.js";
 
 const app = document.querySelector("#app");
