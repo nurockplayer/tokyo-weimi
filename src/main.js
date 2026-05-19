@@ -195,13 +195,14 @@ const renderContact = () => `
     <div>
       <span class="section-kicker">Contact</span>
       <h2>聯絡方式</h2>
-      <p>舊站提醒近期通訊管控較嚴，建議優先電話預約，確認檔期、價格與集合方式。LINE QR 已依舊站聯絡頁補上；WeChat 入口先保留，等實際 QR 圖確認後可直接替換。</p>
+      <p>舊站提醒近期通訊管控較嚴，建議優先電話預約，確認檔期、價格與集合方式。舊站公開 QR 目前解出來都是 LINE，其中 Mr. 源的用途先標記為待確認。</p>
     </div>
     <div class="contact-panel">
       <a class="phone-number" href="${phoneLink}">${contact.phone}</a>
       <dl>
         <div><dt>服務區域</dt><dd>${contact.area}</dd></div>
-        <div><dt>LINE</dt><dd><a href="${contact.line}" target="_blank" rel="noreferrer">加入官方 LINE</a></dd></div>
+        <div><dt>LINE</dt><dd><a href="${contact.line}" target="_blank" rel="noreferrer">LINE 1號</a> / <a href="${contact.temporaryLine}" target="_blank" rel="noreferrer">LINE 2號</a></dd></div>
+        <div><dt>Mr. 源</dt><dd><a href="${contact.mrYuanLine}" target="_blank" rel="noreferrer">掃碼結果為 LINE 帳號</a></dd></div>
         <div><dt>WeChat</dt><dd>${contact.wechat}</dd></div>
         <div><dt>更新頻率</dt><dd>${contact.hours}</dd></div>
       </dl>
@@ -211,24 +212,25 @@ const renderContact = () => `
         <img src="${contact.lineQr}" alt="LINE 官方 QR Code" loading="lazy" />
         <div>
           <span>LINE</span>
-          <h3>官方 QR Code</h3>
-          <a href="${contact.line}" target="_blank" rel="noreferrer">開啟 LINE 加好友</a>
+          <h3>LINE 1號</h3>
+          <a href="${contact.line}" target="_blank" rel="noreferrer">開啟 LINE</a>
         </div>
       </article>
       <article class="qr-card">
         <img src="${contact.temporaryLineQr}" alt="LINE 臨時 QR Code" loading="lazy" />
         <div>
           <span>LINE</span>
-          <h3>首頁臨時 QR</h3>
-          <a href="${contact.temporaryLine}" target="_blank" rel="noreferrer">開啟臨時 LINE</a>
+          <h3>LINE 2號</h3>
+          <a href="${contact.temporaryLine}" target="_blank" rel="noreferrer">開啟 LINE</a>
         </div>
       </article>
-      <article class="qr-card qr-card-pending">
-        <div class="qr-placeholder" aria-hidden="true">WeChat</div>
+      <article class="qr-card">
+        <img src="${contact.mrYuanQr}" alt="Mr. 源 LINE QR Code" loading="lazy" />
         <div>
-          <span>WeChat</span>
-          <h3>微信聯絡</h3>
-          <p>舊站公開資料未找到 WeChat QR。請先電話確認臨時微信，拿到 QR 圖後可在資料檔直接補上。</p>
+          <span>LINE</span>
+          <h3>Mr. 源</h3>
+          <a href="${contact.mrYuanLine}" target="_blank" rel="noreferrer">開啟 LINE</a>
+          <p>掃碼顯示為 Mr. 源，實際用途待確認。</p>
         </div>
       </article>
     </div>
