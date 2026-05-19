@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.vite/
+scraped/
+public/assets/old-site/
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example
