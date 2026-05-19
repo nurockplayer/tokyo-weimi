@@ -44,8 +44,8 @@ const renderHero = () => `
       <p class="eyebrow">Tokyo / Ikebukuro / Reservation</p>
       <h1>東京維密天使</h1>
       <p class="hero-copy">
-        今日出勤、價格、推薦飯店與聯絡方式集中整理。維持舊站每日更新節奏，
-        改成更快、更清楚、可直接部署到 Cloudflare Pages 的新版前端。
+        今日出勤、價格、推薦飯店與聯絡方式集中整理。每日更新檔期資訊，
+        讓預約流程更快、更清楚，也更方便在手機上瀏覽。
       </p>
       <div class="hero-actions">
         <a class="button primary" href="#today">查看今日出勤</a>
@@ -64,11 +64,11 @@ const renderIntro = () => `
   <section class="intro-band" aria-label="預約提醒">
     <div>
       <span class="section-kicker">Notice</span>
-      <h2>舊站內容已整理，新站保留核心資訊與圖片來源。</h2>
+      <h2>出勤資訊、價格與聯絡方式集中整理。</h2>
     </div>
     <p>
-      預約建議直接電話確認；LINE 與 QR 碼可由客服提供。部分檔期與價格會依日期、
-      人選與飯店安排變動，頁面顯示為舊站整理後的預約參考。
+      預約建議直接電話確認；LINE 與 QR 碼可快速加入。部分檔期與價格會依日期、
+      人選與飯店安排變動，請以客服確認後的當日資訊為準。
     </p>
   </section>
 `;
@@ -129,7 +129,7 @@ const renderProfiles = () => {
       <div class="section-head">
         <span class="section-kicker">Today</span>
         <h2>今日出勤</h2>
-        <p>從舊站公開文章整理出近期可預約名單，支援標籤篩選與快速電話預約。</p>
+        <p>近期可預約名單支援標籤篩選、關鍵字搜尋與快速電話預約。</p>
       </div>
       ${renderFilters()}
       <div class="profile-grid">
@@ -148,7 +148,7 @@ const renderPrices = () => `
     <div class="section-head">
       <span class="section-kicker">Pricing</span>
       <h2>價格表</h2>
-      <p>舊站價格頁沒有正文，以下依近期出勤文章整理成常見方案。</p>
+      <p>依近期出勤資訊整理常見方案，實際金額請於預約時再次確認。</p>
     </div>
     <div class="price-grid">
       ${pricePlans
@@ -171,7 +171,7 @@ const renderHotels = () => `
     <div class="section-head">
       <span class="section-kicker">Hotels</span>
       <h2>推薦飯店</h2>
-      <p>舊站列出的池袋周邊地點，保留圖片與地址資訊，方便預約前確認。</p>
+      <p>池袋周邊常用地點與地址資訊，方便預約前確認集合安排。</p>
     </div>
     <div class="hotel-grid">
       ${hotels
@@ -196,7 +196,7 @@ const renderContact = () => `
     <div>
       <span class="section-kicker">Contact</span>
       <h2>聯絡方式</h2>
-      <p>舊站提醒近期通訊管控較嚴，建議優先電話預約，確認檔期、價格與集合方式。舊站公開的聯絡 QR 先整理為 LINE 1號與 LINE 2號。</p>
+      <p>近期通訊狀態可能變動，建議優先電話預約，確認檔期、價格與集合方式。也可使用 LINE 1號或 LINE 2號加入客服。</p>
     </div>
     <div class="contact-panel">
       <a class="phone-number" href="${phoneLink}">${contact.phone}</a>
@@ -235,8 +235,8 @@ const renderExchange = () => `
       <h2>外幣兌換</h2>
     </div>
     <p>
-      舊站外幣兌換頁目前沒有正文。新版先保留入口，日後可接後台管理匯率、
-      可兌幣別與預約表單；現階段請直接向客服確認當日資訊。
+      外幣兌換資訊請直接向客服確認當日匯率、可兌幣別與預約方式。
+      後續可依營運需求加入即時匯率與預約表單。
     </p>
   </section>
 `;
@@ -265,7 +265,7 @@ const renderModal = () => `
 const renderFooter = () => `
   <footer class="site-footer">
     <p>Tokyo Weimi Angels</p>
-    <span>Static frontend ready for Cloudflare Pages. Old WordPress/PHP is not reused.</span>
+    <span>Tokyo reservation information, updated for mobile browsing.</span>
   </footer>
   <a class="sticky-call" href="${phoneLink}">電話預約 ${contact.phone}</a>
 `;
@@ -313,7 +313,7 @@ const openProfile = (id) => {
       <span class="section-kicker">${formatDate(profile.date)} 更新</span>
       <h2>${profile.name}｜${profile.title}</h2>
       <p>${profile.summary}</p>
-      <p class="gallery-count">${gallery.length} 張舊站圖片</p>
+      <p class="gallery-count">${gallery.length} 張照片</p>
       <dl class="dialog-specs">
         <div><dt>家鄉</dt><dd>${profile.origin}</dd></div>
         <div><dt>年齡</dt><dd>${profile.age}</dd></div>
