@@ -94,7 +94,8 @@ const renderProfileCard = (profile) => `
   <article class="profile-card">
     <div class="profile-image">
       <img src="${profile.image}" alt="${profile.name} ${profile.title}" loading="lazy" />
-      <span>${formatDate(profile.date)} 更新</span>
+      <span class="date-badge">${formatDate(profile.date)} 更新</span>
+      <span class="photo-badge">${profile.gallery?.length || 1} 張照片</span>
     </div>
     <div class="profile-body">
       <div class="profile-heading">
@@ -290,14 +291,29 @@ const renderApp = () => {
 
 const openProfile = (id) => {
   const profile = profiles.find((item) => item.id === id);
+  const gallery = profile.gallery?.length ? profile.gallery : [profile.image];
   const dialog = document.querySelector(".profile-dialog");
   const content = dialog.querySelector(".dialog-content");
   content.innerHTML = `
-    <img src="${profile.image}" alt="${profile.name} ${profile.title}" />
+    <div class="dialog-gallery">
+      <img class="dialog-main-image" data-gallery-main src="${gallery[0]}" alt="${profile.name} ${profile.title}" />
+      <div class="dialog-thumbs" aria-label="${profile.name} 圖片集">
+        ${gallery
+          .map(
+            (image, index) => `
+              <button class="${index === 0 ? "is-active" : ""}" data-gallery-image="${image}" type="button" aria-label="查看第 ${index + 1} 張照片">
+                <img src="${image}" alt="" loading="lazy" />
+              </button>
+            `,
+          )
+          .join("")}
+      </div>
+    </div>
     <div>
       <span class="section-kicker">${formatDate(profile.date)} 更新</span>
       <h2>${profile.name}｜${profile.title}</h2>
       <p>${profile.summary}</p>
+      <p class="gallery-count">${gallery.length} 張舊站圖片</p>
       <dl class="dialog-specs">
         <div><dt>家鄉</dt><dd>${profile.origin}</dd></div>
         <div><dt>年齡</dt><dd>${profile.age}</dd></div>
@@ -310,6 +326,15 @@ const openProfile = (id) => {
     </div>
   `;
   dialog.showModal();
+  content.querySelectorAll("[data-gallery-image]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const mainImage = content.querySelector("[data-gallery-main]");
+      mainImage.src = button.dataset.galleryImage;
+      content
+        .querySelectorAll("[data-gallery-image]")
+        .forEach((item) => item.classList.toggle("is-active", item === button));
+    });
+  });
 };
 
 const bindEvents = () => {
