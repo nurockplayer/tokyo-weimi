@@ -322,14 +322,19 @@ const openProfile = (id) => {
         <div><dt>罩杯</dt><dd>${profile.cup}</dd></div>
       </dl>
       <p class="price-line">${profile.price}</p>
-      <a class="button primary" href="${phoneLink}">電話預約</a>
+      <div class="dialog-actions">
+        <a class="button primary" href="${phoneLink}">電話預約</a>
+        <a class="button ghost" data-gallery-open-original href="${gallery[0]}" target="_blank" rel="noreferrer">開啟原圖</a>
+      </div>
     </div>
   `;
   dialog.showModal();
   content.querySelectorAll("[data-gallery-image]").forEach((button) => {
     button.addEventListener("click", () => {
       const mainImage = content.querySelector("[data-gallery-main]");
+      const originalLink = content.querySelector("[data-gallery-open-original]");
       mainImage.src = button.dataset.galleryImage;
+      originalLink.href = button.dataset.galleryImage;
       content
         .querySelectorAll("[data-gallery-image]")
         .forEach((item) => item.classList.toggle("is-active", item === button));

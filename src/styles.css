@@ -717,13 +717,13 @@ dd {
 
 .dialog-main-image {
   width: 100%;
-  height: min(78vh, 780px);
+  height: auto;
+  max-height: none;
   border: 1px solid var(--line);
   border-radius: 6px;
   background:
     radial-gradient(circle at 50% 14%, rgba(216, 179, 106, 0.14), transparent 36%),
     #141210;
-  object-fit: contain;
 }
 
 .dialog-thumbs {
@@ -778,6 +778,12 @@ dd {
   color: var(--gold) !important;
   font-size: 13px;
   font-weight: 800;
+}
+
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .dialog-specs {
@@ -871,7 +877,7 @@ dd {
   }
 
   .dialog-main-image {
-    height: min(62vh, 560px);
+    max-height: none;
   }
 }
 
@@ -940,7 +946,7 @@ dd {
   }
 
   .dialog-main-image {
-    height: min(72vh, 620px);
+    max-height: none;
   }
 
   .dialog-thumbs {
