@@ -49,6 +49,20 @@ img {
   max-width: 100%;
 }
 
+[data-protected-media],
+.profile-image,
+.hero-media,
+.hotel-card,
+.dialog-gallery {
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+[data-protected-media] {
+  pointer-events: none;
+}
+
 .site-header {
   position: sticky;
   top: 0;

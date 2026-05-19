@@ -5,6 +5,7 @@ import { contact, heroImages, hotels, profiles } from "./site-data.js";
 const app = document.querySelector("#app");
 const phoneLink = `tel:${contact.phone.replaceAll("-", "")}`;
 const languageStorageKey = "tokyo-weimi-language";
+const protectedImageAttributes = `data-protected-media draggable="false"`;
 const filterRules = {
   japanese: (profile) => profile.tags.includes("日本人") || profile.title.includes("日本人"),
   china: (profile) => profile.origin === "中國" || profile.tags.includes("中國"),
@@ -97,7 +98,7 @@ const renderHero = () => {
   return `
   <section class="hero" id="top" aria-label="${copy.hero.label}">
     <div class="hero-media" aria-hidden="true">
-      ${heroImages.map((image, index) => `<img src="${image}" alt="" style="--delay: ${index * 120}ms" />`).join("")}
+      ${heroImages.map((image, index) => `<img ${protectedImageAttributes} src="${image}" alt="" style="--delay: ${index * 120}ms" />`).join("")}
     </div>
     <div class="hero-shade"></div>
     <div class="hero-content">
@@ -160,7 +161,7 @@ const renderProfileCard = (profile) => {
   return `
   <article class="profile-card">
     <div class="profile-image">
-      <img src="${profile.image}" alt="${profile.name} ${profileText.title}" loading="lazy" />
+      <img ${protectedImageAttributes} src="${profile.image}" alt="${profile.name} ${profileText.title}" loading="lazy" />
       <span class="date-badge">${formatDate(profile.date)} ${copy.labels.updated}</span>
       <span class="photo-badge">${formatPhotoCount(photoTotal, copy)}</span>
     </div>
@@ -252,7 +253,7 @@ const renderHotels = () => {
         .map(
           (hotel) => `
             <article class="hotel-card">
-              <img src="${hotel.image}" alt="${copy.hotelArea} ${copy.labels.hotelAlt}" loading="lazy" />
+              <img ${protectedImageAttributes} src="${hotel.image}" alt="${copy.hotelArea} ${copy.labels.hotelAlt}" loading="lazy" />
               <div>
                 <span>${copy.hotelArea}</span>
                 <h3>${hotel.address}</h3>
@@ -387,13 +388,13 @@ const openProfile = (id) => {
   const content = dialog.querySelector(".dialog-content");
   content.innerHTML = `
     <div class="dialog-gallery">
-      <img class="dialog-main-image" data-gallery-main src="${gallery[0]}" alt="${profile.name} ${profileText.title}" />
+      <img class="dialog-main-image" ${protectedImageAttributes} data-gallery-main src="${gallery[0]}" alt="${profile.name} ${profileText.title}" />
       <div class="dialog-thumbs" aria-label="${profile.name} ${copy.labels.lineGallery}">
         ${gallery
           .map(
             (image, index) => `
               <button class="${index === 0 ? "is-active" : ""}" data-gallery-image="${image}" type="button" aria-label="${getPhotoAria(index, copy)}">
-                <img src="${image}" alt="" loading="lazy" />
+                <img ${protectedImageAttributes} src="${image}" alt="" loading="lazy" />
               </button>
             `,
           )
@@ -415,7 +416,6 @@ const openProfile = (id) => {
       <p class="price-line">${profileText.price}</p>
       <div class="dialog-actions">
         <a class="button primary" href="${phoneLink}">${copy.actions.call}</a>
-        <a class="button ghost" data-gallery-open-original href="${gallery[0]}" target="_blank" rel="noreferrer">${copy.actions.openOriginal}</a>
       </div>
     </div>
   `;
@@ -423,9 +423,7 @@ const openProfile = (id) => {
   content.querySelectorAll("[data-gallery-image]").forEach((button) => {
     button.addEventListener("click", () => {
       const mainImage = content.querySelector("[data-gallery-main]");
-      const originalLink = content.querySelector("[data-gallery-open-original]");
       mainImage.src = button.dataset.galleryImage;
-      originalLink.href = button.dataset.galleryImage;
       content
         .querySelectorAll("[data-gallery-image]")
         .forEach((item) => item.classList.toggle("is-active", item === button));
@@ -477,5 +475,18 @@ const bindProfileButtons = () => {
     button.addEventListener("click", () => openProfile(button.dataset.profile));
   });
 };
+
+const protectedMediaSelector = "[data-protected-media], .profile-image, .hero-media, .hotel-card, .dialog-gallery";
+
+const isProtectedMediaEvent = (event) =>
+  event.target instanceof Element && Boolean(event.target.closest(protectedMediaSelector));
+
+const preventProtectedMediaAction = (event) => {
+  if (isProtectedMediaEvent(event)) event.preventDefault();
+};
+
+document.addEventListener("contextmenu", preventProtectedMediaAction, { capture: true });
+document.addEventListener("dragstart", preventProtectedMediaAction, { capture: true });
+document.addEventListener("selectstart", preventProtectedMediaAction, { capture: true });
 
 renderApp();
