@@ -195,15 +195,42 @@ const renderContact = () => `
     <div>
       <span class="section-kicker">Contact</span>
       <h2>聯絡方式</h2>
-      <p>舊站提醒近期通訊管控較嚴，建議優先電話預約，確認檔期、價格與集合方式。</p>
+      <p>舊站提醒近期通訊管控較嚴，建議優先電話預約，確認檔期、價格與集合方式。LINE QR 已依舊站聯絡頁補上；WeChat 入口先保留，等實際 QR 圖確認後可直接替換。</p>
     </div>
     <div class="contact-panel">
       <a class="phone-number" href="${phoneLink}">${contact.phone}</a>
       <dl>
         <div><dt>服務區域</dt><dd>${contact.area}</dd></div>
-        <div><dt>LINE</dt><dd>${contact.line}</dd></div>
+        <div><dt>LINE</dt><dd><a href="${contact.line}" target="_blank" rel="noreferrer">加入官方 LINE</a></dd></div>
+        <div><dt>WeChat</dt><dd>${contact.wechat}</dd></div>
         <div><dt>更新頻率</dt><dd>${contact.hours}</dd></div>
       </dl>
+    </div>
+    <div class="contact-qr-grid">
+      <article class="qr-card">
+        <img src="${contact.lineQr}" alt="LINE 官方 QR Code" loading="lazy" />
+        <div>
+          <span>LINE</span>
+          <h3>官方 QR Code</h3>
+          <a href="${contact.line}" target="_blank" rel="noreferrer">開啟 LINE 加好友</a>
+        </div>
+      </article>
+      <article class="qr-card">
+        <img src="${contact.temporaryLineQr}" alt="LINE 臨時 QR Code" loading="lazy" />
+        <div>
+          <span>LINE</span>
+          <h3>首頁臨時 QR</h3>
+          <a href="${contact.temporaryLine}" target="_blank" rel="noreferrer">開啟臨時 LINE</a>
+        </div>
+      </article>
+      <article class="qr-card qr-card-pending">
+        <div class="qr-placeholder" aria-hidden="true">WeChat</div>
+        <div>
+          <span>WeChat</span>
+          <h3>微信聯絡</h3>
+          <p>舊站公開資料未找到 WeChat QR。請先電話確認臨時微信，拿到 QR 圖後可在資料檔直接補上。</p>
+        </div>
+      </article>
     </div>
   </section>
 `;

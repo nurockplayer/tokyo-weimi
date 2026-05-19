@@ -1,6 +1,12 @@
 export const contact = {
   phone: "080-6831-4605",
-  line: "請以客服提供或 QR 碼為準",
+  line: "https://line.me/ti/p/KMSZfYErhS",
+  temporaryLine: "https://line.me/ti/p/0PLMapgqhT",
+  lineQr:
+    "https://tokyo-weimi.com/wp-content/uploads/2021/05/C82B87B1-69E1-4649-A4A0-C43C315B9EBF.jpeg",
+  temporaryLineQr: "https://tokyo-weimi.com/wp-content/uploads/2026/05/20260506-221018.jpg",
+  wechat: "臨時微信請電話確認",
+  wechatQr: "",
   area: "東京・池袋周邊",
   hours: "每日更新，建議提前預約",
 };
