@@ -368,20 +368,25 @@ img {
 
 .profile-image {
   position: relative;
-  aspect-ratio: 4 / 5;
+  display: grid;
+  min-height: clamp(340px, 34vw, 500px);
+  aspect-ratio: 3 / 4;
+  place-items: center;
   overflow: hidden;
-  background: #26221d;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(216, 179, 106, 0.16), transparent 34%),
+    linear-gradient(145deg, #28231d, #141210);
 }
 
 .profile-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform 420ms ease;
+  object-fit: contain;
+  transition: filter 240ms ease;
 }
 
 .profile-card:hover .profile-image img {
-  transform: scale(1.035);
+  filter: saturate(1.08) contrast(1.03);
 }
 
 .date-badge,
@@ -579,7 +584,7 @@ dd {
 
 .qr-card {
   display: grid;
-  grid-template-columns: 132px 1fr;
+  grid-template-columns: minmax(168px, 220px) 1fr;
   gap: 18px;
   align-items: center;
   border: 1px solid var(--line);
@@ -590,12 +595,12 @@ dd {
 
 .qr-card img,
 .qr-placeholder {
-  width: 132px;
-  aspect-ratio: 1;
+  width: 100%;
+  height: clamp(188px, 21vw, 300px);
   border: 1px solid rgba(255, 248, 236, 0.18);
   border-radius: 6px;
   background: #fff;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .qr-card span {
@@ -666,12 +671,14 @@ dd {
 }
 
 .profile-dialog {
-  width: min(940px, calc(100% - 32px));
+  width: min(1180px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0;
   background: var(--panel-solid);
   color: var(--ink);
+  overflow: auto;
 }
 
 .profile-dialog::backdrop {
@@ -696,7 +703,7 @@ dd {
 
 .dialog-content {
   display: grid;
-  grid-template-columns: 0.86fr 1fr;
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.78fr);
   gap: 28px;
   align-items: start;
   padding: 24px;
@@ -710,28 +717,34 @@ dd {
 
 .dialog-main-image {
   width: 100%;
-  height: min(68vh, 660px);
+  height: min(78vh, 780px);
   border: 1px solid var(--line);
-  background: #26221d;
-  object-fit: cover;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 50% 14%, rgba(216, 179, 106, 0.14), transparent 36%),
+    #141210;
+  object-fit: contain;
 }
 
 .dialog-thumbs {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  display: flex;
   gap: 8px;
-  max-height: 178px;
-  overflow: auto;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
 }
 
 .dialog-thumbs button {
-  aspect-ratio: 1;
+  flex: 0 0 clamp(82px, 9vw, 116px);
+  aspect-ratio: 3 / 4;
   border: 1px solid var(--line);
   border-radius: 4px;
   padding: 0;
   background: #26221d;
   cursor: pointer;
   overflow: hidden;
+  scroll-snap-align: start;
 }
 
 .dialog-thumbs button.is-active {
@@ -741,7 +754,8 @@ dd {
 .dialog-thumbs img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: #141210;
 }
 
 .dialog-content h2 {
@@ -909,12 +923,12 @@ dd {
   }
 
   .qr-card {
-    grid-template-columns: 112px 1fr;
+    grid-template-columns: 1fr;
   }
 
   .qr-card img,
   .qr-placeholder {
-    width: 112px;
+    height: min(68vw, 330px);
   }
 
   .profile-specs {
@@ -926,11 +940,11 @@ dd {
   }
 
   .dialog-main-image {
-    height: 420px;
+    height: min(72vh, 620px);
   }
 
   .dialog-thumbs {
-    grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+    gap: 7px;
   }
 
   .site-footer {
