@@ -30,6 +30,13 @@ assert(
   malformedImageResponse.status === 404,
   "malformed image paths must return a controlled 404",
 );
+for (const inheritedPath of ["__proto__", "toString"]) {
+  const inheritedImageResponse = await onRequestGet({ params: { path: inheritedPath } });
+  assert(
+    inheritedImageResponse.status === 404,
+    `inherited image key ${inheritedPath} must return a controlled 404`,
+  );
+}
 
 const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 assert(packageJson.scripts?.test === "node tools/check-site.mjs", "package.json must expose pnpm test");
