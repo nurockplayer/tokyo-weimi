@@ -16,9 +16,9 @@ const getImageId = (path) => {
 export async function onRequestGet({ params }) {
   const rawPath = Array.isArray(params.path) ? params.path.join("/") : params.path;
   const imageId = getImageId(rawPath);
-  const upstreamUrl = imageMap[imageId];
+  const upstreamUrl = Object.hasOwn(imageMap, imageId) ? imageMap[imageId] : undefined;
 
-  if (!upstreamUrl) {
+  if (typeof upstreamUrl !== "string") {
     return new Response("Image not found", {
       status: 404,
       headers: cacheHeaders,
