@@ -5,9 +5,17 @@ const cacheHeaders = {
   "X-Content-Type-Options": "nosniff",
 };
 
+const getImageId = (path) => {
+  try {
+    return decodeURIComponent(path).replace(/\.jpe?g$/i, "");
+  } catch {
+    return undefined;
+  }
+};
+
 export async function onRequestGet({ params }) {
   const rawPath = Array.isArray(params.path) ? params.path.join("/") : params.path;
-  const imageId = decodeURIComponent(rawPath).replace(/\.jpe?g$/i, "");
+  const imageId = getImageId(rawPath);
   const upstreamUrl = imageMap[imageId];
 
   if (!upstreamUrl) {
