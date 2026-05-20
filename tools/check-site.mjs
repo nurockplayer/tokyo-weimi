@@ -9,6 +9,7 @@ const requiredFiles = [
   "src/content/local-image-map.json",
   "functions/img/[[path]].js",
   "tools/postbuild.mjs",
+  "public/404.html",
   "public/robots.txt",
   ".github/workflows/verify.yml",
   "docs/privacy-policy.md",
@@ -22,6 +23,13 @@ const assert = (condition, message) => {
 for (const file of requiredFiles) {
   assert(existsSync(join(root, file)), `Missing required file: ${file}`);
 }
+
+const { onRequestGet } = await import("../functions/img/[[path]].js");
+const malformedImageResponse = await onRequestGet({ params: { path: "%" } });
+assert(
+  malformedImageResponse.status === 404,
+  "malformed image paths must return a controlled 404",
+);
 
 const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 assert(packageJson.scripts?.test === "node tools/check-site.mjs", "package.json must expose pnpm test");
