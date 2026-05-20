@@ -26,3 +26,17 @@ test("localized static routes are generated", async ({ page }) => {
   await page.goto("/sitemap.xml");
   await expect.poll(() => page.content()).toContain("https://tokyo-weimi.pages.dev/ja/");
 });
+
+test("traditional chinese hero title stays on one line on desktop", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/zh-hant/");
+
+  const metrics = await page.locator(".hero h1").evaluate((heading) => {
+    const rect = heading.getBoundingClientRect();
+    const lineHeight = Number.parseFloat(getComputedStyle(heading).lineHeight);
+    return { height: rect.height, lineHeight, scrollWidth: heading.scrollWidth, clientWidth: heading.clientWidth };
+  });
+
+  expect(metrics.height).toBeLessThan(metrics.lineHeight * 1.2);
+  expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
+});
