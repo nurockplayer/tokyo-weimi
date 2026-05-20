@@ -6,7 +6,8 @@ const cacheHeaders = {
 };
 
 export async function onRequestGet({ params }) {
-  const imageId = Array.isArray(params.path) ? params.path.join("/") : params.path;
+  const rawPath = Array.isArray(params.path) ? params.path.join("/") : params.path;
+  const imageId = decodeURIComponent(rawPath).replace(/\.jpe?g$/i, "");
   const upstreamUrl = imageMap[imageId];
 
   if (!upstreamUrl) {

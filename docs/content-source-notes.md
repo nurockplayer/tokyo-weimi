@@ -10,7 +10,8 @@ These notes are for maintainers only and should not appear in customer-facing we
 - Crawl script: `tools/scrape-old-site.mjs`
 - Raw crawl output is local-only and ignored by git: `scraped/old-site/`
 - Downloaded image copies are local-only and ignored by git: `public/assets/old-site/`
-- The live frontend renders image proxy paths such as `/img/:id`; source image URLs are stored in `src/content/image-map.json` for the Cloudflare Pages Function.
+- The live frontend renders local image paths such as `/img/:id.jpg`; source image URLs are stored in `src/content/image-map.json` for reference and the Cloudflare Pages Function fallback.
+- `src/content/local-image-map.json` points each image ID at a tracked local copy under `public/assets/old-site/`. Postbuild copies those files into `dist/img/` so production does not depend on the old site being reachable.
 - Primary content is maintained in `src/content/site-data.json`.
 
 ## Frontend Copy Rule

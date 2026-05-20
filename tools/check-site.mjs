@@ -6,6 +6,7 @@ const requiredFiles = [
   "src/content/site-data.json",
   "src/content/image-map.json",
   "src/content/image-map.js",
+  "src/content/local-image-map.json",
   "functions/img/[[path]].js",
   "tools/postbuild.mjs",
   "public/robots.txt",
@@ -32,9 +33,24 @@ assert(
 const mainSource = readFileSync(join(root, "src/main.js"), "utf8");
 assert(mainSource.includes("trackEvent("), "CTA tracking must be wired through trackEvent()");
 assert(mainSource.includes("imageSrc("), "Images must be rendered through the image proxy helper");
+assert(
+  readFileSync(join(root, "src/media.js"), "utf8").includes(".jpg"),
+  "image helper must use static mirrored image paths",
+);
 
 const imageMap = JSON.parse(readFileSync(join(root, "src/content/image-map.json"), "utf8"));
 assert(Object.keys(imageMap).length >= 30, "image map should contain the migrated gallery images");
+const localImageMap = JSON.parse(readFileSync(join(root, "src/content/local-image-map.json"), "utf8"));
+assert(
+  Object.keys(localImageMap).length === Object.keys(imageMap).length,
+  "local image map should cover every rendered image",
+);
+for (const [imageId, localPath] of Object.entries(localImageMap)) {
+  assert(
+    existsSync(join(root, "public", localPath.replace(/^\//, ""))),
+    `Missing local image copy for ${imageId}: ${localPath}`,
+  );
+}
 
 const siteData = readFileSync(join(root, "src/content/site-data.json"), "utf8");
 assert(!siteData.includes("tokyo-weimi.com/wp-content/uploads"), "site-data JSON must not expose original image URLs");
@@ -43,5 +59,7 @@ const postbuild = readFileSync(join(root, "tools/postbuild.mjs"), "utf8");
 for (const route of ["zh-hant", "zh-hans", "ja", "ko", "en"]) {
   assert(postbuild.includes(route), `postbuild must generate /${route}/`);
 }
+assert(postbuild.includes("mirrorImages"), "postbuild must mirror images into dist/img");
+assert(postbuild.includes("copyFileSync"), "postbuild must prefer local image copies");
 
 console.log("site checks passed");
