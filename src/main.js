@@ -1,11 +1,19 @@
 import "./styles.css";
 import { filterKeys, getCopy, getLanguageOption, languageOptions } from "./i18n.js";
+import { imageSrc } from "./media.js";
 import { contact, heroImages, hotels, profiles } from "./site-data.js";
 
 const app = document.querySelector("#app");
 const phoneLink = `tel:${contact.phone.replaceAll("-", "")}`;
 const languageStorageKey = "tokyo-weimi-language";
 const protectedImageAttributes = `data-protected-media draggable="false"`;
+const languageRoutes = {
+  "/zh-hant/": "zh-Hant",
+  "/zh-hans/": "zh-Hans",
+  "/ja/": "ja",
+  "/ko/": "ko",
+  "/en/": "en",
+};
 const filterRules = {
   japanese: (profile) => profile.tags.includes("日本人") || profile.title.includes("日本人"),
   china: (profile) => profile.origin === "中國" || profile.tags.includes("中國"),
@@ -17,9 +25,9 @@ const filterRules = {
 
 let activeFilter = "all";
 let query = "";
-let currentLanguage = languageOptions.some((option) => option.code === localStorage.getItem(languageStorageKey))
-  ? localStorage.getItem(languageStorageKey)
-  : "zh-Hant";
+const storedLanguage = localStorage.getItem(languageStorageKey);
+const routedLanguage = languageRoutes[window.location.pathname];
+let currentLanguage = routedLanguage || (languageOptions.some((option) => option.code === storedLanguage) ? storedLanguage : "zh-Hant");
 
 const currentCopy = () => getCopy(currentLanguage);
 const currentLanguageOption = () => getLanguageOption(currentLanguage);
@@ -28,6 +36,15 @@ const updateDocumentLanguage = (copy) => {
   document.documentElement.lang = currentLanguageOption().htmlLang;
   document.title = copy.meta.title;
   document.querySelector('meta[name="description"]')?.setAttribute("content", copy.meta.description);
+};
+
+const trackEvent = (eventName, detail = {}) => {
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({
+    event: eventName,
+    language: currentLanguage,
+    ...detail,
+  });
 };
 
 const formatDate = (date) =>
@@ -98,7 +115,7 @@ const renderHero = () => {
   return `
   <section class="hero" id="top" aria-label="${copy.hero.label}">
     <div class="hero-media" aria-hidden="true">
-      ${heroImages.map((image, index) => `<img ${protectedImageAttributes} src="${image}" alt="" style="--delay: ${index * 120}ms" />`).join("")}
+      ${heroImages.map((image, index) => `<img ${protectedImageAttributes} src="${imageSrc(image)}" alt="" style="--delay: ${index * 120}ms" />`).join("")}
     </div>
     <div class="hero-shade"></div>
     <div class="hero-content">
@@ -106,8 +123,8 @@ const renderHero = () => {
       <h1>${copy.hero.title}</h1>
       <p class="hero-copy">${copy.hero.copy}</p>
       <div class="hero-actions">
-        <a class="button primary" href="#today">${copy.actions.viewToday}</a>
-        <a class="button ghost" href="${phoneLink}">${copy.actions.call}</a>
+        <a class="button primary" data-track="hero_view_today" href="#today">${copy.actions.viewToday}</a>
+        <a class="button ghost" data-track="hero_call" href="${phoneLink}">${copy.actions.call}</a>
       </div>
     </div>
     <div class="hero-status" aria-label="${copy.hero.statusAria}">
@@ -161,7 +178,7 @@ const renderProfileCard = (profile) => {
   return `
   <article class="profile-card">
     <div class="profile-image">
-      <img ${protectedImageAttributes} src="${profile.image}" alt="${profile.name} ${profileText.title}" loading="lazy" />
+      <img ${protectedImageAttributes} src="${imageSrc(profile.image)}" alt="${profile.name} ${profileText.title}" loading="lazy" />
       <span class="date-badge">${formatDate(profile.date)} ${copy.labels.updated}</span>
       <span class="photo-badge">${formatPhotoCount(photoTotal, copy)}</span>
     </div>
@@ -183,7 +200,7 @@ const renderProfileCard = (profile) => {
       <div class="tag-row">${profileText.tags.map((tag) => `<span>${tag}</span>`).join("")}</div>
       <div class="price-line">${profileText.price}</div>
       <div class="card-actions">
-        <a class="button small primary" href="${phoneLink}">${copy.actions.call}</a>
+        <a class="button small primary" data-track="profile_call" data-track-profile="${profile.id}" href="${phoneLink}">${copy.actions.call}</a>
         <button class="button small ghost" data-profile="${profile.id}" type="button">${copy.actions.viewInfo}</button>
       </div>
     </div>
@@ -253,7 +270,7 @@ const renderHotels = () => {
         .map(
           (hotel) => `
             <article class="hotel-card">
-              <img ${protectedImageAttributes} src="${hotel.image}" alt="${copy.hotelArea} ${copy.labels.hotelAlt}" loading="lazy" />
+              <img ${protectedImageAttributes} src="${imageSrc(hotel.image)}" alt="${copy.hotelArea} ${copy.labels.hotelAlt}" loading="lazy" />
               <div>
                 <span>${copy.hotelArea}</span>
                 <h3>${hotel.address}</h3>
@@ -280,26 +297,26 @@ const renderContact = () => {
       <a class="phone-number" href="${phoneLink}">${contact.phone}</a>
       <dl>
         <div><dt>${copy.labels.serviceArea}</dt><dd>${copy.contact.area}</dd></div>
-        <div><dt>LINE</dt><dd><a href="${contact.line}" target="_blank" rel="noreferrer">${copy.contact.lineOne}</a> / <a href="${contact.secondaryLine}" target="_blank" rel="noreferrer">${copy.contact.lineTwo}</a></dd></div>
+        <div><dt>LINE</dt><dd><a data-track="contact_line_1" href="${contact.line}" target="_blank" rel="noreferrer">${copy.contact.lineOne}</a> / <a data-track="contact_line_2" href="${contact.secondaryLine}" target="_blank" rel="noreferrer">${copy.contact.lineTwo}</a></dd></div>
         <div><dt>WeChat</dt><dd>${copy.contact.wechat}</dd></div>
         <div><dt>${copy.labels.updateFrequency}</dt><dd>${copy.contact.hours}</dd></div>
       </dl>
     </div>
     <div class="contact-qr-grid">
       <article class="qr-card">
-        <img src="${contact.lineQr}" alt="${copy.labels.qrAltMain}" loading="lazy" />
+        <img ${protectedImageAttributes} src="${imageSrc(contact.lineQr)}" alt="${copy.labels.qrAltMain}" loading="lazy" />
         <div>
           <span>LINE</span>
           <h3>${copy.contact.lineOne}</h3>
-          <a href="${contact.line}" target="_blank" rel="noreferrer">${copy.actions.openLine}</a>
+          <a data-track="qr_line_1" href="${contact.line}" target="_blank" rel="noreferrer">${copy.actions.openLine}</a>
         </div>
       </article>
       <article class="qr-card">
-        <img src="${contact.secondaryLineQr}" alt="${copy.labels.qrAltSecond}" loading="lazy" />
+        <img ${protectedImageAttributes} src="${imageSrc(contact.secondaryLineQr)}" alt="${copy.labels.qrAltSecond}" loading="lazy" />
         <div>
           <span>LINE</span>
           <h3>${copy.contact.lineTwo}</h3>
-          <a href="${contact.secondaryLine}" target="_blank" rel="noreferrer">${copy.actions.openLine}</a>
+          <a data-track="qr_line_2" href="${contact.secondaryLine}" target="_blank" rel="noreferrer">${copy.actions.openLine}</a>
         </div>
       </article>
     </div>
@@ -351,10 +368,20 @@ const renderFooter = () => {
   const copy = currentCopy();
   return `
   <footer class="site-footer">
-    <p>${copy.footer.title}</p>
-    <span>${copy.footer.copy}</span>
+    <div>
+      <p>${copy.footer.title}</p>
+      <span>${copy.footer.copy}</span>
+    </div>
+    <nav aria-label="${copy.footer.title}">
+      <a href="/privacy.html">${copy.footer.privacy}</a>
+      <a href="/disclaimer.html">${copy.footer.disclaimer}</a>
+    </nav>
   </footer>
-  <a class="sticky-call" href="${phoneLink}">${copy.actions.call} ${contact.phone}</a>
+  <div class="sticky-actions">
+    <a class="sticky-call" data-track="sticky_call" href="${phoneLink}">${copy.actions.call}</a>
+    <a data-track="sticky_line_1" href="${contact.line}" target="_blank" rel="noreferrer">${copy.contact.lineOne}</a>
+    <a data-track="sticky_line_2" href="${contact.secondaryLine}" target="_blank" rel="noreferrer">${copy.contact.lineTwo}</a>
+  </div>
 `;
 };
 
@@ -388,13 +415,13 @@ const openProfile = (id) => {
   const content = dialog.querySelector(".dialog-content");
   content.innerHTML = `
     <div class="dialog-gallery">
-      <img class="dialog-main-image" ${protectedImageAttributes} data-gallery-main src="${gallery[0]}" alt="${profile.name} ${profileText.title}" />
+      <img class="dialog-main-image" ${protectedImageAttributes} data-gallery-main src="${imageSrc(gallery[0])}" alt="${profile.name} ${profileText.title}" />
       <div class="dialog-thumbs" aria-label="${profile.name} ${copy.labels.lineGallery}">
         ${gallery
           .map(
             (image, index) => `
               <button class="${index === 0 ? "is-active" : ""}" data-gallery-image="${image}" type="button" aria-label="${getPhotoAria(index, copy)}">
-                <img ${protectedImageAttributes} src="${image}" alt="" loading="lazy" />
+                <img ${protectedImageAttributes} src="${imageSrc(image)}" alt="" loading="lazy" />
               </button>
             `,
           )
@@ -415,7 +442,7 @@ const openProfile = (id) => {
       </dl>
       <p class="price-line">${profileText.price}</p>
       <div class="dialog-actions">
-        <a class="button primary" href="${phoneLink}">${copy.actions.call}</a>
+        <a class="button primary" data-track="dialog_call" data-track-profile="${profile.id}" href="${phoneLink}">${copy.actions.call}</a>
       </div>
     </div>
   `;
@@ -423,7 +450,7 @@ const openProfile = (id) => {
   content.querySelectorAll("[data-gallery-image]").forEach((button) => {
     button.addEventListener("click", () => {
       const mainImage = content.querySelector("[data-gallery-main]");
-      mainImage.src = button.dataset.galleryImage;
+      mainImage.src = imageSrc(button.dataset.galleryImage);
       content
         .querySelectorAll("[data-gallery-image]")
         .forEach((item) => item.classList.toggle("is-active", item === button));
@@ -458,6 +485,15 @@ const bindEvents = () => {
 
   bindProfileButtons();
 
+  document.querySelectorAll("[data-track]").forEach((element) => {
+    element.addEventListener("click", () => {
+      trackEvent(element.dataset.track, {
+        profile: element.dataset.trackProfile,
+        href: element.getAttribute("href"),
+      });
+    });
+  });
+
   document.querySelector("[data-age-confirm]")?.addEventListener("click", () => {
     localStorage.setItem("tokyo-weimi-age-ok", "1");
     document.querySelector(".age-gate")?.remove();
@@ -472,7 +508,10 @@ const bindEvents = () => {
 
 const bindProfileButtons = () => {
   document.querySelectorAll("[data-profile]").forEach((button) => {
-    button.addEventListener("click", () => openProfile(button.dataset.profile));
+    button.addEventListener("click", () => {
+      trackEvent("profile_view", { profile: button.dataset.profile });
+      openProfile(button.dataset.profile);
+    });
   });
 };
 

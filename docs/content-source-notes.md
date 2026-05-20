@@ -10,7 +10,8 @@ These notes are for maintainers only and should not appear in customer-facing we
 - Crawl script: `tools/scrape-old-site.mjs`
 - Raw crawl output is local-only and ignored by git: `scraped/old-site/`
 - Downloaded image copies are local-only and ignored by git: `public/assets/old-site/`
-- The live frontend currently references image URLs from `tokyo-weimi.com/wp-content/uploads`.
+- The live frontend renders image proxy paths such as `/img/:id`; source image URLs are stored in `src/content/image-map.json` for the Cloudflare Pages Function.
+- Primary content is maintained in `src/content/site-data.json`.
 
 ## Frontend Copy Rule
 

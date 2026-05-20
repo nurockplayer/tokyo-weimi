@@ -169,6 +169,8 @@ const common = {
     footer: {
       title: "Tokyo Weimi Angels",
       copy: "Tokyo reservation information, updated for mobile browsing.",
+      privacy: "隱私政策",
+      disclaimer: "免責聲明",
     },
   },
 };
@@ -298,6 +300,8 @@ export const dictionaries = {
     footer: {
       title: "Tokyo Weimi Angels",
       copy: "Tokyo reservation information, updated for mobile browsing.",
+      privacy: "隐私政策",
+      disclaimer: "免责声明",
     },
     profiles: {
       fubuki: {
@@ -484,6 +488,8 @@ export const dictionaries = {
     footer: {
       title: "Tokyo Weimi Angels",
       copy: "スマートフォンでも見やすい東京の予約情報です。",
+      privacy: "プライバシーポリシー",
+      disclaimer: "免責事項",
     },
     profiles: {
       fubuki: {
@@ -670,6 +676,8 @@ export const dictionaries = {
     footer: {
       title: "Tokyo Weimi Angels",
       copy: "모바일에서 보기 쉬운 도쿄 예약 정보입니다.",
+      privacy: "개인정보 처리방침",
+      disclaimer: "면책 고지",
     },
     profiles: {
       fubuki: {
@@ -856,6 +864,8 @@ export const dictionaries = {
     footer: {
       title: "Tokyo Weimi Angels",
       copy: "Tokyo reservation information, updated for mobile browsing.",
+      privacy: "Privacy Policy",
+      disclaimer: "Disclaimer",
     },
     profiles: {
       fubuki: {

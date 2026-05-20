@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tokyo-weimi.pages.dev/sitemap.xml
