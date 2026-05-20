@@ -5,6 +5,8 @@ scraped/
 public/assets/old-site/
 .DS_Store
 *.log
+test-results/
+playwright-report/
 .env
 .env.*
 !.env.example
