@@ -83,17 +83,25 @@ const profileMatches = (profile: Profile) => {
 const renderLanguageSwitcher = () => {
   const copy = currentCopy();
   return `
-    <label class="language-switcher">
-      <span>${copy.languageAria}</span>
-      <select data-language-select aria-label="${copy.languageAria}">
+    <div class="language-switcher" role="group" aria-label="${copy.languageAria}">
+      <span class="language-switcher-icon" data-language-icon aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path>
+        </svg>
+      </span>
+      <span class="language-switcher-label">${copy.languageAria}</span>
+      <div class="language-options">
         ${languageOptions
           .map(
             (option) =>
-              `<option value="${option.code}" ${option.code === currentLanguage ? "selected" : ""}>${option.label}</option>`,
+              `<button class="language-option ${option.code === currentLanguage ? "is-active" : ""}" data-language-option="${option.code}" type="button" aria-pressed="${option.code === currentLanguage}">
+                ${option.label}
+              </button>`,
           )
           .join("")}
-      </select>
-    </label>
+      </div>
+    </div>
   `;
 };
 
@@ -469,8 +477,10 @@ const openProfile = (id: string | undefined) => {
 };
 
 const bindEvents = () => {
-  document.querySelectorAll<HTMLSelectElement>("[data-language-select]").forEach((select) => select.addEventListener("change", (event) => {
-    currentLanguage = (event.currentTarget as HTMLSelectElement).value as LanguageCode;
+  document.querySelectorAll<HTMLButtonElement>("[data-language-option]").forEach((button) => button.addEventListener("click", () => {
+    const language = button.dataset.languageOption as LanguageCode | undefined;
+    if (!language) return;
+    currentLanguage = language;
     localStorage.setItem(languageStorageKey, currentLanguage);
     renderApp();
   }));
