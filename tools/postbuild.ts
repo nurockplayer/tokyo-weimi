@@ -1,25 +1,26 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { dictionaries, getLanguageOption, languageOptions } from "../src/i18n.js";
+import { dictionaries, getLanguageOption, languageOptions } from "../src/i18n.ts";
+import type { LanguageCode } from "../src/types.ts";
 
 const siteUrl = "https://tokyo-weimi.pages.dev";
 const distDir = join(process.cwd(), "dist");
 const baseHtml = readFileSync(join(distDir, "index.html"), "utf8");
-const imageMap = JSON.parse(readFileSync(join(process.cwd(), "src/content/image-map.json"), "utf8"));
-const localImageMap = JSON.parse(readFileSync(join(process.cwd(), "src/content/local-image-map.json"), "utf8"));
+const imageMap = JSON.parse(readFileSync(join(process.cwd(), "src/content/image-map.json"), "utf8")) as Record<string, string>;
+const localImageMap = JSON.parse(readFileSync(join(process.cwd(), "src/content/local-image-map.json"), "utf8")) as Record<string, string>;
 
-const routeFor = (code) => {
+const routeFor = (code: LanguageCode) => {
   const routes = {
     "zh-Hant": "zh-hant",
     "zh-Hans": "zh-hans",
     ja: "ja",
     ko: "ko",
     en: "en",
-  };
+  } satisfies Record<LanguageCode, string>;
   return routes[code];
 };
 
-const escapeHtml = (value) =>
+const escapeHtml = (value: string) =>
   String(value)
     .replaceAll("&", "&amp;")
     .replaceAll('"', "&quot;")
@@ -33,7 +34,7 @@ const alternateLinks = languageOptions
   })
   .join("\n    ");
 
-const renderLocalizedHtml = (code) => {
+const renderLocalizedHtml = (code: LanguageCode) => {
   const copy = dictionaries[code];
   const route = routeFor(code);
   const canonical = `${siteUrl}/${route}/`;
@@ -73,10 +74,10 @@ writeFileSync(join(distDir, "sitemap.xml"), sitemap);
 const imageDir = join(distDir, "img");
 mkdirSync(imageDir, { recursive: true });
 
-const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
-const fetchWithRetry = async (imageId, sourceUrl) => {
-  let lastError;
+const fetchWithRetry = async (imageId: string, sourceUrl: string): Promise<Response> => {
+  let lastError: unknown;
 
   for (let attempt = 1; attempt <= 4; attempt += 1) {
     try {
@@ -91,10 +92,11 @@ const fetchWithRetry = async (imageId, sourceUrl) => {
     }
   }
 
-  throw new Error(`Failed to fetch ${imageId}: ${lastError?.message || "unknown network error"}`);
+  const message = lastError instanceof Error ? lastError.message : "unknown network error";
+  throw new Error(`Failed to fetch ${imageId}: ${message}`);
 };
 
-const fetchImage = async ([imageId, sourceUrl]) => {
+const fetchImage = async ([imageId, sourceUrl]: [string, string]) => {
   const localSource = localImageMap[imageId];
   if (localSource) {
     const localPath = join(process.cwd(), "public", localSource.replace(/^\//, ""));

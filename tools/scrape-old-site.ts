@@ -7,10 +7,64 @@ const scrapeDir = path.join(rootDir, "scraped", "old-site");
 const assetDir = path.join(rootDir, "public", "assets", "old-site");
 const baseUrl = "https://tokyo-weimi.com";
 
-const decodeEntities = (value = "") =>
+type WordPressEntity = {
+  id: number | string;
+  title?: { rendered?: string };
+  slug?: string;
+  link: string;
+  date?: string;
+  content?: { rendered?: string };
+  excerpt?: { rendered?: string };
+  _embedded?: {
+    "wp:featuredmedia"?: Array<{
+      source_url?: string;
+      media_details?: {
+        sizes?: {
+          full?: {
+            source_url?: string;
+          };
+        };
+      };
+    }>;
+  };
+};
+
+type ScrapedDocument = {
+  type: "home" | "page" | "post";
+  id: string | number;
+  title: string;
+  slug: string;
+  link: string;
+  date: string | null;
+  html: string;
+  featuredMedia?: string;
+};
+
+type DownloadedImage = {
+  src: string;
+  usedBy: string[];
+  local?: string;
+  bytes?: number;
+  error?: string;
+};
+
+type ContentItem = {
+  type: ScrapedDocument["type"];
+  id: ScrapedDocument["id"];
+  title: string;
+  slug: string;
+  link: string;
+  date: string | null;
+  text: string;
+  profile: Record<string, string>;
+  imageUrls: string[];
+  images: Array<{ source: string; local: string }>;
+};
+
+const decodeEntities = (value = ""): string =>
   value
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, code) =>
+    .replace(/&#(\d+);/g, (_match, code: string) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_match, code: string) =>
       String.fromCharCode(Number.parseInt(code, 16)),
     )
     .replace(/&nbsp;/g, " ")
@@ -20,7 +74,7 @@ const decodeEntities = (value = "") =>
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">");
 
-const stripHtml = (html = "") =>
+const stripHtml = (html = ""): string =>
   decodeEntities(
     html
       .replace(/<script[\s\S]*?<\/script>/gi, "")
@@ -34,7 +88,7 @@ const stripHtml = (html = "") =>
       .trim(),
   );
 
-const absolutize = (url) => {
+const absolutize = (url: string | undefined): string => {
   if (!url || url.startsWith("data:")) return "";
   try {
     return new URL(decodeEntities(url), baseUrl).href;
@@ -43,8 +97,8 @@ const absolutize = (url) => {
   }
 };
 
-const imageUrlsFromHtml = (html = "") => {
-  const urls = new Set();
+const imageUrlsFromHtml = (html = ""): string[] => {
+  const urls = new Set<string>();
   for (const match of html.matchAll(
     /<(?:img|source)\b[^>]*(?:src|data-src)=["']([^"']+)["'][^>]*>/gi,
   )) {
@@ -52,8 +106,11 @@ const imageUrlsFromHtml = (html = "") => {
     if (url) urls.add(url);
   }
   for (const match of html.matchAll(/srcset=["']([^"']+)["']/gi)) {
-    for (const candidate of match[1].split(",")) {
-      const url = absolutize(candidate.trim().split(/\s+/)[0]);
+    const srcset = match[1];
+    if (!srcset) continue;
+    for (const candidate of srcset.split(",")) {
+      const source = candidate.trim().split(/\s+/)[0];
+      const url = absolutize(source);
       if (url) urls.add(url);
     }
   }
@@ -68,24 +125,24 @@ const imageUrlsFromHtml = (html = "") => {
   );
 };
 
-const extractProfile = (text = "") => {
-  const fields = {};
+const extractProfile = (text = ""): Record<string, string> => {
+  const fields: Record<string, string> = {};
   for (const label of ["家鄉", "年齡", "身高", "體重", "罩杯"]) {
     const match = text.match(new RegExp(`${label}[:：]\\s*([^\\n]+)`));
-    if (match) fields[label] = match[1].trim();
+    if (match?.[1]) fields[label] = match[1].trim();
   }
   return fields;
 };
 
-const wpJson = async (endpoint) => {
+const wpJson = async <T>(endpoint: string): Promise<T> => {
   const response = await fetch(`${baseUrl}/wp-json/wp/v2/${endpoint}`);
   if (!response.ok) {
     throw new Error(`${endpoint} failed with HTTP ${response.status}`);
   }
-  return response.json();
+  return response.json() as Promise<T>;
 };
 
-const downloadImage = async (url, index) => {
+const downloadImage = async (url: string, index: number): Promise<Omit<DownloadedImage, "usedBy">> => {
   const parsed = new URL(url);
   const sourceName = path.basename(parsed.pathname).replace(/[^a-z0-9._-]+/gi, "-");
   const hash = createHash("sha1").update(url).digest("hex").slice(0, 8);
@@ -111,12 +168,12 @@ await mkdir(scrapeDir, { recursive: true });
 await mkdir(assetDir, { recursive: true });
 
 const [pages, posts, homeHtml] = await Promise.all([
-  wpJson("pages?per_page=100&_embed=1"),
-  wpJson("posts?per_page=100&_embed=1"),
+  wpJson<WordPressEntity[]>("pages?per_page=100&_embed=1"),
+  wpJson<WordPressEntity[]>("posts?per_page=100&_embed=1"),
   fetch(baseUrl).then((response) => response.text()),
 ]);
 
-const documents = [
+const documents: ScrapedDocument[] = [
   {
     type: "home",
     id: "home",
@@ -126,22 +183,24 @@ const documents = [
     date: null,
     html: homeHtml,
   },
-  ...pages.map((page) => ({
+  ...pages.map(
+    (page): ScrapedDocument => ({
     type: "page",
     id: page.id,
     title: stripHtml(page.title?.rendered),
-    slug: page.slug,
+    slug: page.slug || "",
     link: page.link,
-    date: page.date,
+    date: page.date || null,
     html: page.content?.rendered || "",
   })),
-  ...posts.map((post) => ({
+  ...posts.map(
+    (post): ScrapedDocument => ({
     type: "post",
     id: post.id,
     title: stripHtml(post.title?.rendered),
-    slug: post.slug,
+    slug: post.slug || "",
     link: post.link,
-    date: post.date,
+    date: post.date || null,
     html: `${post.content?.rendered || ""}\n${post.excerpt?.rendered || ""}`,
     featuredMedia:
       post._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
@@ -151,8 +210,8 @@ const documents = [
   })),
 ];
 
-const imageMap = new Map();
-const content = documents.map((document) => {
+const imageMap = new Map<string, DownloadedImage>();
+const content: ContentItem[] = documents.map((document) => {
   const text = stripHtml(document.html);
   const imageUrls = new Set(imageUrlsFromHtml(document.html));
   if (document.featuredMedia) {
@@ -174,21 +233,23 @@ const content = documents.map((document) => {
     text,
     profile: extractProfile(text),
     imageUrls: [...imageUrls],
+    images: [],
   };
 });
 
-const images = [];
+const images: DownloadedImage[] = [];
 let imageIndex = 0;
 for (const image of imageMap.values()) {
   imageIndex += 1;
   try {
     images.push({ ...image, ...(await downloadImage(image.src, imageIndex)) });
   } catch (error) {
-    images.push({ ...image, error: error.message });
+    const message = error instanceof Error ? error.message : String(error);
+    images.push({ ...image, error: message });
   }
 }
 
-const localBySource = new Map(images.map((image) => [image.src, image.local]));
+const localBySource = new Map(images.map((image) => [image.src, image.local || ""]));
 for (const item of content) {
   item.images = item.imageUrls
     .map((source) => ({ source, local: localBySource.get(source) || "" }))
