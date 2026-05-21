@@ -1,13 +1,16 @@
 import "./styles.css";
-import { filterKeys, getCopy, getLanguageOption, languageOptions } from "./i18n.js";
-import { imageSrc } from "./media.js";
-import { contact, heroImages, hotels, profiles } from "./site-data.js";
+import { filterKeys, getCopy, getLanguageOption, languageOptions } from "./i18n.ts";
+import { imageSrc } from "./media.ts";
+import { contact, heroImages, hotels, profiles } from "./site-data.ts";
+import type { Dictionary, FilterKey, LanguageCode, Profile, ProfileCopy } from "./types.ts";
 
-const app = document.querySelector("#app");
+const app = document.querySelector<HTMLDivElement>("#app");
+if (!app) throw new Error("Missing #app root");
+
 const phoneLink = `tel:${contact.phone.replaceAll("-", "")}`;
 const languageStorageKey = "tokyo-weimi-language";
 const protectedImageAttributes = `data-protected-media draggable="false"`;
-const languageRoutes = {
+const languageRoutes: Record<string, LanguageCode> = {
   "/zh-hant/": "zh-Hant",
   "/zh-hans/": "zh-Hans",
   "/ja/": "ja",
@@ -15,30 +18,31 @@ const languageRoutes = {
   "/en/": "en",
 };
 const filterRules = {
-  japanese: (profile) => profile.tags.includes("日本人") || profile.title.includes("日本人"),
-  china: (profile) => profile.origin === "中國" || profile.tags.includes("中國"),
-  newcomer: (profile) => profile.tags.includes("新人") || profile.title.includes("新人"),
-  recommended: (profile) => ["推薦", "人氣", "好評"].some((tag) => profile.tags.includes(tag)),
-  premium: (profile) => profile.tags.includes("高級") || profile.title.includes("高級") || profile.title.includes("AV 女優"),
-  room: (profile) => profile.tags.includes("提供房間") || profile.title.includes("提供房間"),
-};
+  japanese: (profile: Profile) => profile.tags.includes("日本人") || profile.title.includes("日本人"),
+  china: (profile: Profile) => profile.origin === "中國" || profile.tags.includes("中國"),
+  newcomer: (profile: Profile) => profile.tags.includes("新人") || profile.title.includes("新人"),
+  recommended: (profile: Profile) => ["推薦", "人氣", "好評"].some((tag) => profile.tags.includes(tag)),
+  premium: (profile: Profile) => profile.tags.includes("高級") || profile.title.includes("高級") || profile.title.includes("AV 女優"),
+  room: (profile: Profile) => profile.tags.includes("提供房間") || profile.title.includes("提供房間"),
+} satisfies Record<Exclude<FilterKey, "all">, (profile: Profile) => boolean>;
 
-let activeFilter = "all";
+let activeFilter: FilterKey = "all";
 let query = "";
-const storedLanguage = localStorage.getItem(languageStorageKey);
+const storedLanguage = localStorage.getItem(languageStorageKey) as LanguageCode | null;
 const routedLanguage = languageRoutes[window.location.pathname];
-let currentLanguage = routedLanguage || (languageOptions.some((option) => option.code === storedLanguage) ? storedLanguage : "zh-Hant");
+let currentLanguage: LanguageCode =
+  routedLanguage || (languageOptions.some((option) => option.code === storedLanguage) ? storedLanguage! : "zh-Hant");
 
 const currentCopy = () => getCopy(currentLanguage);
 const currentLanguageOption = () => getLanguageOption(currentLanguage);
 
-const updateDocumentLanguage = (copy) => {
+const updateDocumentLanguage = (copy: Dictionary) => {
   document.documentElement.lang = currentLanguageOption().htmlLang;
   document.title = copy.meta.title;
   document.querySelector('meta[name="description"]')?.setAttribute("content", copy.meta.description);
 };
 
-const trackEvent = (eventName, detail = {}) => {
+const trackEvent = (eventName: string, detail: Record<string, unknown> = {}) => {
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({
     event: eventName,
@@ -47,31 +51,31 @@ const trackEvent = (eventName, detail = {}) => {
   });
 };
 
-const formatDate = (date) =>
+const formatDate = (date: string) =>
   new Intl.DateTimeFormat(currentLanguageOption().locale, {
     month: "2-digit",
     day: "2-digit",
   }).format(new Date(date));
 
-const formatPhotoCount = (count, copy) =>
+const formatPhotoCount = (count: number, copy: Dictionary) =>
   ["ja", "ko"].includes(currentLanguage) ? `${count}${copy.labels.photos}` : `${count} ${copy.labels.photos}`;
 
-const getProfileCopy = (profile, copy = currentCopy()) => ({
+const getProfileCopy = (profile: Profile, copy: Dictionary = currentCopy()): Profile & ProfileCopy => ({
   ...profile,
   ...(copy.profiles[profile.id] || {}),
 });
 
-const getPhotoAria = (index, copy) => {
+const getPhotoAria = (index: number, copy: Dictionary) => {
   const number = index + 1;
   if (currentLanguage.startsWith("zh")) return `${copy.labels.viewPhoto} ${number} ${copy.labels.photoOrdinalSuffix}`;
   if (currentLanguage === "en") return `${copy.labels.viewPhoto} ${number}`;
   return `${copy.labels.viewPhoto} ${number} ${copy.labels.photoOrdinalSuffix}`;
 };
 
-const profileMatches = (profile) => {
+const profileMatches = (profile: Profile) => {
   const profileText = getProfileCopy(profile);
   const haystack = `${profile.name} ${profile.title} ${profile.origin} ${profile.tags.join(" ")} ${profile.summary} ${profileText.title} ${profileText.origin} ${profileText.tags.join(" ")} ${profileText.summary}`;
-  const filterOk = activeFilter === "all" || filterRules[activeFilter]?.(profile);
+  const filterOk = activeFilter === "all" ? true : filterRules[activeFilter](profile);
   const queryOk = !query || haystack.toLowerCase().includes(query.toLowerCase());
   return filterOk && queryOk;
 };
@@ -171,7 +175,7 @@ const renderFilters = () => {
 `;
 };
 
-const renderProfileCard = (profile) => {
+const renderProfileCard = (profile: Profile) => {
   const copy = currentCopy();
   const profileText = getProfileCopy(profile, copy);
   const photoTotal = profile.gallery?.length || 1;
@@ -406,16 +410,20 @@ const renderApp = () => {
   bindEvents();
 };
 
-const openProfile = (id) => {
+const openProfile = (id: string | undefined) => {
+  if (!id) return;
   const profile = profiles.find((item) => item.id === id);
+  if (!profile) return;
   const copy = currentCopy();
   const profileText = getProfileCopy(profile, copy);
   const gallery = profile.gallery?.length ? profile.gallery : [profile.image];
-  const dialog = document.querySelector(".profile-dialog");
-  const content = dialog.querySelector(".dialog-content");
+  const dialog = document.querySelector<HTMLDialogElement>(".profile-dialog");
+  const content = dialog?.querySelector<HTMLElement>(".dialog-content");
+  if (!dialog || !content) return;
+  const firstImage = gallery[0] || profile.image;
   content.innerHTML = `
     <div class="dialog-gallery">
-      <img class="dialog-main-image" ${protectedImageAttributes} data-gallery-main src="${imageSrc(gallery[0])}" alt="${profile.name} ${profileText.title}" />
+      <img class="dialog-main-image" ${protectedImageAttributes} data-gallery-main src="${imageSrc(firstImage)}" alt="${profile.name} ${profileText.title}" />
       <div class="dialog-thumbs" aria-label="${profile.name} ${copy.labels.lineGallery}">
         ${gallery
           .map(
@@ -447,47 +455,53 @@ const openProfile = (id) => {
     </div>
   `;
   dialog.showModal();
-  content.querySelectorAll("[data-gallery-image]").forEach((button) => {
+  content.querySelectorAll<HTMLButtonElement>("[data-gallery-image]").forEach((button) => {
     button.addEventListener("click", () => {
-      const mainImage = content.querySelector("[data-gallery-main]");
-      mainImage.src = imageSrc(button.dataset.galleryImage);
+      const mainImage = content.querySelector<HTMLImageElement>("[data-gallery-main]");
+      const imageId = button.dataset.galleryImage;
+      if (mainImage && imageId) mainImage.src = imageSrc(imageId);
       content
-        .querySelectorAll("[data-gallery-image]")
+        .querySelectorAll<HTMLButtonElement>("[data-gallery-image]")
         .forEach((item) => item.classList.toggle("is-active", item === button));
     });
   });
 };
 
 const bindEvents = () => {
-  document.querySelector("[data-language-select]")?.addEventListener("change", (event) => {
-    currentLanguage = event.target.value;
+  document.querySelector<HTMLSelectElement>("[data-language-select]")?.addEventListener("change", (event) => {
+    currentLanguage = (event.currentTarget as HTMLSelectElement).value as LanguageCode;
     localStorage.setItem(languageStorageKey, currentLanguage);
     renderApp();
   });
 
-  document.querySelectorAll("[data-filter]").forEach((button) => {
+  document.querySelectorAll<HTMLButtonElement>("[data-filter]").forEach((button) => {
     button.addEventListener("click", () => {
-      activeFilter = button.dataset.filter;
+      const filter = button.dataset.filter as FilterKey | undefined;
+      if (!filter) return;
+      activeFilter = filter;
       renderApp();
-      document.querySelector("#today").scrollIntoView({ block: "start" });
+      document.querySelector("#today")?.scrollIntoView({ block: "start" });
     });
   });
 
-  document.querySelector(".search-box input")?.addEventListener("input", (event) => {
+  document.querySelector<HTMLInputElement>(".search-box input")?.addEventListener("input", (event) => {
     const copy = currentCopy();
-    query = event.target.value;
+    query = (event.currentTarget as HTMLInputElement).value;
     const filtered = profiles.filter(profileMatches);
-    document.querySelector(".profile-grid").innerHTML = filtered.length
-      ? filtered.map(renderProfileCard).join("")
-      : `<p class="empty-state">${copy.labels.empty}</p>`;
+    const profileGrid = document.querySelector<HTMLElement>(".profile-grid");
+    if (profileGrid) {
+      profileGrid.innerHTML = filtered.length
+        ? filtered.map(renderProfileCard).join("")
+        : `<p class="empty-state">${copy.labels.empty}</p>`;
+    }
     bindProfileButtons();
   });
 
   bindProfileButtons();
 
-  document.querySelectorAll("[data-track]").forEach((element) => {
+  document.querySelectorAll<HTMLElement>("[data-track]").forEach((element) => {
     element.addEventListener("click", () => {
-      trackEvent(element.dataset.track, {
+      trackEvent(element.dataset.track || "unknown_click", {
         profile: element.dataset.trackProfile,
         href: element.getAttribute("href"),
       });
@@ -499,15 +513,15 @@ const bindEvents = () => {
     document.querySelector(".age-gate")?.remove();
   });
 
-  const dialog = document.querySelector(".profile-dialog");
-  document.querySelector(".dialog-close")?.addEventListener("click", () => dialog.close());
+  const dialog = document.querySelector<HTMLDialogElement>(".profile-dialog");
+  document.querySelector<HTMLButtonElement>(".dialog-close")?.addEventListener("click", () => dialog?.close());
   dialog?.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
   });
 };
 
 const bindProfileButtons = () => {
-  document.querySelectorAll("[data-profile]").forEach((button) => {
+  document.querySelectorAll<HTMLButtonElement>("[data-profile]").forEach((button) => {
     button.addEventListener("click", () => {
       trackEvent("profile_view", { profile: button.dataset.profile });
       openProfile(button.dataset.profile);
@@ -517,10 +531,10 @@ const bindProfileButtons = () => {
 
 const protectedMediaSelector = "[data-protected-media], .profile-image, .hero-media, .hotel-card, .dialog-gallery";
 
-const isProtectedMediaEvent = (event) =>
+const isProtectedMediaEvent = (event: Event) =>
   event.target instanceof Element && Boolean(event.target.closest(protectedMediaSelector));
 
-const preventProtectedMediaAction = (event) => {
+const preventProtectedMediaAction = (event: Event) => {
   if (isProtectedMediaEvent(event)) event.preventDefault();
 };
 

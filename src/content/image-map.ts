@@ -76,4 +76,4 @@ export const imageMap = {
   "2020-08-7943cc0e-a7e4-4f40-ae75-878666b0eb9b": "https://tokyo-weimi.com/wp-content/uploads/2020/08/7943CC0E-A7E4-4F40-AE75-878666B0EB9B.jpeg",
   "2019-08-8e6812e1-8ead-48d7-81be-ac01c0b56b41": "https://tokyo-weimi.com/wp-content/uploads/2019/08/8E6812E1-8EAD-48D7-81BE-AC01C0B56B41.jpeg",
   "2019-08-d4881538-6239-43bb-8064-b7d64d01ed89": "https://tokyo-weimi.com/wp-content/uploads/2019/08/D4881538-6239-43BB-8064-B7D64D01ED89.jpeg"
-};
+} satisfies Record<string, string>;

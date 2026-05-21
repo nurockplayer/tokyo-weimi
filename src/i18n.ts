@@ -1,12 +1,14 @@
+import type { Dictionary, FilterKey, LanguageCode, LanguageOption, ProfileCopy } from "./types.ts";
+
 export const languageOptions = [
   { code: "zh-Hant", label: "繁體", shortLabel: "繁", htmlLang: "zh-Hant-TW", locale: "zh-TW" },
   { code: "zh-Hans", label: "简体", shortLabel: "简", htmlLang: "zh-Hans-CN", locale: "zh-CN" },
   { code: "ja", label: "日本語", shortLabel: "日", htmlLang: "ja", locale: "ja-JP" },
   { code: "ko", label: "한국어", shortLabel: "한", htmlLang: "ko", locale: "ko-KR" },
   { code: "en", label: "English", shortLabel: "EN", htmlLang: "en", locale: "en-US" },
-];
+] satisfies LanguageOption[];
 
-export const filterKeys = ["all", "japanese", "china", "newcomer", "recommended", "premium", "room"];
+export const filterKeys = ["all", "japanese", "china", "newcomer", "recommended", "premium", "room"] as const satisfies readonly FilterKey[];
 
 const zhHantProfiles = {
   fubuki: {
@@ -72,7 +74,7 @@ const zhHantProfiles = {
     price: "60 分鐘 20,000 / 80 分鐘 30,000 / 120 分鐘 40,000 / 包夜 60,000",
     summary: "高挑亮眼，適合先確認是否仍有短期檔期。",
   },
-};
+} satisfies Record<string, ProfileCopy>;
 
 const common = {
   zhHant: {
@@ -958,9 +960,9 @@ export const dictionaries = {
     ],
     hotelArea: "Ikebukuro",
   },
-};
+} satisfies Record<LanguageCode, Dictionary>;
 
-export const getLanguageOption = (code) =>
-  languageOptions.find((option) => option.code === code) || languageOptions[0];
+export const getLanguageOption = (code: LanguageCode): LanguageOption =>
+  languageOptions.find((option) => option.code === code) || languageOptions[0]!;
 
-export const getCopy = (code) => dictionaries[code] || dictionaries["zh-Hant"];
+export const getCopy = (code: LanguageCode): Dictionary => dictionaries[code] || dictionaries["zh-Hant"];

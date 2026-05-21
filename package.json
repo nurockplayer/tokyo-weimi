@@ -5,13 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "vite build && node tools/postbuild.mjs",
+    "build": "vite build && tsx tools/postbuild.ts",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node tools/check-site.mjs",
+    "test": "tsx tools/check-site.ts",
+    "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
     "vite": "^8.0.13"
   }
 }

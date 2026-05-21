@@ -7,6 +7,7 @@ Vite 純前端版本，可直接部署到 Cloudflare Pages。內容來源與遷�
 ```bash
 pnpm install
 pnpm dev
+pnpm run typecheck
 pnpm test
 pnpm build
 pnpm test:e2e
@@ -22,7 +23,8 @@ Cloudflare Pages 建議設定：
 
 ## 部署與檢查
 
-- `pnpm build` 會先執行 Vite build，再用 `tools/postbuild.mjs` 產生多語靜態路徑、`sitemap.xml` 與 `dist/img/` 圖片。
+- 專案主程式、工具腳本與 Cloudflare Pages Function 皆使用 TypeScript。
+- `pnpm build` 會先執行 Vite build，再用 `tools/postbuild.ts` 產生多語靜態路徑、`sitemap.xml` 與 `dist/img/` 圖片。
 - 多語路徑：`/zh-hant/`、`/zh-hans/`、`/ja/`、`/ko/`、`/en/`。
 - `pnpm test` 會檢查資料檔、圖片代理、SEO 產物、政策文件與 CI 設定。
 - `pnpm test:e2e` 會用 Playwright 驗證桌面/手機首頁、多語切換、篩選與相簿流程。
