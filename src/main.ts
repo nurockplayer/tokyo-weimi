@@ -346,6 +346,7 @@ const renderAgeGate = () => {
   return `
   <div class="age-gate" role="dialog" aria-modal="true" aria-labelledby="age-title">
     <div class="age-panel">
+      <div class="age-language">${renderLanguageSwitcher()}</div>
       <span class="section-kicker">${copy.ageGate.kicker}</span>
       <h2 id="age-title">${copy.ageGate.title}</h2>
       <p>${copy.ageGate.copy}</p>
@@ -468,11 +469,11 @@ const openProfile = (id: string | undefined) => {
 };
 
 const bindEvents = () => {
-  document.querySelector<HTMLSelectElement>("[data-language-select]")?.addEventListener("change", (event) => {
+  document.querySelectorAll<HTMLSelectElement>("[data-language-select]").forEach((select) => select.addEventListener("change", (event) => {
     currentLanguage = (event.currentTarget as HTMLSelectElement).value as LanguageCode;
     localStorage.setItem(languageStorageKey, currentLanguage);
     renderApp();
-  });
+  }));
 
   document.querySelectorAll<HTMLButtonElement>("[data-filter]").forEach((button) => {
     button.addEventListener("click", () => {

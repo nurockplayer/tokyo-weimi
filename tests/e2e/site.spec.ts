@@ -27,6 +27,20 @@ test("localized static routes are generated", async ({ page }) => {
   await expect.poll(() => page.content()).toContain("https://tokyo-weimi.pages.dev/ja/");
 });
 
+test("age gate includes the same language switcher", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.locator(".age-panel")).toBeVisible();
+  await expect(page.locator(".age-panel .section-kicker")).toHaveText("年齡確認");
+  await expect(page.locator("#age-title")).toHaveText("請確認你已達法定年齡");
+
+  await page.locator(".age-panel [data-language-select]").selectOption("en");
+
+  await expect(page.locator(".age-panel .section-kicker")).toHaveText("Age Check");
+  await expect(page.locator("#age-title")).toHaveText("Please confirm you are of legal age");
+  await expect(page.getByRole("button", { name: "I am 20 or older" })).toBeVisible();
+});
+
 test("traditional chinese hero title stays on one line on desktop", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/zh-hant/");

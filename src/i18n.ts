@@ -164,7 +164,7 @@ const common = {
       lineTwo: "LINE 2號",
     },
     ageGate: {
-      kicker: "Age Check",
+      kicker: "年齡確認",
       title: "請確認你已達法定年齡",
       copy: "本網站整理成人預約資訊，未滿 20 歲或不適合瀏覽者請離開。",
     },
@@ -295,7 +295,7 @@ export const dictionaries = {
       lineTwo: "LINE 2号",
     },
     ageGate: {
-      kicker: "Age Check",
+      kicker: "年龄确认",
       title: "请确认你已达到法定年龄",
       copy: "本网站整理成人预约信息，未满 20 岁或不适合浏览者请离开。",
     },
@@ -483,7 +483,7 @@ export const dictionaries = {
       lineTwo: "LINE 2号",
     },
     ageGate: {
-      kicker: "Age Check",
+      kicker: "年齢確認",
       title: "法定年齢に達していることを確認してください",
       copy: "本サイトは成人向け予約情報を掲載しています。20歳未満、または閲覧に適さない方は退出してください。",
     },
@@ -671,7 +671,7 @@ export const dictionaries = {
       lineTwo: "LINE 2번",
     },
     ageGate: {
-      kicker: "Age Check",
+      kicker: "연령 확인",
       title: "법적 연령 도달 여부를 확인해주세요",
       copy: "본 사이트는 성인 예약 정보를 정리합니다. 만 20세 미만이거나 열람에 적합하지 않은 분은 나가주세요.",
     },
