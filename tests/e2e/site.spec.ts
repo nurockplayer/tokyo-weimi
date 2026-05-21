@@ -5,7 +5,8 @@ test("renders localized homepage and profile gallery", async ({ page }) => {
   await page.getByRole("button", { name: /20|歲|세|以上/ }).click().catch(() => {});
 
   await expect(page.locator(".profile-card")).toHaveCount(9);
-  await page.locator("[data-language-select]").selectOption("en");
+  await expect(page.locator("[data-language-select]")).toHaveCount(0);
+  await page.getByRole("button", { name: "English" }).click();
   await expect(page.locator(".hero h1")).toHaveText("Tokyo Weimi Angels");
   await expect(page.locator("#today h2")).toHaveText("Today's Schedule");
 
@@ -33,8 +34,10 @@ test("age gate includes the same language switcher", async ({ page }) => {
   await expect(page.locator(".age-panel")).toBeVisible();
   await expect(page.locator(".age-panel .section-kicker")).toHaveText("年齡確認");
   await expect(page.locator("#age-title")).toHaveText("請確認你已達法定年齡");
+  await expect(page.locator(".age-panel [data-language-option]")).toHaveCount(5);
+  await expect(page.locator(".age-panel [data-language-icon]")).toBeVisible();
 
-  await page.locator(".age-panel [data-language-select]").selectOption("en");
+  await page.locator(".age-panel").getByRole("button", { name: "English" }).click();
 
   await expect(page.locator(".age-panel .section-kicker")).toHaveText("Age Check");
   await expect(page.locator("#age-title")).toHaveText("Please confirm you are of legal age");
