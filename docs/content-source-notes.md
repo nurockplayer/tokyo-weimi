@@ -9,7 +9,7 @@ These notes are for maintainers only and should not appear in customer-facing we
 - Public source site: `https://tokyo-weimi.com/`
 - Full crawl script: `tools/scrape-old-site.ts`
 - Daily attendance updater: `tools/update-today-attendance.ts`
-- Scheduled refresh workflow: `.github/workflows/update-attendance.yml`, running daily at 00:10 JST and opening a pull request when content changes.
+- Scheduled refresh workflow: `.github/workflows/update-attendance.yml`, running daily at 07:30 and 14:30 JST and opening a pull request when content changes.
 - Raw crawl output is local-only and ignored by git: `scraped/old-site/`
 - Downloaded image copies are local-only and ignored by git: `public/assets/old-site/`
 - The live frontend renders local image paths such as `/img/:id.jpg`; source image URLs are stored in `src/content/image-map.json` for reference and the Cloudflare Pages Function fallback.
