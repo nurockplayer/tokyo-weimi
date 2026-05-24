@@ -1,17 +1,29 @@
+import { readFileSync } from "node:fs";
+
 import { expect, test } from "@playwright/test";
+
+import type { SiteData } from "../../src/types.ts";
+
+const siteData = JSON.parse(
+  readFileSync(new URL("../../src/content/site-data.json", import.meta.url), "utf8"),
+) as SiteData;
+const profileCount = siteData.profiles.length;
+const japaneseProfileCount = siteData.profiles.filter(
+  (profile) => profile.tags.includes("日本人") || profile.title.includes("日本人"),
+).length;
 
 test("renders localized homepage and profile gallery", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /20|歲|세|以上/ }).click().catch(() => {});
 
-  await expect(page.locator(".profile-card")).toHaveCount(15);
+  await expect(page.locator(".profile-card")).toHaveCount(profileCount);
   await expect(page.locator("[data-language-select]")).toHaveCount(0);
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.locator(".hero h1")).toHaveText("Tokyo Weimi Angels");
   await expect(page.locator("#today h2")).toHaveText("Today's Schedule");
 
   await page.locator('[data-filter="japanese"]').click();
-  await expect(page.locator(".profile-card")).toHaveCount(13);
+  await expect(page.locator(".profile-card")).toHaveCount(japaneseProfileCount);
 
   await page.locator("[data-profile]").first().click();
   await expect(page.locator(".profile-dialog")).toBeVisible();
