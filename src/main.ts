@@ -80,6 +80,8 @@ const profileMatches = (profile: Profile) => {
   return filterOk && queryOk;
 };
 
+const isTodayProfile = (profile: Profile) => profile.isToday !== false;
+
 const renderLanguageSwitcher = () => {
   const copy = currentCopy();
   return `
@@ -223,6 +225,8 @@ const renderProfileCard = (profile: Profile) => {
 const renderProfiles = () => {
   const copy = currentCopy();
   const filtered = profiles.filter(profileMatches);
+  const todayProfiles = filtered.filter(isTodayProfile);
+  const featuredProfiles = filtered.filter((profile) => !isTodayProfile(profile));
   return `
     <section class="content-section" id="today">
       <div class="section-head">
@@ -233,12 +237,26 @@ const renderProfiles = () => {
       ${renderFilters()}
       <div class="profile-grid">
         ${
-          filtered.length
-            ? filtered.map(renderProfileCard).join("")
+          todayProfiles.length
+            ? todayProfiles.map(renderProfileCard).join("")
             : `<p class="empty-state">${copy.labels.empty}</p>`
         }
       </div>
     </section>
+    ${
+      featuredProfiles.length
+        ? `<section class="content-section" id="featured">
+            <div class="section-head">
+              <span class="section-kicker">${copy.sections.featuredKicker}</span>
+              <h2>${copy.sections.featuredTitle}</h2>
+              <p>${copy.sections.featuredCopy}</p>
+            </div>
+            <div class="profile-grid">
+              ${featuredProfiles.map(renderProfileCard).join("")}
+            </div>
+          </section>`
+        : ""
+    }
   `;
 };
 

@@ -36,6 +36,7 @@ export type Profile = {
   tags: string[];
   price: string;
   summary: string;
+  isToday?: boolean;
 };
 
 export type Hotel = {
@@ -64,6 +65,9 @@ type SectionKey =
   | "todayKicker"
   | "todayTitle"
   | "todayCopy"
+  | "featuredKicker"
+  | "featuredTitle"
+  | "featuredCopy"
   | "priceKicker"
   | "priceTitle"
   | "priceCopy"

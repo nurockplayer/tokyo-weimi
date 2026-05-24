@@ -7,23 +7,31 @@ import type { SiteData } from "../../src/types.ts";
 const siteData = JSON.parse(
   readFileSync(new URL("../../src/content/site-data.json", import.meta.url), "utf8"),
 ) as SiteData;
-const profileCount = siteData.profiles.length;
-const japaneseProfileCount = siteData.profiles.filter(
+const todayProfileCount = siteData.profiles.filter((profile) => profile.isToday !== false).length;
+const featuredProfileCount = siteData.profiles.filter((profile) => profile.isToday === false).length;
+const japaneseTodayProfileCount = siteData.profiles.filter(
   (profile) => profile.tags.includes("日本人") || profile.title.includes("日本人"),
-).length;
+).filter((profile) => profile.isToday !== false).length;
+const japaneseFeaturedProfileCount = siteData.profiles.filter(
+  (profile) => profile.tags.includes("日本人") || profile.title.includes("日本人"),
+).filter((profile) => profile.isToday === false).length;
+const visibleProfileCount = (today: number, featured: number) => today + featured;
 
 test("renders localized homepage and profile gallery", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /20|歲|세|以上/ }).click().catch(() => {});
 
-  await expect(page.locator(".profile-card")).toHaveCount(profileCount);
+  await expect(page.locator("#today .profile-card")).toHaveCount(todayProfileCount);
+  await expect(page.locator("#featured .profile-card")).toHaveCount(featuredProfileCount);
+  await expect(page.locator(".profile-card")).toHaveCount(visibleProfileCount(todayProfileCount, featuredProfileCount));
   await expect(page.locator("[data-language-select]")).toHaveCount(0);
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.locator(".hero h1")).toHaveText("Tokyo Weimi Angels");
   await expect(page.locator("#today h2")).toHaveText("Today's Schedule");
 
   await page.locator('[data-filter="japanese"]').click();
-  await expect(page.locator(".profile-card")).toHaveCount(japaneseProfileCount);
+  await expect(page.locator("#today .profile-card")).toHaveCount(japaneseTodayProfileCount);
+  await expect(page.locator("#featured .profile-card")).toHaveCount(japaneseFeaturedProfileCount);
 
   await page.locator("[data-profile]").first().click();
   await expect(page.locator(".profile-dialog")).toBeVisible();

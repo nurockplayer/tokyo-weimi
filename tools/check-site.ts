@@ -72,9 +72,15 @@ for (const [imageId, localPath] of Object.entries(localImageMap)) {
 
 const siteData = readFileSync(join(root, "src/content/site-data.json"), "utf8");
 assert(!siteData.includes("tokyo-weimi.com/wp-content/uploads"), "site-data JSON must not expose original image URLs");
-const parsedSiteData = JSON.parse(siteData) as { profiles?: Array<{ id: string; gallery?: string[] }> };
+const parsedSiteData = JSON.parse(siteData) as {
+  profiles?: Array<{ id: string; gallery?: string[]; isToday?: boolean }>;
+};
 const parsedProfiles = parsedSiteData.profiles || [];
 assert(parsedProfiles.length >= 1, "today schedule should contain scraped profiles");
+assert(
+  parsedProfiles.some((profile) => profile.isToday === false),
+  "curated non-today profiles should be preserved instead of deleted",
+);
 for (const profile of parsedProfiles) {
   assert((profile.gallery?.length || 0) >= 2, `Profile ${profile.id} should keep a multi-photo gallery`);
 }

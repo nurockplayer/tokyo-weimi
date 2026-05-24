@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -133,14 +132,6 @@ const cleanText = (value = ""): string =>
     .trim();
 
 const readJson = <T>(file: string): T => JSON.parse(readFileSync(path.join(rootDir, file), "utf8")) as T;
-
-const readHeadJson = <T>(file: string, fallback: T): T => {
-  try {
-    return JSON.parse(execFileSync("git", ["show", `HEAD:${file}`], { cwd: rootDir, encoding: "utf8" })) as T;
-  } catch {
-    return fallback;
-  }
-};
 
 const writeJson = async (file: string, value: unknown): Promise<void> => {
   await writeFile(path.join(rootDir, file), `${JSON.stringify(value, null, 2)}\n`);
@@ -402,7 +393,7 @@ const ensureImage = async (
 await mkdir(assetDir, { recursive: true });
 
 const siteData = readJson<SiteData>("src/content/site-data.json");
-const baselineSiteData = readHeadJson<SiteData>("src/content/site-data.json", siteData);
+const baselineSiteData = siteData;
 const imageMap = readJson<Record<string, string>>("src/content/image-map.json");
 const localImageMap = readJson<Record<string, string>>("src/content/local-image-map.json");
 const sourceToId = new Map(Object.entries(imageMap).map(([id, source]) => [source, id]));
@@ -439,12 +430,18 @@ for (const sourceProfile of sourceProfiles) {
     summary: previousProfile?.summary || deriveSummary(sourceProfile),
     image: gallery[0] || "",
     gallery,
+    isToday: true,
   });
 }
 
 if (!profiles.length) throw new Error("No profiles remained after image processing");
 
-siteData.profiles = profiles;
+const todayProfileIds = new Set(profiles.map((profile) => profile.id));
+const preservedProfiles = baselineSiteData.profiles
+  .filter((profile) => !todayProfileIds.has(profile.id))
+  .map((profile) => ({ ...profile, isToday: false }));
+
+siteData.profiles = [...profiles, ...preservedProfiles];
 siteData.heroImages = profiles.slice(0, 4).map((profile) => profile.image);
 
 await writeJson("src/content/site-data.json", siteData);
@@ -458,7 +455,9 @@ await writeFile(
 console.log(
   JSON.stringify(
     {
-      profiles: profiles.length,
+      todayProfiles: profiles.length,
+      preservedProfiles: preservedProfiles.length,
+      totalProfiles: siteData.profiles.length,
       images: Object.keys(imageMap).length,
       localImages: Object.keys(localImageMap).length,
     },
