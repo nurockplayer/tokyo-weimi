@@ -84,6 +84,25 @@ assert(
 for (const profile of parsedProfiles) {
   assert((profile.gallery?.length || 0) >= 2, `Profile ${profile.id} should keep a multi-photo gallery`);
 }
+const { dictionaries, languageOptions } = await import("../src/i18n.ts");
+const localizedDictionaries = dictionaries as Record<
+  string,
+  { profiles: Record<string, { summary: string }> }
+>;
+for (const option of languageOptions) {
+  const dictionary = localizedDictionaries[option.code];
+  for (const profile of parsedProfiles) {
+    const profileCopy = dictionary?.profiles[profile.id];
+    assert(profileCopy, `Missing ${option.code} profile copy for ${profile.id}`);
+    assert(profileCopy.summary.length > 0, `Missing ${option.code} profile summary for ${profile.id}`);
+    if (["ja", "ko", "en"].includes(option.code)) {
+      assert(
+        profileCopy.summary !== localizedDictionaries["zh-Hant"]?.profiles[profile.id]?.summary,
+        `${option.code} profile summary should not fall back to Traditional Chinese for ${profile.id}`,
+      );
+    }
+  }
+}
 assert(
   existsSync(join(root, "tools/update-today-attendance.ts")),
   "daily attendance updater should be available",

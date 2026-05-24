@@ -1,4 +1,5 @@
-import type { Dictionary, FilterKey, LanguageCode, LanguageOption, ProfileCopy } from "./types.ts";
+import { profiles as siteProfiles } from "./site-data.ts";
+import type { Dictionary, FilterKey, LanguageCode, LanguageOption, Profile, ProfileCopy } from "./types.ts";
 
 export const languageOptions = [
   { code: "zh-Hant", label: "繁體", shortLabel: "繁", htmlLang: "zh-Hant-TW", locale: "zh-TW" },
@@ -75,6 +76,399 @@ const zhHantProfiles = {
     summary: "高挑亮眼，適合先確認是否仍有短期檔期。",
   },
 } satisfies Record<string, ProfileCopy>;
+
+type TranslatedProfileText = Pick<ProfileCopy, "title" | "tags" | "summary">;
+
+const zhHansReplacements: Array<[RegExp, string]> = [
+  [/東京/g, "东京"],
+  [/中國/g, "中国"],
+  [/推薦/g, "推荐"],
+  [/人氣/g, "人气"],
+  [/長腿/g, "长腿"],
+  [/氣質/g, "气质"],
+  [/溫柔/g, "温柔"],
+  [/資訊/g, "信息"],
+  [/預約/g, "预约"],
+  [/檔期/g, "档期"],
+  [/價位/g, "价位"],
+  [/價/g, "价"],
+  [/實際/g, "实际"],
+  [/確認/g, "确认"],
+  [/聯絡/g, "联系"],
+  [/適合/g, "适合"],
+  [/偏好/g, "偏好"],
+  [/穩定/g, "稳定"],
+  [/細緻/g, "细致"],
+  [/號/g, "号"],
+  [/歲/g, "岁"],
+  [/優/g, "优"],
+  [/亞/g, "亚"],
+  [/麗/g, "丽"],
+  [/繪/g, "绘"],
+  [/楓/g, "枫"],
+  [/體/g, "体"],
+  [/會/g, "会"],
+  [/與/g, "与"],
+  [/張/g, "张"],
+  [/分鐘/g, "分钟"],
+];
+
+const toZhHans = (value: string): string =>
+  zhHansReplacements.reduce((text, [pattern, replacement]) => text.replace(pattern, replacement), value);
+
+const profileOrigin = (origin: string, language: LanguageCode): string => {
+  if (language === "zh-Hans") return toZhHans(origin);
+  if (language === "ja") return origin === "中國" ? "中国" : "東京";
+  if (language === "ko") return origin === "中國" ? "중국" : "도쿄";
+  if (language === "en") return origin === "中國" ? "China" : "Tokyo";
+  return origin;
+};
+
+const profilePrice = (price: string, language: LanguageCode): string => {
+  if (language === "zh-Hans") return toZhHans(price);
+  if (language === "ja") return price.replaceAll(" 分鐘 ", "分 ").replaceAll("包夜", "泊まり");
+  if (language === "ko") return price.replaceAll(" 分鐘 ", "분 ").replaceAll("包夜", "밤샘");
+  if (language === "en") return price.replaceAll(" 分鐘 ", " min ").replaceAll("包夜", "Overnight");
+  return price;
+};
+
+const jaProfileText = {
+  yuna: {
+    title: "おすすめ・日本人美脚女神",
+    tags: ["日本人", "おすすめ", "高身長"],
+    summary: "モデルのようなスタイルと美脚が魅力。白い肌と丁寧な対応で、高身長の女神系が好きな方に向いています。",
+  },
+  maika: {
+    title: "おすすめ・18歳の少女系",
+    tags: ["日本人", "新人", "おすすめ"],
+    summary: "清潔感があり自然体で距離感も近い18歳新人タイプ。容姿とスタイルの条件が良く、当日の空き確認がおすすめです。",
+  },
+  noa: {
+    title: "日本人・甘めのトレンド女子",
+    tags: ["日本人", "甘め", "限定"],
+    summary: "甘さとトレンド感のあるタイプ。最近の出勤情報が更新されているため、短期スケジュールを先に確認してください。",
+  },
+  yurika: {
+    title: "日本人・とても優しい彼女系",
+    tags: ["日本人", "やさしい", "彼女感"],
+    summary: "とても優しい彼女系で、料金も分かりやすいプロフィールです。落ち着いたやり取りと安定した返信を好む方に向いています。",
+  },
+  yue: {
+    title: "18歳・桜系グラマー少女",
+    tags: ["日本人", "新人", "高身長"],
+    summary: "18歳の新人で、長身と目を引くスタイルが特徴です。新しい出勤情報を確認したい方におすすめです。",
+  },
+  ria: {
+    title: "日本人・おすすめガール",
+    tags: ["日本人", "おすすめ", "スリム"],
+    summary: "スリムで甘い雰囲気、明るい対応が魅力。最近の予定が更新されているため、電話で空き時間をご確認ください。",
+  },
+  nanami: {
+    title: "新人・18歳の甘め少女",
+    tags: ["日本人", "新人", "甘め"],
+    summary: "18歳新人の甘いタイプ。若くて可愛らしく性格も良いため、当日の出勤確認がおすすめです。",
+  },
+  reina: {
+    title: "おすすめ・日本人萌え系",
+    tags: ["日本人", "おすすめ", "彼女感"],
+    summary: "親しみやすく明るい萌え系タイプ。彼女感が強く、可愛い雰囲気のやり取りを好む方に向いています。",
+  },
+  winnie: {
+    title: "中国若奥様・池袋ルームあり",
+    tags: ["中国", "部屋あり", "高コスパ"],
+    summary: "池袋で部屋の相談ができ、コストパフォーマンスも良いタイプ。効率と部屋手配を重視する予約に向いています。",
+  },
+  yuina: {
+    title: "日本人・やさしい女神",
+    tags: ["日本人", "やさしい", "彼女感"],
+    summary: "やわらかく上品な雰囲気で、均整の取れたスタイル。日系の甘い彼女感を求める方におすすめです。",
+  },
+  himawari: {
+    title: "日本人・東大才女",
+    tags: ["日本人", "高身長", "限定"],
+    summary: "東大才女の清楚で高身長なタイプ。英語での会話も得意で、初恋のような彼女感を好む方に向いています。",
+  },
+  yuki: {
+    title: "本日特価・おすすめ日本人",
+    tags: ["日本人", "おすすめ", "高身長"],
+    summary: "本日特価のおすすめ枠。モデルのようなスタイルと若く繊細な雰囲気で、上位人気枠を探す方に向いています。",
+  },
+  nozomi: {
+    title: "日本人・人気ガール",
+    tags: ["日本人", "人気", "彼女感"],
+    summary: "白い肌と均整の取れたスタイル、強い彼女感が魅力。サービスとやり取りの評価も安定しています。",
+  },
+  kaede: {
+    title: "日本人・人気のお姉さん",
+    tags: ["日本人", "人気", "高身長"],
+    summary: "期間限定の人気お姉さんタイプ。長身で脚がきれい、柔らかな雰囲気があり、やや高めの人気枠です。",
+  },
+  koko: {
+    title: "中国・期間限定プレミアム",
+    tags: ["中国", "高身長", "期間限定"],
+    summary: "中国の上質な美女タイプ。整ったスタイルと明るい性格が魅力で、短期スケジュールの確認がおすすめです。",
+  },
+  fubuki: {
+    title: "日本人・美脚のお姉さん",
+    tags: ["日本人", "人気", "美脚"],
+    summary: "すっきりした雰囲気で自然な会話が魅力。長身で清楚なタイプが好きな方におすすめです。",
+  },
+  akari: {
+    title: "日本人・セクシー女神",
+    tags: ["日本人", "新人", "おすすめ"],
+    summary: "若くて甘い雰囲気。返信が早く、空き状況をすぐ確認したい方に向いています。",
+  },
+  zihan: {
+    title: "中国ガール・池袋で部屋手配可",
+    tags: ["中国", "部屋あり", "高コスパ"],
+    summary: "池袋で部屋の手配を相談できます。料金が明確で、効率よく予約したい方におすすめです。",
+  },
+  kanano: {
+    title: "AV女優・高級スケジュール",
+    tags: ["AV女優", "高級", "予約制"],
+    summary: "注目度の高い枠です。日程と予約可能時間を早めにご確認ください。",
+  },
+  mayu: {
+    title: "好評ガール・やさしい系",
+    tags: ["好評", "やさしい", "日本人"],
+    summary: "やわらかなコミュニケーションが魅力。安定感と細やかな対応を好む方に向いています。",
+  },
+} satisfies Record<string, TranslatedProfileText>;
+
+const koProfileText = {
+  yuna: {
+    title: "추천・일본인 긴 다리 여신",
+    tags: ["일본인", "추천", "키 큰"],
+    summary: "모델 같은 몸매와 긴 다리가 매력입니다. 하얀 피부와 세심한 응대로 키 큰 여신 타입을 선호하는 분께 어울립니다.",
+  },
+  maika: {
+    title: "추천・18세 소녀 타입",
+    tags: ["일본인", "신인", "추천"],
+    summary: "상큼하고 자연스러우며 거리감이 적은 18세 신인 타입입니다. 외모와 몸매 조건이 좋아 당일 일정을 먼저 확인해주세요.",
+  },
+  noa: {
+    title: "일본인・달콤한 트렌디 타입",
+    tags: ["일본인", "달콤함", "한정"],
+    summary: "달콤하고 트렌디한 분위기입니다. 최근 출근 정보가 업데이트되어 단기 일정은 먼저 문의하는 것이 좋습니다.",
+  },
+  yurika: {
+    title: "일본인・매우 다정한 여자친구 타입",
+    tags: ["일본인", "다정함", "여자친구 느낌"],
+    summary: "매우 다정한 여자친구 타입이며 가격도 명확합니다. 편안한 소통과 안정적인 응대를 원하는 분께 적합합니다.",
+  },
+  yue: {
+    title: "18세 글래머 벚꽃 소녀",
+    tags: ["일본인", "신인", "키 큰"],
+    summary: "18세 신인으로 긴 다리와 눈에 띄는 조건이 특징입니다. 최근 새 출근 명단을 확인하고 싶은 고객에게 적합합니다.",
+  },
+  ria: {
+    title: "일본인・추천 여성",
+    tags: ["일본인", "추천", "슬림"],
+    summary: "슬림하고 달콤한 분위기, 밝은 응대가 매력입니다. 최근 일정이 업데이트되었으니 전화로 가능 시간을 확인해주세요.",
+  },
+  nanami: {
+    title: "신인・18세 달콤한 소녀",
+    tags: ["일본인", "신인", "달콤함"],
+    summary: "18세 신인의 달콤한 타입입니다. 젊고 예쁘며 성격도 좋아 당일 출근 확인을 추천합니다.",
+  },
+  reina: {
+    title: "추천・일본인 러블리 타입",
+    tags: ["일본인", "추천", "여자친구 느낌"],
+    summary: "친화력이 좋고 밝은 러블리 타입입니다. 여자친구 느낌이 뚜렷해 귀여운 소통을 선호하는 분께 어울립니다.",
+  },
+  winnie: {
+    title: "중국 젊은 아내 타입・이케부쿠로 방 제공",
+    tags: ["중국", "방 제공", "가성비"],
+    summary: "이케부쿠로에서 방 상담이 가능하고 가성비가 좋은 타입입니다. 효율과 방 배정을 중시하는 예약에 적합합니다.",
+  },
+  yuina: {
+    title: "일본인・다정한 여신",
+    tags: ["일본인", "다정함", "여자친구 느낌"],
+    summary: "부드럽고 온화한 분위기, 균형 잡힌 몸매가 특징입니다. 완전한 일본식 달콤한 여자친구 느낌을 원하는 분께 어울립니다.",
+  },
+  himawari: {
+    title: "일본인・도쿄대 재원",
+    tags: ["일본인", "키 큰", "한정"],
+    summary: "도쿄대 재원 느낌의 산뜻하고 키 큰 타입입니다. 영어 소통도 좋아 첫사랑 같은 여자친구 느낌을 선호하는 분께 적합합니다.",
+  },
+  yuki: {
+    title: "오늘 특가・추천 일본인",
+    tags: ["일본인", "추천", "키 큰"],
+    summary: "오늘 특가 추천 프로필입니다. 모델 같은 몸매와 젊고 섬세한 분위기로 고급 인기 일정을 원하는 분께 어울립니다.",
+  },
+  nozomi: {
+    title: "일본인・인기 여성",
+    tags: ["일본인", "인기", "여자친구 느낌"],
+    summary: "하얀 피부와 균형 잡힌 몸매, 강한 여자친구 느낌이 매력입니다. 서비스와 소통 평가도 안정적입니다.",
+  },
+  kaede: {
+    title: "일본인・인기 언니 타입",
+    tags: ["일본인", "인기", "키 큰"],
+    summary: "기간 한정 인기 언니 타입입니다. 키가 크고 다리가 길며 부드러운 분위기가 있는 다소 높은 가격대의 인기 일정입니다.",
+  },
+  koko: {
+    title: "중국・기간 한정 프리미엄",
+    tags: ["중국", "키 큰", "기간 한정"],
+    summary: "중국 프리미엄 미인 타입입니다. 완벽한 몸매와 밝은 성격이 매력으로, 단기 일정 가능 여부를 먼저 확인해주세요.",
+  },
+  fubuki: {
+    title: "일본인・긴 다리의 세련된 타입",
+    tags: ["일본인", "인기", "긴 다리"],
+    summary: "깔끔한 분위기와 자연스러운 소통이 매력입니다. 키가 크고 산뜻한 스타일을 선호하는 분께 적합합니다.",
+  },
+  akari: {
+    title: "일본인・섹시한 여신 타입",
+    tags: ["일본인", "신인", "추천"],
+    summary: "어리고 달콤한 분위기, 빠른 응답이 장점입니다. 일정을 빠르게 확인하고 싶은 고객에게 적합합니다.",
+  },
+  zihan: {
+    title: "중국 여성・이케부쿠로 방 제공 가능",
+    tags: ["중국", "방 제공", "가성비"],
+    summary: "이케부쿠로에서 방 배정을 상담할 수 있습니다. 가격이 명확해 효율을 중시하는 예약에 적합합니다.",
+  },
+  kanano: {
+    title: "AV 배우・고급 일정",
+    tags: ["AV 배우", "고급", "예약제"],
+    summary: "인지도가 높은 일정입니다. 날짜와 예약 가능 시간을 미리 확인하는 것을 추천합니다.",
+  },
+  mayu: {
+    title: "호평 여성・부드러운 타입",
+    tags: ["호평", "부드러움", "일본인"],
+    summary: "부드러운 소통이 매력입니다. 안정적인 서비스와 섬세한 응대를 선호하는 고객에게 적합합니다.",
+  },
+} satisfies Record<string, TranslatedProfileText>;
+
+const enProfileText = {
+  yuna: {
+    title: "Recommended / Japanese long-legged goddess",
+    tags: ["Japanese", "Recommended", "Tall"],
+    summary: "Model-like proportions and elegant long legs, with fair skin and attentive service. A strong fit for guests who prefer a tall goddess type.",
+  },
+  maika: {
+    title: "Recommended / 18-year-old girl-next-door",
+    tags: ["Japanese", "New", "Recommended"],
+    summary: "Fresh, natural, and easy to approach. An 18-year-old newcomer with standout looks and figure; call first to confirm same-day availability.",
+  },
+  noa: {
+    title: "Japanese / Sweet trendy type",
+    tags: ["Japanese", "Sweet", "Limited"],
+    summary: "Sweet with a trendy feel. Recent schedule details have been updated, so ask first about short-term availability.",
+  },
+  yurika: {
+    title: "Japanese / Very gentle girlfriend type",
+    tags: ["Japanese", "Gentle", "Girlfriend feel"],
+    summary: "A very gentle girlfriend-style profile with clear pricing. Good for guests who prefer relaxed interaction and steady replies.",
+  },
+  yue: {
+    title: "18-year-old glamorous sakura girl",
+    tags: ["Japanese", "New", "Tall"],
+    summary: "An 18-year-old newcomer with long legs and eye-catching proportions. A good match for guests checking the latest new schedules.",
+  },
+  ria: {
+    title: "Japanese / Recommended girl",
+    tags: ["Japanese", "Recommended", "Slim"],
+    summary: "Slim, sweet, and warm in conversation. Her recent schedule has been updated, so call to confirm available time slots.",
+  },
+  nanami: {
+    title: "New / 18-year-old sweet girl",
+    tags: ["Japanese", "New", "Sweet"],
+    summary: "An 18-year-old newcomer with a sweet, youthful feel and a friendly personality. Best to confirm same-day attendance first.",
+  },
+  reina: {
+    title: "Recommended / Japanese cute type",
+    tags: ["Japanese", "Recommended", "Girlfriend feel"],
+    summary: "Friendly, lively, and cute with a clear girlfriend feel. A good fit for guests who prefer playful, adorable interaction.",
+  },
+  winnie: {
+    title: "Chinese young wife type / Ikebukuro room available",
+    tags: ["China", "Room available", "Value"],
+    summary: "Room arrangement is available in Ikebukuro, with strong value and gentle service. Good for efficient bookings with room support.",
+  },
+  yuina: {
+    title: "Japanese / Gentle goddess",
+    tags: ["Japanese", "Gentle", "Girlfriend feel"],
+    summary: "Soft, elegant, and well-proportioned, with a fully Japanese sweet girlfriend feel.",
+  },
+  himawari: {
+    title: "Japanese / University of Tokyo talent",
+    tags: ["Japanese", "Tall", "Limited"],
+    summary: "A smart University of Tokyo style with a fresh, tall look and good English communication. Good for guests who like first-love girlfriend energy.",
+  },
+  yuki: {
+    title: "Today's special / Recommended Japanese",
+    tags: ["Japanese", "Recommended", "Tall"],
+    summary: "A recommended special for today, with model-like proportions and a young, refined presence. Suitable for guests seeking a premium popular slot.",
+  },
+  nozomi: {
+    title: "Japanese / Popular girl",
+    tags: ["Japanese", "Popular", "Girlfriend feel"],
+    summary: "Fair skin, balanced proportions, and strong girlfriend feel. Service and interaction feedback are consistently stable.",
+  },
+  kaede: {
+    title: "Japanese / Popular mature type",
+    tags: ["Japanese", "Popular", "Tall"],
+    summary: "A limited-period popular mature type with a tall figure, long legs, and a soft presence. A higher-priced popular schedule.",
+  },
+  koko: {
+    title: "Chinese / Limited premium type",
+    tags: ["China", "Tall", "Limited"],
+    summary: "A premium Chinese beauty with excellent proportions and a warm personality. Confirm first whether short-term availability remains.",
+  },
+  fubuki: {
+    title: "Japanese / Long-legged elegant type",
+    tags: ["Japanese", "Popular", "Long legs"],
+    summary: "Polished, natural, and easy to talk to. A good match for guests who prefer a tall, fresh style.",
+  },
+  akari: {
+    title: "Japanese / Sexy goddess type",
+    tags: ["Japanese", "New", "Recommended"],
+    summary: "Young, sweet, and responsive. Suitable for guests who want to confirm availability quickly.",
+  },
+  zihan: {
+    title: "Chinese / Ikebukuro room available",
+    tags: ["China", "Room available", "Value"],
+    summary: "Room arrangement can be discussed in Ikebukuro. Clear pricing and a good fit for efficient bookings.",
+  },
+  kanano: {
+    title: "AV actress / Premium schedule",
+    tags: ["AV actress", "Premium", "Reservation only"],
+    summary: "A highly recognizable schedule. Please confirm dates and available time slots in advance.",
+  },
+  mayu: {
+    title: "Well-reviewed / Gentle type",
+    tags: ["Well reviewed", "Gentle", "Japanese"],
+    summary: "Soft communication and steady service. Good for guests who prefer calm, attentive interaction.",
+  },
+} satisfies Record<string, TranslatedProfileText>;
+
+const buildProfileCopies = (
+  language: LanguageCode,
+  translations: Record<string, TranslatedProfileText> = {},
+): Record<string, ProfileCopy> =>
+  Object.fromEntries(
+    siteProfiles.map((profile: Profile) => {
+      const translated = translations[profile.id];
+      const sourceText = language === "zh-Hans" ? toZhHans : (value: string) => value;
+      return [
+        profile.id,
+        {
+          title: translated?.title || sourceText(profile.title),
+          origin: profileOrigin(profile.origin, language),
+          tags: translated?.tags || profile.tags.map(sourceText),
+          price: profilePrice(profile.price, language),
+          summary: translated?.summary || sourceText(profile.summary),
+        },
+      ];
+    }),
+  );
+
+const completeProfileCopies = {
+  "zh-Hant": buildProfileCopies("zh-Hant"),
+  "zh-Hans": buildProfileCopies("zh-Hans"),
+  ja: buildProfileCopies("ja", jaProfileText),
+  ko: buildProfileCopies("ko", koProfileText),
+  en: buildProfileCopies("en", enProfileText),
+} satisfies Record<LanguageCode, Record<string, ProfileCopy>>;
 
 const common = {
   zhHant: {
@@ -976,6 +1370,10 @@ export const dictionaries = {
     hotelArea: "Ikebukuro",
   },
 } satisfies Record<LanguageCode, Dictionary>;
+
+for (const option of languageOptions) {
+  (dictionaries as Record<LanguageCode, Dictionary>)[option.code].profiles = completeProfileCopies[option.code];
+}
 
 export const getLanguageOption = (code: LanguageCode): LanguageOption =>
   languageOptions.find((option) => option.code === code) || languageOptions[0]!;
