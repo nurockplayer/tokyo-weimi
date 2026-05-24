@@ -4,14 +4,14 @@ test("renders localized homepage and profile gallery", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /20|歲|세|以上/ }).click().catch(() => {});
 
-  await expect(page.locator(".profile-card")).toHaveCount(9);
+  await expect(page.locator(".profile-card")).toHaveCount(15);
   await expect(page.locator("[data-language-select]")).toHaveCount(0);
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.locator(".hero h1")).toHaveText("Tokyo Weimi Angels");
   await expect(page.locator("#today h2")).toHaveText("Today's Schedule");
 
   await page.locator('[data-filter="japanese"]').click();
-  await expect(page.locator(".profile-card")).toHaveCount(5);
+  await expect(page.locator(".profile-card")).toHaveCount(13);
 
   await page.locator("[data-profile]").first().click();
   await expect(page.locator(".profile-dialog")).toBeVisible();

@@ -13,6 +13,7 @@ These notes are for maintainers only and should not appear in customer-facing we
 - The live frontend renders local image paths such as `/img/:id.jpg`; source image URLs are stored in `src/content/image-map.json` for reference and the Cloudflare Pages Function fallback.
 - `src/content/local-image-map.json` points each image ID at a tracked local copy under `public/assets/old-site/`. Postbuild copies those files into `dist/img/` so production does not depend on the old site being reachable.
 - Primary content is maintained in `src/content/site-data.json`.
+- Latest attendance refresh: `2026-05-24` JST, using the public source site's visible `今日出勤` entries. The refresh keeps 15 real profiles and excludes placeholders, ads, and the unconfirmed `Mr. 源` QR entry.
 
 ## Frontend Copy Rule
 
