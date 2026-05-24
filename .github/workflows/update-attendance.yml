@@ -2,8 +2,9 @@ name: Update Attendance
 
 on:
   schedule:
-    # 00:10 JST daily. GitHub schedules are UTC.
-    - cron: "10 15 * * *"
+    # 07:30 and 14:30 JST daily. GitHub schedules are UTC.
+    - cron: "30 22 * * *"
+    - cron: "30 5 * * *"
   workflow_dispatch:
 
 permissions:
