@@ -1,0 +1,59 @@
+name: Update Attendance
+
+on:
+  schedule:
+    # 00:10 JST daily. GitHub schedules are UTC.
+    - cron: "10 15 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-attendance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run attendance:update
+      - run: pnpm run typecheck
+      - run: pnpm test
+      - run: pnpm run build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm run test:e2e
+      - name: Create pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- src/content public/assets/old-site docs package.json; then
+            echo "No attendance changes detected."
+            exit 0
+          fi
+
+          branch="automation/update-attendance-$(TZ=Asia/Tokyo date +%Y-%m-%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add src/content/site-data.json src/content/image-map.json src/content/image-map.ts src/content/local-image-map.json
+          git add -f public/assets/old-site/today-*
+          git commit -m "Update attendance for $(TZ=Asia/Tokyo date +%Y-%m-%d)"
+          git push --force-with-lease origin "$branch"
+
+          if gh pr view "$branch" --json number >/dev/null 2>&1; then
+            echo "Pull request already exists for $branch."
+            exit 0
+          fi
+
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "Update attendance for $(TZ=Asia/Tokyo date +%Y-%m-%d)" \
+            --body "Automated daily attendance refresh from https://tokyo-weimi.com/."

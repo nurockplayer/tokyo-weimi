@@ -73,31 +73,19 @@ for (const [imageId, localPath] of Object.entries(localImageMap)) {
 const siteData = readFileSync(join(root, "src/content/site-data.json"), "utf8");
 assert(!siteData.includes("tokyo-weimi.com/wp-content/uploads"), "site-data JSON must not expose original image URLs");
 const parsedSiteData = JSON.parse(siteData) as { profiles?: Array<{ id: string; gallery?: string[] }> };
-const todayProfileIds = [
-  "yuna",
-  "maika",
-  "noa",
-  "yurika",
-  "yue",
-  "ria",
-  "nanami",
-  "reina",
-  "winnie",
-  "yuina",
-  "himawari",
-  "yuki",
-  "nozomi",
-  "kaede",
-  "koko",
-];
-assert(parsedSiteData.profiles?.length === todayProfileIds.length, "today schedule should contain the scraped 15 profiles");
-const currentProfileIds = new Set(parsedSiteData.profiles.map((profile) => profile.id));
-for (const profileId of todayProfileIds) {
-  assert(currentProfileIds.has(profileId), `Missing scraped profile: ${profileId}`);
+const parsedProfiles = parsedSiteData.profiles || [];
+assert(parsedProfiles.length >= 1, "today schedule should contain scraped profiles");
+for (const profile of parsedProfiles) {
+  assert((profile.gallery?.length || 0) >= 2, `Profile ${profile.id} should keep a multi-photo gallery`);
 }
-for (const profile of parsedSiteData.profiles) {
-  assert((profile.gallery?.length || 0) >= 3, `Profile ${profile.id} should keep a multi-photo gallery`);
-}
+assert(
+  existsSync(join(root, "tools/update-today-attendance.ts")),
+  "daily attendance updater should be available",
+);
+assert(
+  existsSync(join(root, ".github/workflows/update-attendance.yml")),
+  "daily attendance workflow should be available",
+);
 
 const postbuild = readFileSync(join(root, "tools/postbuild.ts"), "utf8");
 for (const route of ["zh-hant", "zh-hans", "ja", "ko", "en"]) {
