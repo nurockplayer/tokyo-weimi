@@ -9,13 +9,14 @@ These notes are for maintainers only and should not appear in customer-facing we
 - Public source site: `https://tokyo-weimi.com/`
 - Full crawl script: `tools/scrape-old-site.ts`
 - Daily attendance updater: `tools/update-today-attendance.ts`
-- Scheduled refresh workflow: `.github/workflows/update-attendance.yml`, running daily at 07:30 and 14:30 JST and opening a pull request when content changes.
+- Manual GitHub refresh workflow: `.github/workflows/update-attendance.yml`. This remains available for manual checks, but it is not scheduled because the source site returns HTTP 403 to GitHub-hosted runners, including Playwright Chromium.
+- Scheduled refreshes run from local Codex automations at 07:30 and 14:30 JST. See `docs/operations.md`.
 - Raw crawl output is local-only and ignored by git: `scraped/old-site/`
 - Downloaded image copies are local-only and ignored by git: `public/assets/old-site/`
 - The live frontend renders local image paths such as `/img/:id.jpg`; source image URLs are stored in `src/content/image-map.json` for reference and the Cloudflare Pages Function fallback.
 - `src/content/local-image-map.json` points each image ID at a tracked local copy under `public/assets/old-site/`. Postbuild copies those files into `dist/img/` so production does not depend on the old site being reachable.
 - Primary content is maintained in `src/content/site-data.json`.
-- Latest attendance refresh: `2026-05-24` JST, using the public source site's visible `今日出勤` entries. The refresh keeps 15 real profiles and excludes placeholders, ads, and the unconfirmed `Mr. 源` QR entry.
+- Latest attendance refresh: `2026-05-25` JST, using the public source site's visible `今日出勤` entries. The current refresh keeps 12 today profiles and preserves 9 curated profiles. It excludes placeholders, ads, and the unconfirmed `Mr. 源` QR entry.
 - Profiles with `isToday: false` are curated non-today profiles. The daily updater must preserve them instead of deleting them when they are absent from the source site's current attendance list.
 
 ## Frontend Copy Rule
