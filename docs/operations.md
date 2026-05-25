@@ -36,9 +36,10 @@ These notes are for maintainers. Do not copy this wording into visible website c
 - Primary profile data: `src/content/site-data.json`.
 - Generated profile translations: `src/content/profile-translations.json`.
 - Source image URL map: `src/content/image-map.json`.
-- Local image path map: `src/content/local-image-map.json`.
+- Source video URLs: profile-level `videos` arrays in `src/content/site-data.json`.
+- Local image path map: `src/content/local-image-map.json`, kept as a historical fallback reference.
 - Generated TypeScript image map: `src/content/image-map.ts`.
-- Tracked mirrored images live under `public/assets/old-site/`. New daily assets use the `today-*` filename prefix.
+- Some tracked mirrored images remain under `public/assets/old-site/`, but the frontend now renders original source image and video URLs directly.
 
 ## Verification
 
@@ -52,11 +53,11 @@ pnpm run build
 pnpm run test:e2e
 ```
 
-`pnpm run attendance:update` may change content files and add mirrored images. Review those diffs before committing.
+`pnpm run attendance:update` may change content files, image URL maps, and profile video URLs. Review those diffs before committing.
 
 ## Known Constraints
 
 - GitHub-hosted scheduled scraping is disabled because the source site blocks GitHub runner traffic.
 - Local Mac networking currently succeeds for the source site.
-- Images are rendered through local `/img/:id.jpg` paths after build. The source URLs remain in `src/content/image-map.json` for maintainer reference and function fallback behavior.
+- Images are rendered as original source URLs resolved from `src/content/image-map.json`; profile videos are also rendered from original source URLs.
 - The frontend prevents casual right-click, drag, and direct UI download paths, but public web images cannot be made impossible to retrieve by a determined user.

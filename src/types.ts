@@ -16,7 +16,6 @@ export type Contact = {
   secondaryLine: string;
   lineQr: string;
   secondaryLineQr: string;
-  wechat: string;
   area: string;
   hours: string;
 };
@@ -36,6 +35,7 @@ export type Profile = {
   tags: string[];
   price: string;
   summary: string;
+  videos?: string[];
   isToday?: boolean;
 };
 
@@ -115,7 +115,7 @@ export type Dictionary = {
   actions: Record<"viewToday" | "call" | "viewInfo" | "openLine" | "confirmAge" | "leave", string>;
   labels: Record<LabelKey, string>;
   filters: Record<FilterKey, string>;
-  contact: Record<"area" | "wechat" | "hours" | "lineOne" | "lineTwo", string>;
+  contact: Record<"area" | "hours" | "lineOne" | "lineTwo", string>;
   ageGate: Record<"kicker" | "title" | "copy", string>;
   footer: Record<"title" | "copy" | "privacy" | "disclaimer", string>;
   profiles: Record<string, ProfileCopy>;

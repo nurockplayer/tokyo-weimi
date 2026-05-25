@@ -630,7 +630,6 @@ const common = {
     },
     contact: {
       area: "東京・池袋周邊",
-      wechat: "未找到公開 WeChat QR，請電話確認",
       hours: "每日更新，建議提前預約",
       lineOne: "LINE 1號",
       lineTwo: "LINE 2號",
@@ -764,7 +763,6 @@ export const dictionaries = {
     },
     contact: {
       area: "东京・池袋周边",
-      wechat: "未找到公开 WeChat QR，请电话确认",
       hours: "每日更新，建议提前预约",
       lineOne: "LINE 1号",
       lineTwo: "LINE 2号",
@@ -955,7 +953,6 @@ export const dictionaries = {
     },
     contact: {
       area: "東京・池袋周辺",
-      wechat: "公開 WeChat QR は未確認です。電話でご確認ください",
       hours: "毎日更新、事前予約がおすすめです",
       lineOne: "LINE 1号",
       lineTwo: "LINE 2号",
@@ -1146,7 +1143,6 @@ export const dictionaries = {
     },
     contact: {
       area: "도쿄・이케부쿠로 주변",
-      wechat: "공개 WeChat QR 을 찾지 못했습니다. 전화로 확인해주세요",
       hours: "매일 업데이트, 사전 예약 추천",
       lineOne: "LINE 1번",
       lineTwo: "LINE 2번",
@@ -1337,7 +1333,6 @@ export const dictionaries = {
     },
     contact: {
       area: "Tokyo / Ikebukuro area",
-      wechat: "No public WeChat QR found. Please confirm by phone",
       hours: "Updated daily. Advance booking recommended",
       lineOne: "LINE 1",
       lineTwo: "LINE 2",

@@ -14,7 +14,7 @@ Phone, LINE, and other external contact links open services outside this site. T
 
 ## Images
 
-Images are displayed through a site image proxy where possible. The proxy is intended to reduce direct exposure of original image URLs and improve caching.
+Profile images and videos may be displayed from their original public source URLs.
 
 ## Contact
 
