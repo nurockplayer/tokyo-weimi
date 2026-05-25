@@ -183,10 +183,40 @@ const fetchFromSource = async (url: string, init: RequestInit = {}, retries = 2)
   throw new Error(`${url} failed`);
 };
 
+const fetchTextWithBrowser = async (url: string): Promise<string> => {
+  const { chromium } = await import("@playwright/test");
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage({
+      extraHTTPHeaders: {
+        "accept-language": requestHeaders["accept-language"],
+        "cache-control": "no-cache",
+        "pragma": "no-cache",
+      },
+      userAgent: requestHeaders["user-agent"],
+    });
+    const response = await page.goto(url, {
+      waitUntil: "domcontentloaded",
+      timeout: requestTimeoutMs,
+    });
+    const status = response?.status() || 0;
+    if (!response || status >= 400) throw new Error(`${url} browser fallback failed with HTTP ${status}`);
+    return page.content();
+  } finally {
+    await browser.close();
+  }
+};
+
 const fetchText = async (url: string): Promise<string> => {
-  const response = await fetchFromSource(url);
-  if (!response.ok) throw new Error(`${url} failed with HTTP ${response.status}`);
-  return response.text();
+  try {
+    const response = await fetchFromSource(url);
+    if (!response.ok) throw new Error(`${url} failed with HTTP ${response.status}`);
+    return response.text();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("HTTP 403") || message.includes("HTTP 429")) return fetchTextWithBrowser(url);
+    throw error;
+  }
 };
 
 const absolutize = (url: string | undefined): string => {
