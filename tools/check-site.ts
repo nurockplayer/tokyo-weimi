@@ -52,28 +52,23 @@ assert(
 
 const mainSource = readFileSync(join(root, "src/main.ts"), "utf8");
 assert(mainSource.includes("trackEvent("), "CTA tracking must be wired through trackEvent()");
-assert(mainSource.includes("imageSrc("), "Images must be rendered through the image proxy helper");
+assert(mainSource.includes("imageSrc("), "Images must be rendered through the media helper");
+assert(mainSource.includes("videoSrc("), "Profile videos must be rendered through the media helper");
 assert(
-  readFileSync(join(root, "src/media.ts"), "utf8").includes(".jpg"),
-  "image helper must use static mirrored image paths",
+  readFileSync(join(root, "src/media.ts"), "utf8").includes("sourceImages[imageId]"),
+  "image helper must resolve image ids to source image URLs",
 );
 
 const imageMap = JSON.parse(readFileSync(join(root, "src/content/image-map.json"), "utf8")) as Record<string, string>;
 assert(Object.keys(imageMap).length >= 30, "image map should contain the migrated gallery images");
 const localImageMap = JSON.parse(readFileSync(join(root, "src/content/local-image-map.json"), "utf8")) as Record<string, string>;
 assert(
-  Object.keys(localImageMap).length === Object.keys(imageMap).length,
-  "local image map should cover every rendered image",
+  Object.keys(localImageMap).length >= 30,
+  "local image map should preserve migrated image references",
 );
-for (const [imageId, localPath] of Object.entries(localImageMap)) {
-  assert(
-    existsSync(join(root, "public", localPath.replace(/^\//, ""))),
-    `Missing local image copy for ${imageId}: ${localPath}`,
-  );
-}
 
 const siteData = readFileSync(join(root, "src/content/site-data.json"), "utf8");
-assert(!siteData.includes("tokyo-weimi.com/wp-content/uploads"), "site-data JSON must not expose original image URLs");
+assert(!siteData.includes("WeChat"), "customer-facing data should not mention WeChat");
 const simplifiedProfileTerms = [
   "东京",
   "中国",
@@ -83,6 +78,11 @@ const simplifiedProfileTerms = [
   "皮肤",
   "干净",
   "年轻",
+  "类型",
+  "颜值",
+  "开发",
+  "喜欢",
+  "快来",
   "长相",
   "紧致",
   "精致",
@@ -104,7 +104,7 @@ for (const term of simplifiedProfileTerms) {
   assert(!siteData.includes(term), `site-data base copy should be Traditional Chinese, found: ${term}`);
 }
 const parsedSiteData = JSON.parse(siteData) as {
-  profiles?: Array<{ id: string; gallery?: string[]; isToday?: boolean }>;
+  profiles?: Array<{ id: string; gallery?: string[]; videos?: string[]; isToday?: boolean }>;
 };
 const parsedProfiles = parsedSiteData.profiles || [];
 assert(parsedProfiles.length >= 1, "today schedule should contain scraped profiles");
@@ -114,6 +114,10 @@ assert(
 );
 for (const profile of parsedProfiles) {
   assert((profile.gallery?.length || 0) >= 2, `Profile ${profile.id} should keep a multi-photo gallery`);
+  for (const video of profile.videos || []) {
+    assert(/^https:\/\/tokyo-weimi\.com\/wp-content\/uploads\//.test(video), `Profile ${profile.id} video should use a source URL`);
+    assert(/\.(mp4|mov|webm)$/i.test(new URL(video).pathname), `Profile ${profile.id} video should be a supported video file`);
+  }
 }
 const { dictionaries, languageOptions } = await import("../src/i18n.ts");
 const localizedDictionaries = dictionaries as Record<
@@ -156,8 +160,8 @@ const postbuild = readFileSync(join(root, "tools/postbuild.ts"), "utf8");
 for (const route of ["zh-hant", "zh-hans", "ja", "ko", "en"]) {
   assert(postbuild.includes(route), `postbuild must generate /${route}/`);
 }
-assert(postbuild.includes("mirrorImages"), "postbuild must mirror images into dist/img");
-assert(postbuild.includes("copyFileSync"), "postbuild must prefer local image copies");
+assert(!postbuild.includes("mirrorImages"), "postbuild should not mirror images when rendering source media URLs");
+assert(!postbuild.includes("fetch("), "postbuild should not fetch source media during Cloudflare builds");
 
 const trackedJsImplementationFiles = [
   "src/main.js",

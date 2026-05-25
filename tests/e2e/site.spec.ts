@@ -7,6 +7,9 @@ import type { SiteData } from "../../src/types.ts";
 const siteData = JSON.parse(
   readFileSync(new URL("../../src/content/site-data.json", import.meta.url), "utf8"),
 ) as SiteData;
+const imageMap = JSON.parse(
+  readFileSync(new URL("../../src/content/image-map.json", import.meta.url), "utf8"),
+) as Record<string, string>;
 const todayProfileCount = siteData.profiles.filter((profile) => profile.isToday !== false).length;
 const featuredProfileCount = siteData.profiles.filter((profile) => profile.isToday === false).length;
 const japaneseTodayProfileCount = siteData.profiles.filter(
@@ -36,7 +39,22 @@ test("renders localized homepage and profile gallery", async ({ page }) => {
   await page.locator("[data-profile]").first().click();
   await expect(page.locator(".profile-dialog")).toBeVisible();
   await expect(page.locator(".dialog-main-image")).toHaveAttribute("data-protected-media", "");
+  expect(imageMap[siteData.profiles[0]!.image]).toBeTruthy();
+  await expect(page.locator(".dialog-main-image")).toHaveAttribute("src", imageMap[siteData.profiles[0]!.image]!);
   await expect(page.locator("[data-gallery-open-original]")).toHaveCount(0);
+});
+
+test("renders profile videos from source URLs when available", async ({ page }) => {
+  const videoProfile = siteData.profiles.find((profile) => profile.videos?.length);
+  test.skip(!videoProfile, "No profile video is currently available in site data");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /20|歲|세|以上/ }).click().catch(() => {});
+  await page.locator(`[data-profile="${videoProfile!.id}"]`).click();
+
+  await expect(page.locator(".profile-dialog")).toBeVisible();
+  await expect(page.locator(".dialog-video")).toHaveCount(videoProfile!.videos!.length);
+  await expect(page.locator(".dialog-video").first()).toHaveAttribute("src", videoProfile!.videos![0]!);
 });
 
 test("localized static routes are generated", async ({ page }) => {

@@ -1,6 +1,6 @@
 import "./styles.css";
 import { filterKeys, getCopy, getLanguageOption, languageOptions } from "./i18n.ts";
-import { imageSrc } from "./media.ts";
+import { imageSrc, videoSrc } from "./media.ts";
 import { contact, heroImages, hotels, profiles } from "./site-data.ts";
 import type { Dictionary, FilterKey, LanguageCode, Profile, ProfileCopy } from "./types.ts";
 
@@ -328,7 +328,6 @@ const renderContact = () => {
       <dl>
         <div><dt>${copy.labels.serviceArea}</dt><dd>${copy.contact.area}</dd></div>
         <div><dt>LINE</dt><dd><a data-track="contact_line_1" href="${contact.line}" target="_blank" rel="noreferrer">${copy.contact.lineOne}</a> / <a data-track="contact_line_2" href="${contact.secondaryLine}" target="_blank" rel="noreferrer">${copy.contact.lineTwo}</a></dd></div>
-        <div><dt>WeChat</dt><dd>${copy.contact.wechat}</dd></div>
         <div><dt>${copy.labels.updateFrequency}</dt><dd>${copy.contact.hours}</dd></div>
       </dl>
     </div>
@@ -444,6 +443,7 @@ const openProfile = (id: string | undefined) => {
   const copy = currentCopy();
   const profileText = getProfileCopy(profile, copy);
   const gallery = profile.gallery?.length ? profile.gallery : [profile.image];
+  const videos = profile.videos || [];
   const dialog = document.querySelector<HTMLDialogElement>(".profile-dialog");
   const content = dialog?.querySelector<HTMLElement>(".dialog-content");
   if (!dialog || !content) return;
@@ -462,6 +462,19 @@ const openProfile = (id: string | undefined) => {
           )
           .join("")}
       </div>
+      ${
+        videos.length
+          ? `<div class="dialog-videos">
+              ${videos
+                .map(
+                  (video, index) => `
+                    <video class="dialog-video" src="${videoSrc(video)}" controls preload="metadata" playsinline controlslist="nodownload" aria-label="${profile.name} video ${index + 1}"></video>
+                  `,
+                )
+                .join("")}
+            </div>`
+          : ""
+      }
     </div>
     <div>
       <span class="section-kicker">${formatDate(profile.date)} ${copy.labels.updated}</span>

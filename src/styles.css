@@ -49,6 +49,11 @@ img {
   max-width: 100%;
 }
 
+video {
+  display: block;
+  max-width: 100%;
+}
+
 [data-protected-media],
 .profile-image,
 .hero-media,
@@ -842,6 +847,18 @@ dd {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  background: #141210;
+}
+
+.dialog-videos {
+  display: grid;
+  gap: 12px;
+}
+
+.dialog-video {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
   background: #141210;
 }
 

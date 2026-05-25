@@ -1,13 +1,11 @@
-import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { LanguageCode, Profile, ProfileCopy, SiteData } from "../src/types.ts";
 
 const rootDir = new URL("..", import.meta.url).pathname;
 const contentDir = path.join(rootDir, "src", "content");
-const assetDir = path.join(rootDir, "public", "assets", "old-site");
 const baseUrl = "https://tokyo-weimi.com";
 const recentWindowDays = 120;
 const requestTimeoutMs = 20_000;
@@ -39,6 +37,7 @@ type SourceProfile = {
   cup: string;
   brief: string;
   images: string[];
+  videos: string[];
 };
 
 type TranslatedProfileText = Pick<ProfileCopy, "title" | "tags" | "summary">;
@@ -104,6 +103,11 @@ const textReplacements: Array<[RegExp, string]> = [
   [/皮肤/g, "皮膚"],
   [/干净/g, "乾淨"],
   [/年轻/g, "年輕"],
+  [/类型/g, "類型"],
+  [/颜值/g, "顏值"],
+  [/开发/g, "開發"],
+  [/喜欢/g, "喜歡"],
+  [/快来/g, "快來"],
   [/长相/g, "長相"],
   [/紧致/g, "緊緻"],
   [/精致/g, "精緻"],
@@ -314,6 +318,30 @@ const imageUrlsFromHtml = (html = ""): string[] => {
   return [...urls];
 };
 
+const videoUrlsFromHtml = (html = ""): string[] => {
+  const urls = new Set<string>();
+  const add = (value: string | undefined) => {
+    const url = absolutize(value);
+    if (!url.includes("/wp-content/uploads/")) return;
+    const parsed = new URL(url);
+    parsed.search = "";
+    parsed.hash = "";
+    if (!/\.(mp4|mov|webm)$/i.test(parsed.pathname)) return;
+    urls.add(parsed.href);
+  };
+
+  for (const match of html.matchAll(/<(?:video|source)\b[^>]*(?:src|data-src)=["']([^"']+)["'][^>]*>/gi)) {
+    add(match[1]);
+  }
+  for (const match of html.matchAll(/<a\b[^>]*href=["']([^"']+\.(?:mp4|mov|webm)(?:\?[^"']*)?)["'][^>]*>/gi)) {
+    add(match[1]);
+  }
+  for (const match of html.matchAll(/https?:[^"'\s<>]+\.(?:mp4|mov|webm)(?:\?[^"'\s<>]*)?/gi)) {
+    add(match[0]);
+  }
+  return [...urls];
+};
+
 const fieldFromArticle = (article: string, className: string, label: string): string => {
   if (!label) {
     const match = article.match(new RegExp(`<span[^>]*class=["'][^"']*${className}[^"']*["'][^>]*>([\\s\\S]*?)<\\/span>`, "i"));
@@ -383,16 +411,19 @@ const extractHomeProfiles = async (): Promise<SourceProfile[]> => {
       cup: fieldFromArticle(article, "model_cup", "罩杯"),
       brief: fieldFromArticle(article, "model_brief", ""),
       images: imageUrlsFromHtml(article),
+      videos: videoUrlsFromHtml(article),
     });
   }
   return profiles.filter(isValidAttendance);
 };
 
-const extractDetailImages = async (profile: SourceProfile): Promise<string[]> => {
+const extractDetailMedia = async (profile: SourceProfile): Promise<{ images: string[]; videos: string[] }> => {
   const html = await fetchText(profile.link);
-  return [...new Set([...profile.images, ...imageUrlsFromHtml(html)])].filter(
+  const images = [...new Set([...profile.images, ...imageUrlsFromHtml(html)])].filter(
     (url) => !/\.(mp4|mov|webm)$/i.test(new URL(url).pathname),
   );
+  const videos = [...new Set([...profile.videos, ...videoUrlsFromHtml(html)])];
+  return { images, videos };
 };
 
 const extractName = (profile: SourceProfile): string => {
@@ -581,43 +612,17 @@ const makeImageId = (url: string, imageMap: Record<string, string>): string => {
   return `${candidate}-${suffix}`;
 };
 
-const downloadImage = async (url: string, imageId: string): Promise<string> => {
-  const parsed = new URL(url);
-  const sourceName = path.basename(parsed.pathname).replace(/[^a-z0-9._-]+/gi, "-").replace(/\.jpeg$/i, ".jpg");
-  const hash = createHash("sha1").update(url).digest("hex").slice(0, 8);
-  const filename = `today-${imageId}-${hash}-${sourceName}`;
-  const localPath = path.join(assetDir, filename);
-  if (!existsSync(localPath)) {
-    const response = await fetchFromSource(url, {
-      headers: {
-        accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-        "sec-fetch-dest": "image",
-        "sec-fetch-mode": "no-cors",
-      },
-    });
-    if (!response.ok) throw new Error(`${url} failed with HTTP ${response.status}`);
-    await writeFile(localPath, Buffer.from(await response.arrayBuffer()));
-  }
-  return `/assets/old-site/${filename}`;
-};
-
 const ensureImage = async (
   url: string,
   imageMap: Record<string, string>,
-  localImageMap: Record<string, string>,
   sourceToId: Map<string, string>,
 ): Promise<string> => {
   const existingId = sourceToId.get(url);
   const imageId = existingId || makeImageId(url, imageMap);
   imageMap[imageId] = url;
   sourceToId.set(url, imageId);
-  if (!localImageMap[imageId] || !existsSync(path.join(rootDir, "public", localImageMap[imageId].replace(/^\//, "")))) {
-    localImageMap[imageId] = await downloadImage(url, imageId);
-  }
   return imageId;
 };
-
-await mkdir(assetDir, { recursive: true });
 
 const siteData = readJson<SiteData>("src/content/site-data.json");
 const baselineSiteData = siteData;
@@ -633,11 +638,11 @@ if (!sourceProfiles.length) throw new Error("No valid attendance profiles found 
 
 const profiles: Profile[] = [];
 for (const sourceProfile of sourceProfiles) {
-  const imageUrls = await extractDetailImages(sourceProfile);
+  const { images: imageUrls, videos } = await extractDetailMedia(sourceProfile);
   if (!imageUrls.length) continue;
   const gallery = [];
   for (const url of imageUrls) {
-    gallery.push(await ensureImage(url, imageMap, localImageMap, sourceToId));
+    gallery.push(await ensureImage(url, imageMap, sourceToId));
   }
   const name = extractName(sourceProfile);
   const tags = deriveTags(sourceProfile);
@@ -658,6 +663,7 @@ for (const sourceProfile of sourceProfiles) {
     summary: previousProfile?.summary ? toTraditional(previousProfile.summary) : deriveSummary(sourceProfile),
     image: gallery[0] || "",
     gallery,
+    videos: videos.length ? videos : previousProfile?.videos,
     isToday: true,
   });
 }
@@ -676,7 +682,6 @@ await translateProfilesWithGemini(siteData.profiles, profileTranslations);
 
 await writeJson("src/content/site-data.json", siteData);
 await writeJson("src/content/image-map.json", imageMap);
-await writeJson("src/content/local-image-map.json", localImageMap);
 await writeJson("src/content/profile-translations.json", profileTranslations);
 await writeFile(
   path.join(contentDir, "image-map.ts"),
