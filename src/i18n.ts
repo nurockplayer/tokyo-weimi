@@ -1,4 +1,5 @@
 import { profiles as siteProfiles } from "./site-data.ts";
+import generatedProfileTranslations from "./content/profile-translations.json" with { type: "json" };
 import type { Dictionary, FilterKey, LanguageCode, LanguageOption, Profile, ProfileCopy } from "./types.ts";
 
 export const languageOptions = [
@@ -538,10 +539,10 @@ const buildProfileCopies = (
 
 const completeProfileCopies = {
   "zh-Hant": buildProfileCopies("zh-Hant"),
-  "zh-Hans": buildProfileCopies("zh-Hans"),
-  ja: buildProfileCopies("ja", jaProfileText),
-  ko: buildProfileCopies("ko", koProfileText),
-  en: buildProfileCopies("en", enProfileText),
+  "zh-Hans": buildProfileCopies("zh-Hans", generatedProfileTranslations["zh-Hans"]),
+  ja: buildProfileCopies("ja", { ...generatedProfileTranslations.ja, ...jaProfileText }),
+  ko: buildProfileCopies("ko", { ...generatedProfileTranslations.ko, ...koProfileText }),
+  en: buildProfileCopies("en", { ...generatedProfileTranslations.en, ...enProfileText }),
 } satisfies Record<LanguageCode, Record<string, ProfileCopy>>;
 
 const common = {

@@ -1,10 +1,6 @@
 name: Update Attendance
 
 on:
-  schedule:
-    # 07:30 and 14:30 JST daily. GitHub schedules are UTC.
-    - cron: "30 22 * * *"
-    - cron: "30 5 * * *"
   workflow_dispatch:
 
 permissions:
@@ -26,6 +22,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm run attendance:update
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       - run: pnpm run typecheck
       - run: pnpm test
       - run: pnpm run build
@@ -43,7 +41,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
-          git add src/content/site-data.json src/content/image-map.json src/content/image-map.ts src/content/local-image-map.json
+          git add src/content/site-data.json src/content/image-map.json src/content/image-map.ts src/content/local-image-map.json src/content/profile-translations.json
           git add -f public/assets/old-site/today-*
           git commit -m "Update attendance for $(TZ=Asia/Tokyo date +%Y-%m-%d)"
           git push --force-with-lease origin "$branch"
