@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { Profile, SiteData } from "../src/types.ts";
+import type { LanguageCode, Profile, ProfileCopy, SiteData } from "../src/types.ts";
 
 const rootDir = new URL("..", import.meta.url).pathname;
 const contentDir = path.join(rootDir, "src", "content");
@@ -40,6 +40,33 @@ type SourceProfile = {
   brief: string;
   images: string[];
 };
+
+type TranslatedProfileText = Pick<ProfileCopy, "title" | "tags" | "summary">;
+type TranslatableLanguage = Exclude<LanguageCode, "zh-Hant">;
+type ProfileTranslations = Record<LanguageCode, Record<string, TranslatedProfileText>>;
+type GeminiTranslationItem = {
+  id: string;
+  translations?: Partial<Record<TranslatableLanguage, Partial<TranslatedProfileText>>>;
+};
+type GeminiTranslationResponse = {
+  profiles?: GeminiTranslationItem[];
+};
+type GeminiGenerateContentResponse = {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{ text?: string }>;
+    };
+  }>;
+};
+
+const translatableLanguages = ["zh-Hans", "ja", "ko", "en"] as const satisfies readonly TranslatableLanguage[];
+const emptyProfileTranslations = (): ProfileTranslations => ({
+  "zh-Hant": {},
+  "zh-Hans": {},
+  ja: {},
+  ko: {},
+  en: {},
+});
 
 const knownNameIds: Record<string, string> = {
   柚菜: "yuna",
@@ -151,6 +178,16 @@ const readJson = <T>(file: string): T => JSON.parse(readFileSync(path.join(rootD
 
 const writeJson = async (file: string, value: unknown): Promise<void> => {
   await writeFile(path.join(rootDir, file), `${JSON.stringify(value, null, 2)}\n`);
+};
+
+const readProfileTranslations = (): ProfileTranslations => {
+  const file = path.join(rootDir, "src/content/profile-translations.json");
+  if (!existsSync(file)) return emptyProfileTranslations();
+  const parsed = JSON.parse(readFileSync(file, "utf8")) as Partial<ProfileTranslations>;
+  return {
+    ...emptyProfileTranslations(),
+    ...parsed,
+  };
 };
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
@@ -418,6 +455,97 @@ const deriveSummary = (profile: SourceProfile): string =>
     .replace(/\s+/g, " ")
     .slice(0, 90);
 
+const validTranslatedProfileText = (value: Partial<TranslatedProfileText> | undefined): TranslatedProfileText | null => {
+  if (!value || typeof value.title !== "string" || typeof value.summary !== "string" || !Array.isArray(value.tags)) {
+    return null;
+  }
+  const tags = value.tags.filter((tag): tag is string => typeof tag === "string" && tag.trim().length > 0).slice(0, 3);
+  if (!value.title.trim() || !value.summary.trim() || !tags.length) return null;
+  return {
+    title: value.title.trim(),
+    tags,
+    summary: value.summary.trim(),
+  };
+};
+
+const buildGeminiTranslationPrompt = (profiles: Profile[]): string => `Translate these reservation profile summaries.
+
+Rules:
+- Return strict JSON only with this shape: {"profiles":[{"id":"...","translations":{"zh-Hans":{"title":"...","tags":["..."],"summary":"..."},"ja":{"title":"...","tags":["..."],"summary":"..."},"ko":{"title":"...","tags":["..."],"summary":"..."},"en":{"title":"...","tags":["..."],"summary":"..."}}}]}.
+- Keep each id unchanged.
+- Keep profile names unchanged when they appear.
+- Keep the tone polished and concise. Do not add claims that are not in the source.
+- Translate only title, tags, and summary. Do not include price, age, height, weight, or cup.
+- Use natural Simplified Chinese, Japanese, Korean, and English.
+
+Profiles:
+${JSON.stringify(
+  profiles.map((profile) => ({
+    id: profile.id,
+    name: profile.name,
+    title: profile.title,
+    origin: profile.origin,
+    tags: profile.tags,
+    summary: profile.summary,
+  })),
+  null,
+  2,
+)}`;
+
+const translateProfilesWithGemini = async (
+  profiles: Profile[],
+  translations: ProfileTranslations,
+): Promise<ProfileTranslations> => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  const missingProfiles = profiles.filter((profile) =>
+    translatableLanguages.some((language) => !translations[language][profile.id]),
+  );
+  if (!apiKey || !missingProfiles.length) return translations;
+
+  try {
+    const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: buildGeminiTranslationPrompt(missingProfiles) }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.2,
+          responseMimeType: "application/json",
+        },
+      }),
+    });
+    if (!response.ok) throw new Error(`Gemini failed with HTTP ${response.status}`);
+
+    const payload = (await response.json()) as GeminiGenerateContentResponse;
+    const text = payload.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("\n").trim();
+    if (!text) throw new Error("Gemini returned an empty response");
+
+    const translated = JSON.parse(text) as GeminiTranslationResponse;
+    for (const item of translated.profiles || []) {
+      if (!item.id || !item.translations) continue;
+      for (const language of translatableLanguages) {
+        if (translations[language][item.id]) continue;
+        const text = validTranslatedProfileText(item.translations[language]);
+        if (text) translations[language][item.id] = text;
+      }
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`Gemini translation skipped: ${message}`);
+  }
+
+  return translations;
+};
+
 const makeImageId = (url: string, imageMap: Record<string, string>): string => {
   const parsed = new URL(url);
   const parts = parsed.pathname.split("/").filter(Boolean);
@@ -478,6 +606,7 @@ const siteData = readJson<SiteData>("src/content/site-data.json");
 const baselineSiteData = siteData;
 const imageMap = readJson<Record<string, string>>("src/content/image-map.json");
 const localImageMap = readJson<Record<string, string>>("src/content/local-image-map.json");
+const profileTranslations = readProfileTranslations();
 const sourceToId = new Map(Object.entries(imageMap).map(([id, source]) => [source, id]));
 const existingByName = new Map(baselineSiteData.profiles.map((profile) => [profile.name, profile.id]));
 const existingById = new Map(baselineSiteData.profiles.map((profile) => [profile.id, profile]));
@@ -526,9 +655,12 @@ const preservedProfiles = baselineSiteData.profiles
 siteData.profiles = [...profiles, ...preservedProfiles];
 siteData.heroImages = profiles.slice(0, 4).map((profile) => profile.image);
 
+await translateProfilesWithGemini(siteData.profiles, profileTranslations);
+
 await writeJson("src/content/site-data.json", siteData);
 await writeJson("src/content/image-map.json", imageMap);
 await writeJson("src/content/local-image-map.json", localImageMap);
+await writeJson("src/content/profile-translations.json", profileTranslations);
 await writeFile(
   path.join(contentDir, "image-map.ts"),
   `export const imageMap = ${JSON.stringify(imageMap, null, 2)} satisfies Record<string, string>;\n`,

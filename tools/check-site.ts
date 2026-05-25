@@ -7,6 +7,7 @@ const requiredFiles = [
   "src/content/image-map.json",
   "src/content/image-map.ts",
   "src/content/local-image-map.json",
+  "src/content/profile-translations.json",
   "functions/img/[[path]].ts",
   "tools/postbuild.ts",
   "public/404.html",
@@ -110,6 +111,15 @@ assert(
 assert(
   existsSync(join(root, ".github/workflows/update-attendance.yml")),
   "daily attendance workflow should be available",
+);
+const attendanceWorkflow = readFileSync(join(root, ".github/workflows/update-attendance.yml"), "utf8");
+assert(
+  attendanceWorkflow.includes("secrets.GEMINI_API_KEY"),
+  "daily attendance workflow should pass GEMINI_API_KEY to the updater",
+);
+assert(
+  attendanceWorkflow.includes("src/content/profile-translations.json"),
+  "daily attendance workflow should commit generated profile translations",
 );
 
 const postbuild = readFileSync(join(root, "tools/postbuild.ts"), "utf8");
