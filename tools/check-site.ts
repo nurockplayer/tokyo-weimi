@@ -73,6 +73,35 @@ for (const [imageId, localPath] of Object.entries(localImageMap)) {
 
 const siteData = readFileSync(join(root, "src/content/site-data.json"), "utf8");
 assert(!siteData.includes("tokyo-weimi.com/wp-content/uploads"), "site-data JSON must not expose original image URLs");
+const simplifiedProfileTerms = [
+  "东京",
+  "中国",
+  "推荐",
+  "人气",
+  "极品",
+  "皮肤",
+  "干净",
+  "年轻",
+  "长相",
+  "紧致",
+  "精致",
+  "岁",
+  "分钟",
+  "信息",
+  "档期",
+  "价格",
+  "电话",
+  "回复",
+  "服务",
+  "评价",
+  "预约",
+  "房间",
+  "免费",
+  "女优",
+];
+for (const term of simplifiedProfileTerms) {
+  assert(!siteData.includes(term), `site-data base copy should be Traditional Chinese, found: ${term}`);
+}
 const parsedSiteData = JSON.parse(siteData) as {
   profiles?: Array<{ id: string; gallery?: string[]; isToday?: boolean }>;
 };
