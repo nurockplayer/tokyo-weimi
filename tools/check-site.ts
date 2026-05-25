@@ -15,6 +15,7 @@ const requiredFiles = [
   ".github/workflows/verify.yml",
   "docs/privacy-policy.md",
   "docs/disclaimer.md",
+  "docs/operations.md",
 ];
 
 function assert(condition: unknown, message: string): asserts condition {
