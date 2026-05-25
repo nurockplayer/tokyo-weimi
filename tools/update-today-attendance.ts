@@ -10,6 +10,22 @@ const contentDir = path.join(rootDir, "src", "content");
 const assetDir = path.join(rootDir, "public", "assets", "old-site");
 const baseUrl = "https://tokyo-weimi.com";
 const recentWindowDays = 120;
+const requestTimeoutMs = 20_000;
+const requestHeaders = {
+  "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+  "accept-language": "zh-TW,zh;q=0.9,ja;q=0.8,en-US;q=0.7,en;q=0.6",
+  "cache-control": "no-cache",
+  "pragma": "no-cache",
+  "sec-ch-ua": '"Chromium";v="125", "Google Chrome";v="125", "Not.A/Brand";v="24"',
+  "sec-ch-ua-mobile": "?0",
+  "sec-ch-ua-platform": '"macOS"',
+  "sec-fetch-dest": "document",
+  "sec-fetch-mode": "navigate",
+  "sec-fetch-site": "none",
+  "upgrade-insecure-requests": "1",
+  "user-agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+} satisfies HeadersInit;
 
 type SourceProfile = {
   wpId: string;
@@ -137,8 +153,38 @@ const writeJson = async (file: string, value: unknown): Promise<void> => {
   await writeFile(path.join(rootDir, file), `${JSON.stringify(value, null, 2)}\n`);
 };
 
+const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+const fetchFromSource = async (url: string, init: RequestInit = {}, retries = 2): Promise<Response> => {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
+    try {
+      const response = await fetch(url, {
+        ...init,
+        headers: {
+          ...requestHeaders,
+          ...(init.headers || {}),
+        },
+        redirect: "follow",
+        signal: controller.signal,
+      });
+      if (response.ok || (response.status < 500 && response.status !== 403 && response.status !== 429)) return response;
+      lastError = new Error(`${url} failed with HTTP ${response.status}`);
+    } catch (error) {
+      lastError = error;
+    } finally {
+      clearTimeout(timeout);
+    }
+    if (attempt < retries) await wait(1_000 * (attempt + 1));
+  }
+  if (lastError instanceof Error) throw lastError;
+  throw new Error(`${url} failed`);
+};
+
 const fetchText = async (url: string): Promise<string> => {
-  const response = await fetch(url);
+  const response = await fetchFromSource(url);
   if (!response.ok) throw new Error(`${url} failed with HTTP ${response.status}`);
   return response.text();
 };
@@ -367,7 +413,13 @@ const downloadImage = async (url: string, imageId: string): Promise<string> => {
   const filename = `today-${imageId}-${hash}-${sourceName}`;
   const localPath = path.join(assetDir, filename);
   if (!existsSync(localPath)) {
-    const response = await fetch(url);
+    const response = await fetchFromSource(url, {
+      headers: {
+        accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        "sec-fetch-dest": "image",
+        "sec-fetch-mode": "no-cors",
+      },
+    });
     if (!response.ok) throw new Error(`${url} failed with HTTP ${response.status}`);
     await writeFile(localPath, Buffer.from(await response.arrayBuffer()));
   }

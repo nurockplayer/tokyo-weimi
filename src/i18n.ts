@@ -441,13 +441,87 @@ const enProfileText = {
   },
 } satisfies Record<string, TranslatedProfileText>;
 
+const localizedTagFallbacks: Record<Exclude<LanguageCode, "zh-Hant" | "zh-Hans">, Record<string, string>> = {
+  ja: {
+    日本人: "日本人",
+    中國: "中国",
+    新人: "新人",
+    推薦: "おすすめ",
+    人氣: "人気",
+    高挑: "高身長",
+    長腿: "美脚",
+    甜美: "甘め",
+    溫柔: "やさしい",
+    女友感: "彼女感",
+    提供房間: "部屋あり",
+    限時: "期間限定",
+    高級: "高級",
+  },
+  ko: {
+    日本人: "일본인",
+    中國: "중국",
+    新人: "신인",
+    推薦: "추천",
+    人氣: "인기",
+    高挑: "키 큰",
+    長腿: "긴 다리",
+    甜美: "달콤함",
+    溫柔: "다정함",
+    女友感: "여자친구 느낌",
+    提供房間: "방 제공",
+    限時: "기간 한정",
+    高級: "고급",
+  },
+  en: {
+    日本人: "Japanese",
+    中國: "China",
+    新人: "New",
+    推薦: "Recommended",
+    人氣: "Popular",
+    高挑: "Tall",
+    長腿: "Long legs",
+    甜美: "Sweet",
+    溫柔: "Gentle",
+    女友感: "Girlfriend feel",
+    提供房間: "Room available",
+    限時: "Limited",
+    高級: "Premium",
+  },
+};
+
+const fallbackProfileText = (profile: Profile, language: LanguageCode): TranslatedProfileText | null => {
+  if (language === "zh-Hant" || language === "zh-Hans") return null;
+  const tags = profile.tags.map((tag) => localizedTagFallbacks[language][tag] || tag);
+  const isChina = profile.origin === "中國" || profile.tags.includes("中國");
+  const isNewcomer = profile.tags.includes("新人") || profile.title.includes("新人") || profile.age === "18";
+  if (language === "ja") {
+    return {
+      title: `${isChina ? "中国" : "日本人"}・${isNewcomer ? "新人" : "おすすめ"}プロフィール`,
+      tags,
+      summary: `${profile.name}の出勤情報です。${isNewcomer ? "新人枠として確認できます。" : "最近の予定を確認できます。"}写真と基本情報を掲載していますので、予約可能時間は電話でご確認ください。`,
+    };
+  }
+  if (language === "ko") {
+    return {
+      title: `${isChina ? "중국" : "일본인"}・${isNewcomer ? "신인" : "추천"} 프로필`,
+      tags,
+      summary: `${profile.name}의 출근 정보입니다. ${isNewcomer ? "신인 일정으로 확인할 수 있습니다." : "최근 일정을 확인할 수 있습니다."} 사진과 기본 정보를 정리했으니 예약 가능 시간은 전화로 확인해주세요.`,
+    };
+  }
+  return {
+    title: `${isChina ? "Chinese" : "Japanese"} / ${isNewcomer ? "New" : "Recommended"} profile`,
+    tags,
+    summary: `${profile.name}'s attendance information is available. ${isNewcomer ? "This is a new-profile schedule." : "Recent schedule details are listed."} Photos and basic details are included; please call to confirm available time slots.`,
+  };
+};
+
 const buildProfileCopies = (
   language: LanguageCode,
   translations: Record<string, TranslatedProfileText> = {},
 ): Record<string, ProfileCopy> =>
   Object.fromEntries(
     siteProfiles.map((profile: Profile) => {
-      const translated = translations[profile.id];
+      const translated = translations[profile.id] || fallbackProfileText(profile, language);
       const sourceText = language === "zh-Hans" ? toZhHans : (value: string) => value;
       return [
         profile.id,
