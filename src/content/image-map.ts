@@ -171,5 +171,20 @@ export const imageMap = {
   "2026-05-img-6126": "https://tokyo-weimi.com/wp-content/uploads/2026/05/IMG_6126.jpeg",
   "2026-04-img-5969": "https://tokyo-weimi.com/wp-content/uploads/2026/04/IMG_5969.jpeg",
   "2026-04-img-5967": "https://tokyo-weimi.com/wp-content/uploads/2026/04/IMG_5967.jpeg",
-  "2026-04-img-5968": "https://tokyo-weimi.com/wp-content/uploads/2026/04/IMG_5968.jpeg"
+  "2026-04-img-5968": "https://tokyo-weimi.com/wp-content/uploads/2026/04/IMG_5968.jpeg",
+  "2026-03-img-5825": "https://tokyo-weimi.com/wp-content/uploads/2026/03/IMG_5825.jpeg",
+  "2026-03-img-5826": "https://tokyo-weimi.com/wp-content/uploads/2026/03/IMG_5826.jpeg",
+  "2026-03-img-5871": "https://tokyo-weimi.com/wp-content/uploads/2026/03/IMG_5871.jpeg",
+  "2026-03-img-5870": "https://tokyo-weimi.com/wp-content/uploads/2026/03/IMG_5870.jpeg",
+  "2025-02-img-3635": "https://tokyo-weimi.com/wp-content/uploads/2025/02/IMG_3635.jpeg",
+  "2025-01-img-3380": "https://tokyo-weimi.com/wp-content/uploads/2025/01/IMG_3380.jpeg",
+  "2025-04-img-3994": "https://tokyo-weimi.com/wp-content/uploads/2025/04/IMG_3994.jpeg",
+  "2025-03-img-3839": "https://tokyo-weimi.com/wp-content/uploads/2025/03/IMG_3839.jpeg",
+  "2026-05-img-6110": "https://tokyo-weimi.com/wp-content/uploads/2026/05/IMG_6110.jpeg",
+  "2026-05-img-6111": "https://tokyo-weimi.com/wp-content/uploads/2026/05/IMG_6111.jpeg",
+  "2026-05-img-6112": "https://tokyo-weimi.com/wp-content/uploads/2026/05/IMG_6112.jpeg",
+  "2026-05-img-6113": "https://tokyo-weimi.com/wp-content/uploads/2026/05/IMG_6113.jpeg",
+  "2026-05-img-6014": "https://tokyo-weimi.com/wp-content/uploads/2026/05/IMG_6014.jpeg",
+  "2026-05-img-6013": "https://tokyo-weimi.com/wp-content/uploads/2026/05/IMG_6013.jpeg",
+  "2026-05-img-6015": "https://tokyo-weimi.com/wp-content/uploads/2026/05/IMG_6015.jpeg"
 } satisfies Record<string, string>;
