@@ -27,6 +27,7 @@ export type Profile = {
   date: string;
   image: string;
   gallery: string[];
+  supportScreenshots?: string[];
   origin: string;
   age: string;
   height: string;
@@ -97,6 +98,7 @@ type LabelKey =
   | "serviceArea"
   | "updateFrequency"
   | "lineGallery"
+  | "supportScreenshots"
   | "viewPhoto"
   | "photoOrdinalSuffix"
   | "hotelAlt"

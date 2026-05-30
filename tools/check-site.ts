@@ -104,9 +104,18 @@ for (const term of simplifiedProfileTerms) {
   assert(!siteData.includes(term), `site-data base copy should be Traditional Chinese, found: ${term}`);
 }
 const parsedSiteData = JSON.parse(siteData) as {
-  profiles?: Array<{ id: string; gallery?: string[]; videos?: string[]; isToday?: boolean }>;
+  profiles?: Array<{ id: string; gallery?: string[]; supportScreenshots?: string[]; videos?: string[]; isToday?: boolean }>;
 };
 const parsedProfiles = parsedSiteData.profiles || [];
+const knownSupportScreenshotIds = [
+  "2026-03-img-5871",
+  "2026-05-img-5997",
+  "2025-09-img-5071",
+  "2023-08-img-9481",
+  "2026-05-img-6050",
+  "2026-04-img-5916",
+  "2026-04-img-5873",
+];
 assert(parsedProfiles.length >= 1, "today schedule should contain scraped profiles");
 assert(
   parsedProfiles.some((profile) => profile.isToday === false),
@@ -114,6 +123,15 @@ assert(
 );
 for (const profile of parsedProfiles) {
   assert((profile.gallery?.length || 0) >= 2, `Profile ${profile.id} should keep a multi-photo gallery`);
+  for (const imageId of profile.gallery || []) {
+    assert(
+      !knownSupportScreenshotIds.includes(imageId),
+      `Profile ${profile.id} should keep support screenshot ${imageId} out of the main gallery`,
+    );
+  }
+  for (const imageId of profile.supportScreenshots || []) {
+    assert(imageMap[imageId], `Profile ${profile.id} support screenshot ${imageId} should exist in the image map`);
+  }
   for (const video of profile.videos || []) {
     assert(/^https:\/\/tokyo-weimi\.com\/wp-content\/uploads\//.test(video), `Profile ${profile.id} video should use a source URL`);
     assert(/\.(mp4|mov|webm)$/i.test(new URL(video).pathname), `Profile ${profile.id} video should be a supported video file`);
