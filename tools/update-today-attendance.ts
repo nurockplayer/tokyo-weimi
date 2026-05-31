@@ -176,6 +176,7 @@ const supportScreenshotImageIds = new Set([
 
 const profilePhotoImageIds = new Set([
   "2025-10-img-5293",
+  "2025-12-img-5779",
   "2025-12-img-5779-2",
 ]);
 
@@ -781,7 +782,7 @@ const todayProfileIds = new Set(profiles.map((profile) => profile.id));
 const preservedProfiles: Profile[] = [];
 for (const profile of baselineSiteData.profiles.filter((item) => !todayProfileIds.has(item.id))) {
   const { gallery, supportScreenshots } = await splitProfileImages(
-    profile.gallery || [],
+    [...new Set([profile.image, ...(profile.gallery || [])].filter(Boolean))],
     imageMap,
     profile.supportScreenshots || [],
   );

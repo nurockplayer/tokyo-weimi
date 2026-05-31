@@ -104,7 +104,7 @@ for (const term of simplifiedProfileTerms) {
   assert(!siteData.includes(term), `site-data base copy should be Traditional Chinese, found: ${term}`);
 }
 const parsedSiteData = JSON.parse(siteData) as {
-  profiles?: Array<{ id: string; gallery?: string[]; supportScreenshots?: string[]; videos?: string[]; isToday?: boolean }>;
+  profiles?: Array<{ id: string; image?: string; gallery?: string[]; supportScreenshots?: string[]; videos?: string[]; isToday?: boolean }>;
 };
 const parsedProfiles = parsedSiteData.profiles || [];
 const knownSupportScreenshotIds = [
@@ -123,6 +123,10 @@ assert(
 );
 for (const profile of parsedProfiles) {
   assert((profile.gallery?.length || 0) >= 2, `Profile ${profile.id} should keep a multi-photo gallery`);
+  assert(
+    Boolean(profile.image && profile.gallery?.includes(profile.image)),
+    `Profile ${profile.id} cover image should be present in the modal gallery`,
+  );
   for (const imageId of profile.gallery || []) {
     assert(
       !knownSupportScreenshotIds.includes(imageId),
