@@ -48,7 +48,9 @@ jobs:
             "https://tokyo-weimi.com/wp-json/wp/v2/posts?per_page=5" \
             "https://tokyo-weimi.com/wp-json/wp/v2/posts/26846" \
             "https://tokyo-weimi.com/girls/26846" \
-            "https://tokyo-weimi.com/?p=26846"; do
+            "https://tokyo-weimi.com/?p=26846" \
+            "https://hikari888.com/" \
+            "https://hikari888.com/1020/"; do
             echo "::group::$url"
             curl -L -sS -o /tmp/response.txt -w "status=%{http_code} content_type=%{content_type} size=%{size_download} final_url=%{url_effective}\n" "$url" || true
             head -c 500 /tmp/response.txt || true

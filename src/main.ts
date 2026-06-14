@@ -121,7 +121,7 @@ const renderNav = () => {
   return `
   <header class="site-header">
     <a class="brand-mark" href="#top" aria-label="${copy.homeAria}">
-      <span>TW</span>
+      <span>TN</span>
       <strong>${copy.brand}</strong>
     </a>
     <nav aria-label="${copy.navAria}">
