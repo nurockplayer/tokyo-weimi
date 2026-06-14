@@ -36,11 +36,17 @@ test("renders localized homepage and profile gallery", async ({ page }) => {
   await expect(page.locator("#today .profile-card")).toHaveCount(japaneseTodayProfileCount);
   await expect(page.locator("#featured .profile-card")).toHaveCount(japaneseFeaturedProfileCount);
 
-  await page.locator("[data-profile]").first().click();
+  const firstVisibleProfileCard = page.locator("[data-profile]").first();
+  const firstVisibleProfileId = await firstVisibleProfileCard.getAttribute("data-profile");
+  const firstVisibleProfile = siteData.profiles.find((profile) => profile.id === firstVisibleProfileId);
+  expect(firstVisibleProfile).toBeTruthy();
+  const expectedImageSrc = imageMap[firstVisibleProfile!.image];
+  expect(expectedImageSrc).toBeTruthy();
+
+  await firstVisibleProfileCard.click();
   await expect(page.locator(".profile-dialog")).toBeVisible();
   await expect(page.locator(".dialog-main-image")).toHaveAttribute("data-protected-media", "");
-  expect(imageMap[siteData.profiles[0]!.image]).toBeTruthy();
-  await expect(page.locator(".dialog-main-image")).toHaveAttribute("src", imageMap[siteData.profiles[0]!.image]!);
+  await expect(page.locator(".dialog-main-image")).toHaveAttribute("src", expectedImageSrc!);
   await expect(page.locator("[data-gallery-open-original]")).toHaveCount(0);
 });
 
