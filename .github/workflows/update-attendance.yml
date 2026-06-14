@@ -96,7 +96,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
           git add src/content/site-data.json src/content/image-map.json src/content/image-map.ts src/content/local-image-map.json src/content/profile-translations.json
-          git add -f public/assets/old-site/today-*
+          if compgen -G "public/assets/old-site/today-*" > /dev/null; then
+            git add -f public/assets/old-site/today-*
+          fi
+          git status --short
           git commit -m "Update attendance for $(TZ=Asia/Tokyo date +%Y-%m-%d)"
           git push --force-with-lease origin "$branch"
 
