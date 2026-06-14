@@ -13,6 +13,7 @@ const requiredFiles = [
   "public/404.html",
   "public/robots.txt",
   ".github/workflows/verify.yml",
+  ".github/workflows/source-diagnostics.yml",
   "docs/privacy-policy.md",
   "docs/disclaimer.md",
   "docs/operations.md",
@@ -148,12 +149,29 @@ assert(
 );
 const attendanceWorkflow = readFileSync(join(root, ".github/workflows/update-attendance.yml"), "utf8");
 assert(
+  attendanceWorkflow.includes("tailscale/github-action@v4"),
+  "daily attendance workflow should connect through Tailscale",
+);
+assert(
+  attendanceWorkflow.includes("TAILSCALE_EXIT_NODE"),
+  "daily attendance workflow should select a Tailscale exit node",
+);
+assert(
   attendanceWorkflow.includes("secrets.GEMINI_API_KEY"),
   "daily attendance workflow should pass GEMINI_API_KEY to the updater",
 );
 assert(
   attendanceWorkflow.includes("src/content/profile-translations.json"),
   "daily attendance workflow should commit generated profile translations",
+);
+const sourceDiagnosticsWorkflow = readFileSync(join(root, ".github/workflows/source-diagnostics.yml"), "utf8");
+assert(
+  sourceDiagnosticsWorkflow.includes("tailscale/github-action@v4"),
+  "source diagnostics should test source access through Tailscale",
+);
+assert(
+  sourceDiagnosticsWorkflow.includes("wp-json/wp/v2/posts"),
+  "source diagnostics should test the WordPress REST API",
 );
 
 const postbuild = readFileSync(join(root, "tools/postbuild.ts"), "utf8");
