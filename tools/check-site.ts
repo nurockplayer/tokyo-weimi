@@ -105,21 +105,52 @@ for (const term of simplifiedProfileTerms) {
   assert(!siteData.includes(term), `site-data base copy should be Traditional Chinese, found: ${term}`);
 }
 const parsedSiteData = JSON.parse(siteData) as {
+  shops?: Array<{ id: string; name: string; sourceUrl: string }>;
   profiles?: Array<{ id: string; gallery?: string[]; videos?: string[]; isToday?: boolean }>;
 };
+assert((parsedSiteData.shops?.length || 0) >= 2, "site data should include multiple shops");
+assert(
+  parsedSiteData.shops?.some((shop) => shop.id === "tokyo-weimi" && shop.sourceUrl === "https://tokyo-weimi.com/"),
+  "Tokyo Weimi should be configured as a shop source",
+);
+assert(
+  parsedSiteData.shops?.some((shop) => shop.id === "hikari888" && shop.sourceUrl === "https://hikari888.com/"),
+  "Hikari should be configured as a shop source",
+);
 const parsedProfiles = parsedSiteData.profiles || [];
 assert(parsedProfiles.length >= 1, "today schedule should contain scraped profiles");
+const todayProfiles = parsedProfiles.filter((profile) => profile.isToday !== false);
+const todayByShop = new Map<string, number>();
+for (const profile of todayProfiles) {
+  const shopId = (profile as { shopId?: string }).shopId || "";
+  todayByShop.set(shopId, (todayByShop.get(shopId) || 0) + 1);
+}
+assert(
+  (todayByShop.get("tokyo-weimi") || 0) >= 27,
+  "Tokyo Weimi today schedule should preserve the full source homepage grid",
+);
+assert(
+  (todayByShop.get("hikari888") || 0) >= 20,
+  "Hikari today schedule should include the source homepage profile grid",
+);
+assert(
+  parsedProfiles.every((profile) => typeof (profile as { shopId?: unknown }).shopId === "string"),
+  "every profile should be assigned to a shop",
+);
 assert(
   parsedProfiles.some((profile) => profile.isToday === false),
   "curated non-today profiles should be preserved instead of deleted",
 );
+let multiPhotoProfiles = 0;
 for (const profile of parsedProfiles) {
-  assert((profile.gallery?.length || 0) >= 2, `Profile ${profile.id} should keep a multi-photo gallery`);
+  assert((profile.gallery?.length || 0) >= 1, `Profile ${profile.id} should keep at least one source image`);
+  if ((profile.gallery?.length || 0) >= 2) multiPhotoProfiles += 1;
   for (const video of profile.videos || []) {
     assert(/^https:\/\/tokyo-weimi\.com\/wp-content\/uploads\//.test(video), `Profile ${profile.id} video should use a source URL`);
     assert(/\.(mp4|mov|webm)$/i.test(new URL(video).pathname), `Profile ${profile.id} video should be a supported video file`);
   }
 }
+assert(multiPhotoProfiles >= 40, "most profiles should keep multi-photo galleries from source detail pages");
 const { dictionaries, languageOptions } = await import("../src/i18n.ts");
 const localizedDictionaries = dictionaries as Record<
   string,
@@ -157,8 +188,8 @@ assert(
   "daily attendance workflow should select a Tailscale exit node",
 );
 assert(
-  attendanceWorkflow.includes("secrets.GEMINI_API_KEY"),
-  "daily attendance workflow should pass GEMINI_API_KEY to the updater",
+  attendanceWorkflow.includes("secrets.DEEPSEEK_API_KEY"),
+  "daily attendance workflow should pass DEEPSEEK_API_KEY to the updater",
 );
 assert(
   attendanceWorkflow.includes("src/content/profile-translations.json"),
@@ -173,6 +204,10 @@ assert(
   sourceDiagnosticsWorkflow.includes("wp-json/wp/v2/posts"),
   "source diagnostics should test the WordPress REST API",
 );
+
+const attendanceUpdater = readFileSync(join(root, "tools/update-today-attendance.ts"), "utf8");
+assert(!attendanceUpdater.includes('"海选"'), "Tokyo Weimi parser should not blacklist regular 海选 attendance cards");
+assert(!attendanceUpdater.includes('"海選"'), "Tokyo Weimi parser should not blacklist regular 海選 attendance cards");
 
 const postbuild = readFileSync(join(root, "tools/postbuild.ts"), "utf8");
 for (const route of ["zh-hant", "zh-hans", "ja", "ko", "en"]) {

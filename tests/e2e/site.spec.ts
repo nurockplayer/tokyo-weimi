@@ -18,6 +18,8 @@ const japaneseTodayProfileCount = siteData.profiles.filter(
 const japaneseFeaturedProfileCount = siteData.profiles.filter(
   (profile) => profile.tags.includes("日本人") || profile.title.includes("日本人"),
 ).filter((profile) => profile.isToday === false).length;
+const profileCountForShop = (shopId: string, today: boolean) =>
+  siteData.profiles.filter((profile) => profile.shopId === shopId && (today ? profile.isToday !== false : profile.isToday === false)).length;
 const visibleProfileCount = (today: number, featured: number) => today + featured;
 
 test("renders localized homepage and profile gallery", async ({ page }) => {
@@ -29,8 +31,14 @@ test("renders localized homepage and profile gallery", async ({ page }) => {
   await expect(page.locator(".profile-card")).toHaveCount(visibleProfileCount(todayProfileCount, featuredProfileCount));
   await expect(page.locator("[data-language-select]")).toHaveCount(0);
   await page.getByRole("button", { name: "English" }).click();
-  await expect(page.locator(".hero h1")).toHaveText("Tokyo Weimi Angels");
+  await expect(page.locator(".hero h1")).toHaveText("Tokyo Night Guide");
   await expect(page.locator("#today h2")).toHaveText("Today's Schedule");
+  await expect(page.locator("[data-shop]")).toHaveCount(siteData.shops.length + 1);
+
+  await page.locator('[data-shop="hikari888"]').click();
+  await expect(page.locator("#today .profile-card")).toHaveCount(profileCountForShop("hikari888", true));
+  await expect(page.locator("#featured .profile-card")).toHaveCount(profileCountForShop("hikari888", false));
+  await page.locator('[data-shop="all"]').click();
 
   await page.locator('[data-filter="japanese"]').click();
   await expect(page.locator("#today .profile-card")).toHaveCount(japaneseTodayProfileCount);
@@ -65,8 +73,8 @@ test("renders profile videos from source URLs when available", async ({ page }) 
 
 test("localized static routes are generated", async ({ page }) => {
   await page.goto("/ja/");
-  await expect(page).toHaveTitle("東京ヴィーミーエンジェル｜予約情報");
-  await expect(page.locator(".hero h1")).toHaveText("東京ヴィーミーエンジェル");
+  await expect(page).toHaveTitle("東京ナイトガイド｜複数店舗の出勤情報");
+  await expect(page.locator(".hero h1")).toHaveText("東京ナイトガイド");
 
   await page.goto("/sitemap.xml");
   await expect.poll(() => page.content()).toContain("https://tokyo-weimi.pages.dev/ja/");

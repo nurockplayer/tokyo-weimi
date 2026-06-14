@@ -21,7 +21,7 @@ These notes are for maintainers. Do not copy this wording into visible website c
   - `TS_OAUTH_CLIENT_ID`
   - `TS_OAUTH_SECRET`
   - `TAILSCALE_EXIT_NODE`
-  - `GEMINI_API_KEY`
+  - `DEEPSEEK_API_KEY`
 - `TAILSCALE_EXIT_NODE` should be the GL-AXT1800 Tailscale machine name or its `100.x.y.z` tailnet IP.
 - The GL-AXT1800 must advertise itself as a Tailscale exit node and be approved as an exit node in the Tailscale admin console.
 - Local Codex automations may remain as a fallback path, but the primary scheduled refresh path is GitHub Actions through Tailscale.
@@ -33,14 +33,14 @@ These notes are for maintainers. Do not copy this wording into visible website c
 - Use it after changing Tailscale secrets, exit-node settings, or source scraping behavior.
 - It reports the GitHub runner public IP before Tailscale, the public IP after selecting the exit node, and HTTP status for the source homepage, WordPress REST API, and detail pages.
 
-## Gemini Translation
+## DeepSeek Translation
 
-- Repository secret: `GEMINI_API_KEY`.
+- Repository secret: `DEEPSEEK_API_KEY`.
 - The attendance workflow passes the secret only to `pnpm run attendance:update`.
-- The updater uses Gemini to fill missing profile translations in `src/content/profile-translations.json`.
-- Gemini output is treated as generated profile copy for Simplified Chinese, Japanese, Korean, and English.
-- Gemini failures are non-blocking. If the API returns a quota or rate-limit error, the updater keeps the existing fallback translations and still completes the attendance refresh.
-- Optional local environment variable: `GEMINI_MODEL`. If unset, the updater uses `gemini-2.0-flash`.
+- The updater uses DeepSeek to fill missing profile translations in `src/content/profile-translations.json`.
+- DeepSeek output is treated as generated profile copy for Simplified Chinese, Japanese, Korean, and English.
+- DeepSeek failures are non-blocking. If the API returns a quota or rate-limit error, the updater keeps the existing fallback translations and still completes the attendance refresh.
+- Optional local environment variable: `DEEPSEEK_MODEL`. If unset, the updater uses `deepseek-v4-pro`.
 
 ## Content Files
 

@@ -1,15 +1,16 @@
 import "./styles.css";
 import { filterKeys, getCopy, getLanguageOption, languageOptions } from "./i18n.ts";
 import { imageSrc, videoSrc } from "./media.ts";
-import { contact, heroImages, hotels, profiles } from "./site-data.ts";
+import { contact as fallbackContact, heroImages, hotels, profiles, shops } from "./site-data.ts";
 import type { Dictionary, FilterKey, LanguageCode, Profile, ProfileCopy } from "./types.ts";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root");
 
-const phoneLink = `tel:${contact.phone.replaceAll("-", "")}`;
 const languageStorageKey = "tokyo-weimi-language";
+const shopStorageKey = "tokyo-weimi-shop";
 const protectedImageAttributes = `data-protected-media draggable="false"`;
+const allShopsId = "all";
 const languageRoutes: Record<string, LanguageCode> = {
   "/zh-hant/": "zh-Hant",
   "/zh-hans/": "zh-Hans",
@@ -27,6 +28,8 @@ const filterRules = {
 } satisfies Record<Exclude<FilterKey, "all">, (profile: Profile) => boolean>;
 
 let activeFilter: FilterKey = "all";
+const storedShop = localStorage.getItem(shopStorageKey);
+let activeShopId = shops.some((shop) => shop.id === storedShop) ? storedShop! : allShopsId;
 let query = "";
 const storedLanguage = localStorage.getItem(languageStorageKey) as LanguageCode | null;
 const routedLanguage = languageRoutes[window.location.pathname];
@@ -35,6 +38,11 @@ let currentLanguage: LanguageCode =
 
 const currentCopy = () => getCopy(currentLanguage);
 const currentLanguageOption = () => getLanguageOption(currentLanguage);
+const activeShop = () => shops.find((shop) => shop.id === activeShopId);
+const activeContact = () => activeShop()?.contact || fallbackContact;
+const phoneLink = () => `tel:${activeContact().phone.replaceAll("-", "")}`;
+const visibleProfiles = () =>
+  activeShopId === allShopsId ? profiles : profiles.filter((profile) => profile.shopId === activeShopId);
 
 const updateDocumentLanguage = (copy: Dictionary) => {
   document.documentElement.lang = currentLanguageOption().htmlLang;
@@ -74,7 +82,8 @@ const getPhotoAria = (index: number, copy: Dictionary) => {
 
 const profileMatches = (profile: Profile) => {
   const profileText = getProfileCopy(profile);
-  const haystack = `${profile.name} ${profile.title} ${profile.origin} ${profile.tags.join(" ")} ${profile.summary} ${profileText.title} ${profileText.origin} ${profileText.tags.join(" ")} ${profileText.summary}`;
+  const shop = shops.find((item) => item.id === profile.shopId);
+  const haystack = `${shop?.name || ""} ${profile.name} ${profile.title} ${profile.origin} ${profile.tags.join(" ")} ${profile.summary} ${profileText.title} ${profileText.origin} ${profileText.tags.join(" ")} ${profileText.summary}`;
   const filterOk = activeFilter === "all" ? true : filterRules[activeFilter](profile);
   const queryOk = !query || haystack.toLowerCase().includes(query.toLowerCase());
   return filterOk && queryOk;
@@ -119,17 +128,20 @@ const renderNav = () => {
       ${copy.nav.map(([id, label]) => `<a href="#${id}">${label}</a>`).join("")}
     </nav>
     ${renderLanguageSwitcher()}
-    <a class="header-call" href="${phoneLink}">${contact.phone}</a>
+    <a class="header-call" href="${phoneLink()}">${activeContact().phone}</a>
   </header>
 `;
 };
 
 const renderHero = () => {
   const copy = currentCopy();
+  const contact = activeContact();
+  const shopProfiles = visibleProfiles().filter(isTodayProfile);
+  const shopHeroImages = shopProfiles.length ? shopProfiles.slice(0, 4).map((profile) => profile.image) : heroImages;
   return `
   <section class="hero" id="top" aria-label="${copy.hero.label}">
     <div class="hero-media" aria-hidden="true">
-      ${heroImages.map((image, index) => `<img ${protectedImageAttributes} src="${imageSrc(image)}" alt="" style="--delay: ${index * 120}ms" />`).join("")}
+      ${shopHeroImages.map((image, index) => `<img ${protectedImageAttributes} src="${imageSrc(image)}" alt="" style="--delay: ${index * 120}ms" />`).join("")}
     </div>
     <div class="hero-shade"></div>
     <div class="hero-content">
@@ -138,13 +150,13 @@ const renderHero = () => {
       <p class="hero-copy">${copy.hero.copy}</p>
       <div class="hero-actions">
         <a class="button primary" data-track="hero_view_today" href="#today">${copy.actions.viewToday}</a>
-        <a class="button ghost" data-track="hero_call" href="${phoneLink}">${copy.actions.call}</a>
+        <a class="button ghost" data-track="hero_call" href="${phoneLink()}">${copy.actions.call}</a>
       </div>
     </div>
     <div class="hero-status" aria-label="${copy.hero.statusAria}">
       <span>${copy.hero.daily}</span>
       <span>${copy.hero.phonePrefix} ${contact.phone}</span>
-      <span>${copy.contact.area}</span>
+      <span>${contact.area}</span>
     </div>
   </section>
 `;
@@ -166,6 +178,18 @@ const renderIntro = () => {
 const renderFilters = () => {
   const copy = currentCopy();
   return `
+  <div class="shop-switcher" role="group" aria-label="${copy.labels.shop}">
+    <button class="shop-button ${activeShopId === allShopsId ? "is-active" : ""}" data-shop="${allShopsId}" type="button">${copy.labels.allShops}</button>
+    ${shops
+      .map(
+        (shop) => `
+          <button class="shop-button ${shop.id === activeShopId ? "is-active" : ""}" data-shop="${shop.id}" type="button">
+            <span>${shop.shortName}</span>
+            <small>${shop.name}</small>
+          </button>`,
+      )
+      .join("")}
+  </div>
   <div class="tool-row">
     <div class="filter-group" role="group" aria-label="${copy.labels.filterAria}">
       ${filterKeys
@@ -214,7 +238,7 @@ const renderProfileCard = (profile: Profile) => {
       <div class="tag-row">${profileText.tags.map((tag) => `<span>${tag}</span>`).join("")}</div>
       <div class="price-line">${profileText.price}</div>
       <div class="card-actions">
-        <a class="button small primary" data-track="profile_call" data-track-profile="${profile.id}" href="${phoneLink}">${copy.actions.call}</a>
+        <a class="button small primary" data-track="profile_call" data-track-profile="${profile.id}" href="${phoneLink()}">${copy.actions.call}</a>
         <button class="button small ghost" data-profile="${profile.id}" type="button">${copy.actions.viewInfo}</button>
       </div>
     </div>
@@ -224,7 +248,7 @@ const renderProfileCard = (profile: Profile) => {
 
 const renderProfiles = () => {
   const copy = currentCopy();
-  const filtered = profiles.filter(profileMatches);
+  const filtered = visibleProfiles().filter(profileMatches);
   const todayProfiles = filtered.filter(isTodayProfile);
   const featuredProfiles = filtered.filter((profile) => !isTodayProfile(profile));
   return `
@@ -316,6 +340,7 @@ const renderHotels = () => {
 
 const renderContact = () => {
   const copy = currentCopy();
+  const contact = activeContact();
   return `
   <section class="contact-section" id="contact">
     <div>
@@ -324,9 +349,9 @@ const renderContact = () => {
       <p>${copy.sections.contactCopy}</p>
     </div>
     <div class="contact-panel">
-      <a class="phone-number" href="${phoneLink}">${contact.phone}</a>
+      <a class="phone-number" href="${phoneLink()}">${contact.phone}</a>
       <dl>
-        <div><dt>${copy.labels.serviceArea}</dt><dd>${copy.contact.area}</dd></div>
+        <div><dt>${copy.labels.serviceArea}</dt><dd>${contact.area}</dd></div>
         <div><dt>LINE</dt><dd><a data-track="contact_line_1" href="${contact.line}" target="_blank" rel="noreferrer">${copy.contact.lineOne}</a> / <a data-track="contact_line_2" href="${contact.secondaryLine}" target="_blank" rel="noreferrer">${copy.contact.lineTwo}</a></dd></div>
         <div><dt>${copy.labels.updateFrequency}</dt><dd>${copy.contact.hours}</dd></div>
       </dl>
@@ -396,6 +421,7 @@ const renderModal = () => {
 
 const renderFooter = () => {
   const copy = currentCopy();
+  const contact = activeContact();
   return `
   <footer class="site-footer">
     <div>
@@ -408,7 +434,7 @@ const renderFooter = () => {
     </nav>
   </footer>
   <div class="sticky-actions">
-    <a class="sticky-call" data-track="sticky_call" href="${phoneLink}">${copy.actions.call}</a>
+    <a class="sticky-call" data-track="sticky_call" href="${phoneLink()}">${copy.actions.call}</a>
     <a data-track="sticky_line_1" href="${contact.line}" target="_blank" rel="noreferrer">${copy.contact.lineOne}</a>
     <a data-track="sticky_line_2" href="${contact.secondaryLine}" target="_blank" rel="noreferrer">${copy.contact.lineTwo}</a>
   </div>
@@ -490,7 +516,7 @@ const openProfile = (id: string | undefined) => {
       </dl>
       <p class="price-line">${profileText.price}</p>
       <div class="dialog-actions">
-        <a class="button primary" data-track="dialog_call" data-track-profile="${profile.id}" href="${phoneLink}">${copy.actions.call}</a>
+        <a class="button primary" data-track="dialog_call" data-track-profile="${profile.id}" href="${phoneLink()}">${copy.actions.call}</a>
       </div>
     </div>
   `;
@@ -526,10 +552,22 @@ const bindEvents = () => {
     });
   });
 
+  document.querySelectorAll<HTMLButtonElement>("[data-shop]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const shopId = button.dataset.shop;
+      if (!shopId || (shopId !== allShopsId && !shops.some((shop) => shop.id === shopId))) return;
+      activeShopId = shopId;
+      localStorage.setItem(shopStorageKey, activeShopId);
+      activeFilter = "all";
+      renderApp();
+      document.querySelector("#today")?.scrollIntoView({ block: "start" });
+    });
+  });
+
   document.querySelector<HTMLInputElement>(".search-box input")?.addEventListener("input", (event) => {
     const copy = currentCopy();
     query = (event.currentTarget as HTMLInputElement).value;
-    const filtered = profiles.filter(profileMatches);
+    const filtered = visibleProfiles().filter(profileMatches);
     const profileGrid = document.querySelector<HTMLElement>(".profile-grid");
     if (profileGrid) {
       profileGrid.innerHTML = filtered.length
