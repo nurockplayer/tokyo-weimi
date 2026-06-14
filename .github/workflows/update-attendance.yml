@@ -112,4 +112,4 @@ jobs:
             --base main \
             --head "$branch" \
             --title "Update attendance for $(TZ=Asia/Tokyo date +%Y-%m-%d)" \
-            --body "Automated daily attendance refresh from https://tokyo-weimi.com/."
+            --body "Automated daily multi-shop attendance refresh from https://tokyo-weimi.com/ and https://hikari888.com/."
