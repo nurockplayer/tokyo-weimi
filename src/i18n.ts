@@ -522,7 +522,11 @@ const buildProfileCopies = (
 ): Record<string, ProfileCopy> =>
   Object.fromEntries(
     siteProfiles.map((profile: Profile) => {
-      const translated = translations[profile.id] || fallbackProfileText(profile, language);
+      const generated = translations[profile.id];
+      const translated =
+        generated && language !== "zh-Hans" && generated.summary === profile.summary
+          ? fallbackProfileText(profile, language)
+          : generated || fallbackProfileText(profile, language);
       const sourceText = language === "zh-Hans" ? toZhHans : (value: string) => value;
       return [
         profile.id,
@@ -548,18 +552,18 @@ const completeProfileCopies = {
 const common = {
   zhHant: {
     meta: {
-      title: "東京維密天使｜預約資訊",
-      description: "東京維密天使新版預約資訊站，整理今日出勤、價格、聯絡方式、推薦飯店與外幣兌換資訊。",
+      title: "東京夜遊指南｜多店出勤資訊",
+      description: "東京夜遊指南整理多店今日出勤、價格、聯絡方式、推薦飯店與外幣兌換資訊。",
     },
-    brand: "東京維密天使",
+    brand: "東京夜遊指南",
     navAria: "主選單",
     homeAria: "回到首頁",
     languageAria: "選擇語言",
     hero: {
-      label: "東京維密天使",
-      eyebrow: "Tokyo / Ikebukuro / Reservation",
-      title: "東京維密天使",
-      copy: "今日出勤、價格、推薦飯店與聯絡方式集中整理。每日更新檔期資訊，讓預約流程更快、更清楚，也更方便在手機上瀏覽。",
+      label: "東京夜遊指南",
+      eyebrow: "Tokyo / Multi-shop / Reservation",
+      title: "東京夜遊指南",
+      copy: "集中瀏覽多店今日出勤、價格、推薦飯店與聯絡方式。每日更新檔期資訊，手機上也能快速切換店家。",
       statusAria: "網站狀態",
       daily: "每日更新",
       phonePrefix: "預約專線",
@@ -603,6 +607,8 @@ const common = {
       search: "搜尋",
       searchPlaceholder: "輸入名稱、地區或標籤",
       filterAria: "篩選出勤",
+      shop: "店家切換",
+      allShops: "全部店家",
       empty: "沒有符合條件的出勤資料，換個關鍵字試試。",
       age: "年齡",
       height: "身高",
@@ -640,8 +646,8 @@ const common = {
       copy: "本網站整理成人預約資訊，未滿 20 歲或不適合瀏覽者請離開。",
     },
     footer: {
-      title: "Tokyo Weimi Angels",
-      copy: "Tokyo reservation information, updated for mobile browsing.",
+      title: "Tokyo Night Guide",
+      copy: "Tokyo multi-shop reservation information, updated for mobile browsing.",
       privacy: "隱私政策",
       disclaimer: "免責聲明",
     },
@@ -681,18 +687,18 @@ export const dictionaries = {
   "zh-Hans": {
     ...common.zhHant,
     meta: {
-      title: "东京维密天使｜预约信息",
-      description: "东京维密天使预约信息站，整理今日出勤、价格、联系方式、推荐酒店与外币兑换信息。",
+      title: "东京夜游指南｜多店出勤信息",
+      description: "东京夜游指南整理多店今日出勤、价格、联系方式、推荐酒店与外币兑换信息。",
     },
-    brand: "东京维密天使",
+    brand: "东京夜游指南",
     navAria: "主菜单",
     homeAria: "回到首页",
     languageAria: "选择语言",
     hero: {
-      label: "东京维密天使",
-      eyebrow: "Tokyo / Ikebukuro / Reservation",
-      title: "东京维密天使",
-      copy: "今日出勤、价格、推荐酒店与联系方式集中整理。每日更新档期信息，让预约流程更快、更清楚，也更方便在手机上浏览。",
+      label: "东京夜游指南",
+      eyebrow: "Tokyo / Multi-shop / Reservation",
+      title: "东京夜游指南",
+      copy: "集中浏览多店今日出勤、价格、推荐酒店与联系方式。每日更新档期信息，手机上也能快速切换店家。",
       statusAria: "网站状态",
       daily: "每日更新",
       phonePrefix: "预约专线",
@@ -736,6 +742,8 @@ export const dictionaries = {
       search: "搜索",
       searchPlaceholder: "输入名称、地区或标签",
       filterAria: "筛选出勤",
+      shop: "店家切换",
+      allShops: "全部店家",
       empty: "没有符合条件的出勤资料，换个关键词试试。",
       age: "年龄",
       height: "身高",
@@ -773,8 +781,8 @@ export const dictionaries = {
       copy: "本网站整理成人预约信息，未满 20 岁或不适合浏览者请离开。",
     },
     footer: {
-      title: "Tokyo Weimi Angels",
-      copy: "Tokyo reservation information, updated for mobile browsing.",
+      title: "Tokyo Night Guide",
+      copy: "Tokyo multi-shop reservation information, updated for mobile browsing.",
       privacy: "隐私政策",
       disclaimer: "免责声明",
     },
@@ -871,18 +879,18 @@ export const dictionaries = {
   },
   ja: {
     meta: {
-      title: "東京ヴィーミーエンジェル｜予約情報",
-      description: "東京ヴィーミーエンジェルの出勤、料金、連絡方法、推奨ホテル、外貨両替情報をまとめた予約案内サイトです。",
+      title: "東京ナイトガイド｜複数店舗の出勤情報",
+      description: "東京ナイトガイドは複数店舗の本日出勤、料金、連絡方法、推奨ホテル、外貨両替情報をまとめた予約案内サイトです。",
     },
-    brand: "東京ヴィーミーエンジェル",
+    brand: "東京ナイトガイド",
     navAria: "メインメニュー",
     homeAria: "ホームへ戻る",
     languageAria: "言語を選択",
     hero: {
-      label: "東京ヴィーミーエンジェル",
-      eyebrow: "Tokyo / Ikebukuro / Reservation",
-      title: "東京ヴィーミーエンジェル",
-      copy: "本日の出勤、料金、おすすめホテル、連絡方法をまとめています。毎日更新される空き状況を、スマートフォンでも見やすく確認できます。",
+      label: "東京ナイトガイド",
+      eyebrow: "Tokyo / Multi-shop / Reservation",
+      title: "東京ナイトガイド",
+      copy: "複数店舗の本日出勤、料金、おすすめホテル、連絡方法をまとめています。スマートフォンでも店舗をすばやく切り替えられます。",
       statusAria: "サイト状況",
       daily: "毎日更新",
       phonePrefix: "予約専用電話",
@@ -926,6 +934,8 @@ export const dictionaries = {
       search: "検索",
       searchPlaceholder: "名前、地域、タグを入力",
       filterAria: "出勤を絞り込む",
+      shop: "店舗切り替え",
+      allShops: "全店舗",
       empty: "条件に合う出勤情報がありません。別のキーワードをお試しください。",
       age: "年齢",
       height: "身長",
@@ -963,8 +973,8 @@ export const dictionaries = {
       copy: "本サイトは成人向け予約情報を掲載しています。20歳未満、または閲覧に適さない方は退出してください。",
     },
     footer: {
-      title: "Tokyo Weimi Angels",
-      copy: "スマートフォンでも見やすい東京の予約情報です。",
+      title: "Tokyo Night Guide",
+      copy: "スマートフォンでも見やすい東京の複数店舗予約情報です。",
       privacy: "プライバシーポリシー",
       disclaimer: "免責事項",
     },
@@ -1061,18 +1071,18 @@ export const dictionaries = {
   },
   ko: {
     meta: {
-      title: "도쿄 웨이미 엔젤｜예약 정보",
-      description: "도쿄 웨이미 엔젤의 오늘 출근, 가격, 연락처, 추천 호텔, 외화 환전 정보를 정리한 예약 안내 사이트입니다.",
+      title: "도쿄 나이트 가이드｜다중 매장 출근 정보",
+      description: "도쿄 나이트 가이드는 여러 매장의 오늘 출근, 가격, 연락처, 추천 호텔, 외화 환전 정보를 정리한 예약 안내 사이트입니다.",
     },
-    brand: "도쿄 웨이미 엔젤",
+    brand: "도쿄 나이트 가이드",
     navAria: "메인 메뉴",
     homeAria: "홈으로 돌아가기",
     languageAria: "언어 선택",
     hero: {
-      label: "도쿄 웨이미 엔젤",
-      eyebrow: "Tokyo / Ikebukuro / Reservation",
-      title: "도쿄 웨이미 엔젤",
-      copy: "오늘 출근, 가격, 추천 호텔, 연락 방법을 한곳에 정리했습니다. 매일 업데이트되는 예약 정보를 모바일에서도 편하게 확인할 수 있습니다.",
+      label: "도쿄 나이트 가이드",
+      eyebrow: "Tokyo / Multi-shop / Reservation",
+      title: "도쿄 나이트 가이드",
+      copy: "여러 매장의 오늘 출근, 가격, 추천 호텔, 연락 방법을 한곳에 정리했습니다. 모바일에서도 매장을 빠르게 전환할 수 있습니다.",
       statusAria: "사이트 상태",
       daily: "매일 업데이트",
       phonePrefix: "예약 전화",
@@ -1116,6 +1126,8 @@ export const dictionaries = {
       search: "검색",
       searchPlaceholder: "이름, 지역 또는 태그 입력",
       filterAria: "출근 필터",
+      shop: "매장 전환",
+      allShops: "전체 매장",
       empty: "조건에 맞는 출근 정보가 없습니다. 다른 키워드를 시도해보세요.",
       age: "나이",
       height: "키",
@@ -1153,8 +1165,8 @@ export const dictionaries = {
       copy: "본 사이트는 성인 예약 정보를 정리합니다. 만 20세 미만이거나 열람에 적합하지 않은 분은 나가주세요.",
     },
     footer: {
-      title: "Tokyo Weimi Angels",
-      copy: "모바일에서 보기 쉬운 도쿄 예약 정보입니다.",
+      title: "Tokyo Night Guide",
+      copy: "모바일에서 보기 쉬운 도쿄 다중 매장 예약 정보입니다.",
       privacy: "개인정보 처리방침",
       disclaimer: "면책 고지",
     },
@@ -1251,18 +1263,18 @@ export const dictionaries = {
   },
   en: {
     meta: {
-      title: "Tokyo Weimi Angels | Reservation Info",
-      description: "Tokyo Weimi Angels reservation guide with today's schedule, pricing, contact details, recommended hotels, and currency exchange notes.",
+      title: "Tokyo Night Guide | Multi-shop Schedule",
+      description: "Tokyo Night Guide organizes today's schedules, pricing, contact details, recommended hotels, and currency exchange notes across multiple shops.",
     },
-    brand: "Tokyo Weimi Angels",
+    brand: "Tokyo Night Guide",
     navAria: "Main menu",
     homeAria: "Back to home",
     languageAria: "Choose language",
     hero: {
-      label: "Tokyo Weimi Angels",
-      eyebrow: "Tokyo / Ikebukuro / Reservation",
-      title: "Tokyo Weimi Angels",
-      copy: "Today's schedule, pricing, recommended hotels, and contact details are organized in one place. Availability is updated daily and designed for quick mobile browsing.",
+      label: "Tokyo Night Guide",
+      eyebrow: "Tokyo / Multi-shop / Reservation",
+      title: "Tokyo Night Guide",
+      copy: "Browse today's schedules, pricing, hotels, and contact details across multiple shops with quick mobile shop switching.",
       statusAria: "Site status",
       daily: "Updated daily",
       phonePrefix: "Reservation line",
@@ -1306,6 +1318,8 @@ export const dictionaries = {
       search: "Search",
       searchPlaceholder: "Name, area, or tag",
       filterAria: "Filter schedule",
+      shop: "Shop switcher",
+      allShops: "All shops",
       empty: "No schedule matches your search. Try another keyword.",
       age: "Age",
       height: "Height",
@@ -1343,8 +1357,8 @@ export const dictionaries = {
       copy: "This site contains adult reservation information. Please leave if you are under 20 or should not view this content.",
     },
     footer: {
-      title: "Tokyo Weimi Angels",
-      copy: "Tokyo reservation information, updated for mobile browsing.",
+      title: "Tokyo Night Guide",
+      copy: "Tokyo multi-shop reservation information, updated for mobile browsing.",
       privacy: "Privacy Policy",
       disclaimer: "Disclaimer",
     },

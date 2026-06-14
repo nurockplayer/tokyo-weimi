@@ -72,7 +72,7 @@ jobs:
       - run: pnpm run attendance:update
         if: steps.tailscale-config.outputs.configured == 'true'
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       - run: pnpm run typecheck
         if: steps.tailscale-config.outputs.configured == 'true'
       - run: pnpm test

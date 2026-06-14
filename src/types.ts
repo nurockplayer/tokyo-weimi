@@ -20,8 +20,17 @@ export type Contact = {
   hours: string;
 };
 
+export type Shop = {
+  id: string;
+  name: string;
+  shortName: string;
+  sourceUrl: string;
+  contact: Contact;
+};
+
 export type Profile = {
   id: string;
+  shopId: string;
   name: string;
   title: string;
   date: string;
@@ -52,6 +61,7 @@ export type PricePlan = {
 };
 
 export type SiteData = {
+  shops: Shop[];
   contact: Contact;
   heroImages: string[];
   profiles: Profile[];
@@ -87,6 +97,8 @@ type LabelKey =
   | "search"
   | "searchPlaceholder"
   | "filterAria"
+  | "shop"
+  | "allShops"
   | "empty"
   | "age"
   | "height"

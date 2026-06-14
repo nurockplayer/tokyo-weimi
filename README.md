@@ -1,6 +1,6 @@
 # 東京維密天使新版前端
 
-Vite 純前端版本，可直接部署到 Cloudflare Pages。內容來源與遷移注意事項請見 `docs/content-source-notes.md`，排程、Gemini 翻譯與部署設定請見 `docs/operations.md`。
+Vite 純前端版本，可直接部署到 Cloudflare Pages。內容來源與遷移注意事項請見 `docs/content-source-notes.md`，排程、DeepSeek 翻譯與部署設定請見 `docs/operations.md`。
 
 ## 開發
 

@@ -2,13 +2,14 @@ import { existsSync, readFileSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { LanguageCode, Profile, ProfileCopy, SiteData } from "../src/types.ts";
+import type { Contact, LanguageCode, Profile, ProfileCopy, Shop, SiteData } from "../src/types.ts";
 
 const rootDir = new URL("..", import.meta.url).pathname;
 const contentDir = path.join(rootDir, "src", "content");
-const baseUrl = "https://tokyo-weimi.com";
+const tokyoWeimiUrl = "https://tokyo-weimi.com";
+const hikariUrl = "https://hikari888.com";
 const recentWindowDays = 120;
-const requestTimeoutMs = 20_000;
+const requestTimeoutMs = 8_000;
 const requestHeaders = {
   "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
   "accept-language": "zh-TW,zh;q=0.9,ja;q=0.8,en-US;q=0.7,en;q=0.6",
@@ -26,7 +27,9 @@ const requestHeaders = {
 } satisfies HeadersInit;
 
 type SourceProfile = {
+  shopId: string;
   wpId: string;
+  name?: string;
   title: string;
   link: string;
   updatedAt: string;
@@ -43,20 +46,57 @@ type SourceProfile = {
 type TranslatedProfileText = Pick<ProfileCopy, "title" | "tags" | "summary">;
 type TranslatableLanguage = Exclude<LanguageCode, "zh-Hant">;
 type ProfileTranslations = Record<LanguageCode, Record<string, TranslatedProfileText>>;
-type GeminiTranslationItem = {
+type TranslationItem = {
   id: string;
   translations?: Partial<Record<TranslatableLanguage, Partial<TranslatedProfileText>>>;
 };
-type GeminiTranslationResponse = {
-  profiles?: GeminiTranslationItem[];
+type TranslationResponse = {
+  profiles?: TranslationItem[];
 };
-type GeminiGenerateContentResponse = {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{ text?: string }>;
+type DeepSeekChatCompletionResponse = {
+  choices?: Array<{
+    message?: {
+      content?: string;
     };
   }>;
 };
+
+const tokyoWeimiContact: Contact = {
+  phone: "080-6831-4605",
+  line: "https://line.me/ti/p/0PLMapgqhT",
+  secondaryLine: "https://line.me/ti/p/KMSZfYErhS",
+  lineQr: "2026-05-20260506-221018",
+  secondaryLineQr: "2021-05-c82b87b1-69e1-4649-a4a0-c43c315b9ebf",
+  area: "東京・池袋周邊",
+  hours: "每日更新，建議提前預約",
+};
+
+const hikariContact: Contact = {
+  phone: "070-7468-6768",
+  line: "https://line.me/ti/p/mTIbPNSwcX",
+  secondaryLine: "https://hikari888.com/contact",
+  lineQr: tokyoWeimiContact.lineQr,
+  secondaryLineQr: tokyoWeimiContact.secondaryLineQr,
+  area: "東京・新大久保周邊",
+  hours: "12:00~5:00",
+};
+
+const shopSources = [
+  {
+    id: "tokyo-weimi",
+    name: "東京維密天使",
+    shortName: "維密",
+    sourceUrl: `${tokyoWeimiUrl}/`,
+    contact: tokyoWeimiContact,
+  },
+  {
+    id: "hikari888",
+    name: "光・ひかり・新大久保",
+    shortName: "Hikari",
+    sourceUrl: `${hikariUrl}/`,
+    contact: hikariContact,
+  },
+] satisfies Shop[];
 
 const translatableLanguages = ["zh-Hans", "ja", "ko", "en"] as const satisfies readonly TranslatableLanguage[];
 const emptyProfileTranslations = (): ProfileTranslations => ({
@@ -141,8 +181,6 @@ const textReplacements: Array<[RegExp, string]> = [
 ];
 
 const blacklist = [
-  "海选",
-  "海選",
   "回归",
   "回歸",
   "私聊",
@@ -158,6 +196,7 @@ const blacklist = [
   "AV女优",
   "AV女優",
 ];
+const defaultUnknown = "未公開";
 
 const decodeEntities = (value = ""): string =>
   value
@@ -212,6 +251,24 @@ const readProfileTranslations = (): ProfileTranslations => {
 };
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+const mapWithConcurrency = async <T, R>(
+  items: T[],
+  limit: number,
+  mapper: (item: T, index: number) => Promise<R>,
+): Promise<R[]> => {
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      results[index] = await mapper(items[index]!, index);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+};
 
 const fetchFromSource = async (url: string, init: RequestInit = {}, retries = 2): Promise<Response> => {
   let lastError: unknown;
@@ -280,7 +337,7 @@ const fetchText = async (url: string): Promise<string> => {
 const absolutize = (url: string | undefined): string => {
   if (!url || url.startsWith("data:")) return "";
   try {
-    const parsed = new URL(decodeEntities(url), baseUrl);
+    const parsed = new URL(decodeEntities(url), tokyoWeimiUrl);
     parsed.search = "";
     parsed.hash = "";
     return parsed.href;
@@ -312,6 +369,34 @@ const imageUrlsFromHtml = (html = ""): string[] => {
   for (const match of html.matchAll(/srcset=["']([^"']+)["']/gi)) {
     const srcset = match[1] || "";
     for (const candidate of srcset.split(",")) {
+      add(candidate.trim().split(/\s+/)[0]);
+    }
+  }
+  return [...urls];
+};
+
+const imageUrlsFromHtmlForBase = (html = "", baseUrl: string): string[] => {
+  const urls = new Set<string>();
+  const add = (value: string | undefined) => {
+    if (!value || value.startsWith("data:")) return;
+    let parsed: URL;
+    try {
+      parsed = new URL(decodeEntities(value), baseUrl);
+    } catch {
+      return;
+    }
+    parsed.search = "";
+    parsed.hash = "";
+    if (!parsed.pathname.includes("/wp-content/uploads/")) return;
+    if (!/\.(jpe?g|png|webp|gif)$/i.test(parsed.pathname)) return;
+    urls.add(canonicalImageUrl(parsed.href));
+  };
+
+  for (const match of html.matchAll(/<(?:img|source)\b[^>]*(?:src|data-src)=["']([^"']+)["'][^>]*>/gi)) {
+    add(match[1]);
+  }
+  for (const match of html.matchAll(/srcset=["']([^"']+)["']/gi)) {
+    for (const candidate of (match[1] || "").split(",")) {
       add(candidate.trim().split(/\s+/)[0]);
     }
   }
@@ -386,8 +471,11 @@ const isValidAttendance = (profile: SourceProfile): boolean => {
   );
 };
 
+const isSourceListing = (profile: SourceProfile): boolean =>
+  Boolean(profile.wpId && profile.title && profile.link && profile.images.length > 0);
+
 const extractHomeProfiles = async (): Promise<SourceProfile[]> => {
-  const html = await fetchText(baseUrl);
+  const html = await fetchText(tokyoWeimiUrl);
   const sectionStart = html.indexOf('<section class="front-page-section front-page-section-type-post"');
   const source = sectionStart >= 0 ? html.slice(sectionStart) : html;
   const articles = [...source.matchAll(/<article\b[\s\S]*?<\/article>/gi)].map((match) => match[0]);
@@ -400,6 +488,7 @@ const extractHomeProfiles = async (): Promise<SourceProfile[]> => {
     if (!wpId || !title || !link) continue;
 
     profiles.push({
+      shopId: "tokyo-weimi",
       wpId,
       title,
       link,
@@ -414,11 +503,123 @@ const extractHomeProfiles = async (): Promise<SourceProfile[]> => {
       videos: videoUrlsFromHtml(article),
     });
   }
-  return profiles.filter(isValidAttendance);
+  return profiles.filter(isSourceListing);
+};
+
+const textLinesFromHtml = (html = ""): string[] =>
+  stripHtml(html)
+    .split("\n")
+    .map((line) => cleanText(line))
+    .filter(Boolean);
+
+const nextLineAfter = (lines: string[], label: string): string => {
+  const index = lines.findIndex((line) => line === label || line.startsWith(label));
+  if (index < 0) return "";
+  const inlineValue = lines[index]!.slice(label.length).replace(/^[:：.\s]+/, "").trim();
+  if (inlineValue) return inlineValue;
+  return (lines[index + 1] || "").replace(/^>\s*/, "").trim();
+};
+
+const hikariFieldFromHtml = (html: string, label: string): string => {
+  const match = html.match(
+    new RegExp(`<em[^>]*class=["'][^"']*tx[^"']*["'][^>]*>${label}\\.<\\/em>\\s*([\\s\\S]*?)(?=<em|<br|<\\/p>)`, "i"),
+  );
+  return cleanText(match?.[1] || "");
+};
+
+const extractHikariCards = (html: string): SourceProfile[] =>
+  [...html.matchAll(/<a href=["'](https:\/\/hikari888\.com\/(\d+)\/)["'][^>]*class=["'][^"']*cbox[^"']*["'][\s\S]*?<\/a>/gi)]
+    .map((match): SourceProfile | null => {
+      const card = match[0];
+      const image = imageUrlsFromHtmlForBase(card, hikariUrl)[0] || "";
+      const title = cleanText(card.match(/<span[^>]*class=["'][^"']*icon[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1] || "");
+      const name = cleanText(card.match(/<p[^>]*class=["'][^"']*name[^"']*["'][^>]*>([\s\S]*?)<\/p>/i)?.[1] || "");
+      const size = cleanText(card.match(/<p[^>]*class=["'][^"']*size[^"']*["'][^>]*>([\s\S]*?)<\/p>/i)?.[1] || "");
+      const sizeMatch = size.match(/(\d{2})歳\s+(\d{3})cm\s+([A-ZＡ-Ｚ])-?cup/i);
+      const link = match[1];
+      const wpId = match[2];
+      const age = sizeMatch?.[1];
+      const height = sizeMatch?.[2];
+      const cup = sizeMatch?.[3];
+      if (!name || !link || !wpId || !age || !height || !cup || !image) return null;
+      return {
+        shopId: "hikari888",
+        wpId,
+        name,
+        title,
+        link,
+        updatedAt: new Date().toISOString(),
+        home: "新大久保",
+        age,
+        height,
+        weight: "",
+        cup: `${cup.toUpperCase()}-cup`,
+        brief: title,
+        images: [image],
+        videos: [],
+      };
+    })
+    .filter((profile): profile is SourceProfile => Boolean(profile));
+
+const hydrateHikariProfile = async (profile: SourceProfile): Promise<SourceProfile> => {
+  const html = await fetchText(profile.link);
+  const title = cleanText(
+    html.match(/<h2[^>]*class=["'][^"']*page_title[^"']*["'][^>]*>[\s\S]*?<span>([\s\S]*?)<\/span>/i)?.[1] ||
+      profile.title,
+  );
+  const name = cleanText(
+    html.match(/<div[^>]*id=["']name["'][^>]*>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/i)?.[1] ||
+      profile.name ||
+      profile.title,
+  );
+  const age = hikariFieldFromHtml(html, "年齢").replace(/歳$/i, "") || profile.age;
+  const height = hikariFieldFromHtml(html, "身長").replace(/cm$/i, "") || profile.height;
+  const weight = hikariFieldFromHtml(html, "体重") || profile.weight;
+  const cup = hikariFieldFromHtml(html, "罩杯") || profile.cup;
+  const home = hikariFieldFromHtml(html, "出身") || profile.home || "新大久保";
+  const brief = cleanText(
+    html.match(/<div[^>]*class=["'][^"']*other_in[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] ||
+      profile.brief,
+  );
+  const images = imageUrlsFromHtmlForBase(html, hikariUrl).filter((url) => !url.includes("/themes/"));
+
+  return {
+    ...profile,
+    name,
+    title: title.includes(name) ? title : `${title} ${name}`.trim(),
+    home,
+    age: age.replace(/歳$/i, ""),
+    height,
+    weight,
+    cup,
+    brief,
+    images: images.length ? images : profile.images,
+  };
+};
+
+const extractHikariProfiles = async (): Promise<SourceProfile[]> => {
+  const html = await fetchText(hikariUrl);
+  const cards = extractHikariCards(html).slice(0, 28);
+  const profiles = await mapWithConcurrency(cards, 5, async (card) => {
+    try {
+      return await hydrateHikariProfile(card);
+    } catch {
+      return card;
+    }
+  });
+  return profiles.filter(isSourceListing);
 };
 
 const extractDetailMedia = async (profile: SourceProfile): Promise<{ images: string[]; videos: string[] }> => {
   const html = await fetchText(profile.link);
+  if (profile.shopId === "hikari888") {
+    return {
+      images: [...new Set([...profile.images, ...imageUrlsFromHtmlForBase(html, hikariUrl)])].filter(
+        (url) => !url.includes("/themes/"),
+      ),
+      videos: [],
+    };
+  }
   const images = [...new Set([...profile.images, ...imageUrlsFromHtml(html)])].filter(
     (url) => !/\.(mp4|mov|webm)$/i.test(new URL(url).pathname),
   );
@@ -427,6 +628,7 @@ const extractDetailMedia = async (profile: SourceProfile): Promise<{ images: str
 };
 
 const extractName = (profile: SourceProfile): string => {
+  if (profile.name) return toTraditional(profile.name);
   for (const name of Object.keys(knownNameIds).sort((a, b) => b.length - a.length)) {
     if (profile.title.includes(name)) return toTraditional(name);
   }
@@ -439,7 +641,7 @@ const extractName = (profile: SourceProfile): string => {
 
 const profileId = (profile: SourceProfile, existingByName: Map<string, string>): string => {
   const name = extractName(profile);
-  return existingByName.get(name) || knownNameIds[name] || `girl-${profile.wpId}`;
+  return existingByName.get(`${profile.shopId}:${name}`) || (profile.shopId === "tokyo-weimi" ? knownNameIds[name] : "") || `${profile.shopId}-girl-${profile.wpId}`;
 };
 
 const deriveTags = (profile: SourceProfile): string[] => {
@@ -479,6 +681,9 @@ const formatAmount = (value: string | undefined): string => {
 };
 
 const derivePrice = (profile: SourceProfile): string => {
+  if (profile.shopId === "hikari888") {
+    return "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000";
+  }
   const brief = profile.brief.replace(/,/g, "");
   const plans = [
     ["60", brief.match(/60\s*(?:分鐘|分钟|分)[^\d]{0,8}(\d{4,6})/)?.[1]],
@@ -503,6 +708,11 @@ const deriveSummary = (profile: SourceProfile): string =>
     .replace(/\s+/g, " ")
     .slice(0, 90);
 
+const withFallback = (value: string | undefined, fallback = defaultUnknown): string => {
+  const text = cleanText(value || "");
+  return text || fallback;
+};
+
 const validTranslatedProfileText = (value: Partial<TranslatedProfileText> | undefined): TranslatedProfileText | null => {
   if (!value || typeof value.title !== "string" || typeof value.summary !== "string" || !Array.isArray(value.tags)) {
     return null;
@@ -516,7 +726,7 @@ const validTranslatedProfileText = (value: Partial<TranslatedProfileText> | unde
   };
 };
 
-const buildGeminiTranslationPrompt = (profiles: Profile[]): string => `Translate these reservation profile summaries.
+const buildTranslationPrompt = (profiles: Profile[]): string => `Translate these reservation profile summaries.
 
 Rules:
 - Return strict JSON only with this shape: {"profiles":[{"id":"...","translations":{"zh-Hans":{"title":"...","tags":["..."],"summary":"..."},"ja":{"title":"...","tags":["..."],"summary":"..."},"ko":{"title":"...","tags":["..."],"summary":"..."},"en":{"title":"...","tags":["..."],"summary":"..."}}}]}.
@@ -540,44 +750,41 @@ ${JSON.stringify(
   2,
 )}`;
 
-const translateProfilesWithGemini = async (
+const translateProfilesWithDeepSeek = async (
   profiles: Profile[],
   translations: ProfileTranslations,
 ): Promise<ProfileTranslations> => {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.DEEPSEEK_API_KEY;
   const missingProfiles = profiles.filter((profile) =>
     translatableLanguages.some((language) => !translations[language][profile.id]),
   );
   if (!apiKey || !missingProfiles.length) return translations;
 
   try {
-    const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-pro";
+    const response = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-goog-api-key": apiKey,
+        "authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: buildGeminiTranslationPrompt(missingProfiles) }],
-          },
+        model,
+        messages: [
+          { role: "system", content: "You translate adult reservation profile copy and return valid JSON only." },
+          { role: "user", content: buildTranslationPrompt(missingProfiles) },
         ],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: "application/json",
-        },
+        temperature: 0.2,
+        response_format: { type: "json_object" },
       }),
     });
-    if (!response.ok) throw new Error(`Gemini failed with HTTP ${response.status}`);
+    if (!response.ok) throw new Error(`DeepSeek failed with HTTP ${response.status}`);
 
-    const payload = (await response.json()) as GeminiGenerateContentResponse;
-    const text = payload.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("\n").trim();
-    if (!text) throw new Error("Gemini returned an empty response");
+    const payload = (await response.json()) as DeepSeekChatCompletionResponse;
+    const text = payload.choices?.[0]?.message?.content?.trim();
+    if (!text) throw new Error("DeepSeek returned an empty response");
 
-    const translated = JSON.parse(text) as GeminiTranslationResponse;
+    const translated = JSON.parse(text) as TranslationResponse;
     for (const item of translated.profiles || []) {
       if (!item.id || !item.translations) continue;
       for (const language of translatableLanguages) {
@@ -588,7 +795,7 @@ const translateProfilesWithGemini = async (
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.warn(`Gemini translation skipped: ${message}`);
+    console.warn(`DeepSeek translation skipped: ${message}`);
   }
 
   return translations;
@@ -630,15 +837,23 @@ const imageMap = readJson<Record<string, string>>("src/content/image-map.json");
 const localImageMap = readJson<Record<string, string>>("src/content/local-image-map.json");
 const profileTranslations = readProfileTranslations();
 const sourceToId = new Map(Object.entries(imageMap).map(([id, source]) => [source, id]));
-const existingByName = new Map(baselineSiteData.profiles.map((profile) => [profile.name, profile.id]));
+const existingByName = new Map(baselineSiteData.profiles.map((profile) => [`${profile.shopId || "tokyo-weimi"}:${profile.name}`, profile.id]));
 const existingById = new Map(baselineSiteData.profiles.map((profile) => [profile.id, profile]));
 
-const sourceProfiles = await extractHomeProfiles();
+const sourceProfiles = [...(await extractHomeProfiles()), ...(await extractHikariProfiles())];
 if (!sourceProfiles.length) throw new Error("No valid attendance profiles found on source homepage");
 
+const enrichedSourceProfiles = await mapWithConcurrency(sourceProfiles, 5, async (sourceProfile) => ({
+  sourceProfile,
+  media: await extractDetailMedia(sourceProfile).catch(() => ({
+    images: sourceProfile.images,
+    videos: sourceProfile.videos,
+  })),
+}));
+
 const profiles: Profile[] = [];
-for (const sourceProfile of sourceProfiles) {
-  const { images: imageUrls, videos } = await extractDetailMedia(sourceProfile);
+for (const { sourceProfile, media } of enrichedSourceProfiles) {
+  const { images: imageUrls, videos } = media;
   if (!imageUrls.length) continue;
   const gallery = [];
   for (const url of imageUrls) {
@@ -650,17 +865,20 @@ for (const sourceProfile of sourceProfiles) {
   const previousProfile = existingById.get(id);
   profiles.push({
     id,
+    shopId: sourceProfile.shopId,
     name,
     title: previousProfile?.title || deriveTitle(sourceProfile, tags),
     date: new Date(sourceProfile.updatedAt).toISOString().slice(0, 10),
-    origin: toTraditional(sourceProfile.home),
-    age: sourceProfile.age,
-    height: sourceProfile.height,
-    weight: sourceProfile.weight,
-    cup: sourceProfile.cup,
+    origin: withFallback(toTraditional(sourceProfile.home), sourceProfile.shopId === "hikari888" ? "新大久保" : "東京"),
+    age: withFallback(sourceProfile.age),
+    height: withFallback(sourceProfile.height),
+    weight: withFallback(sourceProfile.weight),
+    cup: withFallback(sourceProfile.cup),
     tags: previousProfile?.tags?.length ? previousProfile.tags : tags,
     price: derivePrice(sourceProfile),
-    summary: previousProfile?.summary ? toTraditional(previousProfile.summary) : deriveSummary(sourceProfile),
+    summary: previousProfile?.summary
+      ? toTraditional(previousProfile.summary)
+      : withFallback(deriveSummary(sourceProfile), deriveTitle(sourceProfile, tags)),
     image: gallery[0] || "",
     gallery,
     videos: videos.length ? videos : previousProfile?.videos,
@@ -673,12 +891,22 @@ if (!profiles.length) throw new Error("No profiles remained after image processi
 const todayProfileIds = new Set(profiles.map((profile) => profile.id));
 const preservedProfiles = baselineSiteData.profiles
   .filter((profile) => !todayProfileIds.has(profile.id))
-  .map((profile) => ({ ...profile, isToday: false }));
+  .map((profile) => ({ ...profile, shopId: profile.shopId || "tokyo-weimi", isToday: false }));
 
+siteData.shops = shopSources;
+siteData.contact = tokyoWeimiContact;
 siteData.profiles = [...profiles, ...preservedProfiles];
 siteData.heroImages = profiles.slice(0, 4).map((profile) => profile.image);
 
-await translateProfilesWithGemini(siteData.profiles, profileTranslations);
+for (const profile of siteData.profiles) {
+  for (const language of translatableLanguages) {
+    if (profileTranslations[language][profile.id]?.summary === profile.summary) {
+      delete profileTranslations[language][profile.id];
+    }
+  }
+}
+
+await translateProfilesWithDeepSeek(siteData.profiles, profileTranslations);
 
 await writeJson("src/content/site-data.json", siteData);
 await writeJson("src/content/image-map.json", imageMap);
