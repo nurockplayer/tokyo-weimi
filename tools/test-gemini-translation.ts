@@ -58,10 +58,13 @@ const translateWithGemini = async (
   apiKey: string,
   model: string,
 ): Promise<TranslationResponse | null> => {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const response = await fetch(url, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      "x-goog-api-key": apiKey,
+    },
     body: JSON.stringify({
       systemInstruction: {
         parts: [{ text: "You translate adult reservation profile copy and return valid JSON only." }],
