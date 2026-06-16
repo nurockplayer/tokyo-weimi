@@ -750,52 +750,121 @@ ${JSON.stringify(
   2,
 )}`;
 
-const translateProfilesWithDeepSeek = async (
+const SYSTEM_PROMPT = "You translate adult reservation profile copy and return valid JSON only.";
+
+const tryTranslateWithGemini = async (
+  missingProfiles: Profile[],
+  apiKey: string,
+): Promise<TranslationResponse> => {
+  const model = process.env.GEMINI_MODEL || "gemini-2.5-pro";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: [{ parts: [{ text: buildTranslationPrompt(missingProfiles) }] }],
+      generationConfig: {
+        temperature: 0.2,
+        responseMimeType: "application/json",
+      },
+    }),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Gemini failed with HTTP ${response.status}: ${body.slice(0, 200)}`);
+  }
+
+  const payload = (await response.json()) as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  };
+  const text = payload.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+  if (!text) throw new Error("Gemini returned an empty response");
+
+  return JSON.parse(text) as TranslationResponse;
+};
+
+const tryTranslateWithDeepSeek = async (
+  missingProfiles: Profile[],
+  apiKey: string,
+): Promise<TranslationResponse> => {
+  const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-pro";
+  const response = await fetch("https://api.deepseek.com/chat/completions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: buildTranslationPrompt(missingProfiles) },
+      ],
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+    }),
+  });
+  if (!response.ok) throw new Error(`DeepSeek failed with HTTP ${response.status}`);
+
+  const payload = (await response.json()) as DeepSeekChatCompletionResponse;
+  const text = payload.choices?.[0]?.message?.content?.trim();
+  if (!text) throw new Error("DeepSeek returned an empty response");
+
+  return JSON.parse(text) as TranslationResponse;
+};
+
+const mergeTranslationResponse = (
+  translated: TranslationResponse,
+  translations: ProfileTranslations,
+): void => {
+  for (const item of translated.profiles || []) {
+    if (!item.id || !item.translations) continue;
+    for (const language of translatableLanguages) {
+      if (translations[language][item.id]) continue;
+      const text = validTranslatedProfileText(item.translations[language]);
+      if (text) translations[language][item.id] = text;
+    }
+  }
+};
+
+const translateProfiles = async (
   profiles: Profile[],
   translations: ProfileTranslations,
 ): Promise<ProfileTranslations> => {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
   const missingProfiles = profiles.filter((profile) =>
     translatableLanguages.some((language) => !translations[language][profile.id]),
   );
-  if (!apiKey || !missingProfiles.length) return translations;
+  if (!missingProfiles.length) return translations;
 
-  try {
-    const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-pro";
-    const response = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: "You translate adult reservation profile copy and return valid JSON only." },
-          { role: "user", content: buildTranslationPrompt(missingProfiles) },
-        ],
-        temperature: 0.2,
-        response_format: { type: "json_object" },
-      }),
-    });
-    if (!response.ok) throw new Error(`DeepSeek failed with HTTP ${response.status}`);
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const deepseekKey = process.env.DEEPSEEK_API_KEY;
 
-    const payload = (await response.json()) as DeepSeekChatCompletionResponse;
-    const text = payload.choices?.[0]?.message?.content?.trim();
-    if (!text) throw new Error("DeepSeek returned an empty response");
-
-    const translated = JSON.parse(text) as TranslationResponse;
-    for (const item of translated.profiles || []) {
-      if (!item.id || !item.translations) continue;
-      for (const language of translatableLanguages) {
-        if (translations[language][item.id]) continue;
-        const text = validTranslatedProfileText(item.translations[language]);
-        if (text) translations[language][item.id] = text;
-      }
+  if (geminiKey) {
+    try {
+      console.log("Translating with Gemini...");
+      const result = await tryTranslateWithGemini(missingProfiles, geminiKey);
+      mergeTranslationResponse(result, translations);
+      console.log("Gemini translation succeeded.");
+      return translations;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`Gemini translation failed, falling back to DeepSeek: ${message}`);
     }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.warn(`DeepSeek translation skipped: ${message}`);
+  }
+
+  if (deepseekKey) {
+    try {
+      console.log("Translating with DeepSeek...");
+      const result = await tryTranslateWithDeepSeek(missingProfiles, deepseekKey);
+      mergeTranslationResponse(result, translations);
+      console.log("DeepSeek translation succeeded.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`DeepSeek translation skipped: ${message}`);
+    }
+  } else if (!geminiKey) {
+    console.warn("Translation skipped: neither GEMINI_API_KEY nor DEEPSEEK_API_KEY is set.");
   }
 
   return translations;
@@ -906,7 +975,7 @@ for (const profile of siteData.profiles) {
   }
 }
 
-await translateProfilesWithDeepSeek(siteData.profiles, profileTranslations);
+await translateProfiles(siteData.profiles, profileTranslations);
 
 await writeJson("src/content/site-data.json", siteData);
 await writeJson("src/content/image-map.json", imageMap);

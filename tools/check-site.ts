@@ -188,8 +188,9 @@ assert(
   "daily attendance workflow should select a Tailscale exit node",
 );
 assert(
+  attendanceWorkflow.includes("secrets.GEMINI_API_KEY") ||
   attendanceWorkflow.includes("secrets.DEEPSEEK_API_KEY"),
-  "daily attendance workflow should pass DEEPSEEK_API_KEY to the updater",
+  "daily attendance workflow should pass GEMINI_API_KEY or DEEPSEEK_API_KEY to the updater",
 );
 assert(
   attendanceWorkflow.includes("src/content/profile-translations.json"),
