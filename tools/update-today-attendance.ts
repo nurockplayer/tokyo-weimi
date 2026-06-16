@@ -757,10 +757,13 @@ const tryTranslateWithGemini = async (
   apiKey: string,
 ): Promise<TranslationResponse> => {
   const model = process.env.GEMINI_MODEL || "gemini-2.5-pro";
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const response = await fetch(url, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      "x-goog-api-key": apiKey,
+    },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
       contents: [{ parts: [{ text: buildTranslationPrompt(missingProfiles) }] }],
@@ -865,6 +868,8 @@ const translateProfiles = async (
     }
   } else if (!geminiKey) {
     console.warn("Translation skipped: neither GEMINI_API_KEY nor DEEPSEEK_API_KEY is set.");
+  } else {
+    console.warn("Translation skipped: Gemini failed and DEEPSEEK_API_KEY is not set.");
   }
 
   return translations;
