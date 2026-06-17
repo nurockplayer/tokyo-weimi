@@ -32,11 +32,9 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-      - name: Use Tailscale exit node
-        env:
-          TAILSCALE_EXIT_NODE: ${{ secrets.TAILSCALE_EXIT_NODE }}
+          args: --exit-node=${{ secrets.TAILSCALE_EXIT_NODE }} --exit-node-allow-lan-access
+      - name: Verify connection
         run: |
-          sudo -E tailscale set --exit-node="$TAILSCALE_EXIT_NODE"
           echo "Public IP through exit node:"
           curl -sS https://ifconfig.me || true
           echo
