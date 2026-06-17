@@ -9,6 +9,7 @@ These notes are for maintainers only and should not appear in customer-facing we
 ### Primary Shops
 - **Tokyo Weimi**: `https://tokyo-weimi.com/` (Traditional Japanese/Chinese shop)
 - **Hikari (ひかり)**: `https://hikari888.com/` (Shin-Okubo based shop)
+- **Ikebukuro VIP**: `https://vip6969.com/` (Ikebukuro based shop)
 
 ### Automation & Tools
 - Full crawl script: `tools/scrape-old-site.ts`
