@@ -1,0 +1,57 @@
+name: Source Diagnostics
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show runner public IP
+        run: |
+          echo "Public IP before Tailscale:"
+          curl -sS https://ifconfig.me || true
+          echo
+      - name: Validate Tailscale config
+        env:
+          TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+          TAILSCALE_EXIT_NODE: ${{ secrets.TAILSCALE_EXIT_NODE }}
+        run: |
+          missing=0
+          for name in TS_OAUTH_CLIENT_ID TS_OAUTH_SECRET TAILSCALE_EXIT_NODE; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name is required for source diagnostics."
+              missing=1
+            fi
+          done
+          exit "$missing"
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          args: --exit-node=${{ secrets.TAILSCALE_EXIT_NODE }} --exit-node-allow-lan-access
+      - name: Verify connection
+        run: |
+          echo "Public IP through exit node:"
+          curl -sS https://ifconfig.me || true
+          echo
+      - name: Diagnose source endpoints
+        run: |
+          set -u
+          for url in \
+            "https://tokyo-weimi.com/" \
+            "https://tokyo-weimi.com/wp-json/wp/v2/posts?per_page=5" \
+            "https://tokyo-weimi.com/wp-json/wp/v2/posts/26846" \
+            "https://tokyo-weimi.com/girls/26846" \
+            "https://tokyo-weimi.com/?p=26846" \
+            "https://hikari888.com/" \
+            "https://hikari888.com/1020/"; do
+            echo "::group::$url"
+            curl -L -sS -o /tmp/response.txt -w "status=%{http_code} content_type=%{content_type} size=%{size_download} final_url=%{url_effective}\n" "$url" || true
+            head -c 500 /tmp/response.txt || true
+            echo
+            echo "::endgroup::"
+          done

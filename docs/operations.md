@@ -8,28 +8,38 @@ These notes are for maintainers. Do not copy this wording into visible website c
 - Build command: `pnpm build`.
 - Build output directory: `dist`.
 - Node.js version: `24`.
-- The site is a Vite static frontend. Do not reintroduce PHP or Next.js unless the project direction changes.
 
 ## Attendance Refresh
 
 - Updater script: `tools/update-today-attendance.ts`.
-- Manual GitHub workflow: `.github/workflows/update-attendance.yml`.
-- GitHub-hosted runners are currently blocked by the source site with HTTP 403, even when the updater falls back to Playwright Chromium.
-- Because of that block, the GitHub workflow is intentionally `workflow_dispatch` only.
-- Scheduled refreshes run on the local Mac through Codex automations:
-  - `tokyo-weimi-attendance-07-30-jst`
-  - `tokyo-weimi-attendance-14-30-jst`
-- Both local automations run daily in Japan time, update attendance, run verification, push an automation branch, and open a pull request when content changes.
+- GitHub workflow: `.github/workflows/update-attendance.yml`.
+- The workflow runs at 07:30 and 14:30 JST through GitHub Actions.
+- GitHub-hosted runners are blocked by the source site when they use the default GitHub/Azure egress IP.
+- To avoid that block, the workflow joins the Tailscale tailnet and routes traffic through the home GL-AXT1800 exit node before running the updater.
+- Required GitHub repository secrets:
+  - `TS_OAUTH_CLIENT_ID`
+  - `TS_OAUTH_SECRET`
+  - `TAILSCALE_EXIT_NODE`
+  - `DEEPSEEK_API_KEY`
+- `TAILSCALE_EXIT_NODE` should be the GL-AXT1800 Tailscale machine name or its `100.x.y.z` tailnet IP.
+- The GL-AXT1800 must advertise itself as a Tailscale exit node and be approved as an exit node in the Tailscale admin console.
+- Local Codex automations may remain as a fallback path, but the primary scheduled refresh path is GitHub Actions through Tailscale.
 - Automation pull requests should be reviewed before merge. They should not be auto-merged.
 
-## Gemini Translation
+## Source Diagnostics
 
-- Repository secret: `GEMINI_API_KEY`.
+- Manual diagnostic workflow: `.github/workflows/source-diagnostics.yml`.
+- Use it after changing Tailscale secrets, exit-node settings, or source scraping behavior.
+- It reports the GitHub runner public IP before Tailscale, the public IP after selecting the exit node, and HTTP status for the source homepage, WordPress REST API, and detail pages.
+
+## DeepSeek Translation
+
+- Repository secret: `DEEPSEEK_API_KEY`.
 - The attendance workflow passes the secret only to `pnpm run attendance:update`.
-- The updater uses Gemini to fill missing profile translations in `src/content/profile-translations.json`.
-- Gemini output is treated as generated profile copy for Simplified Chinese, Japanese, Korean, and English.
-- Gemini failures are non-blocking. If the API returns a quota or rate-limit error, the updater keeps the existing fallback translations and still completes the attendance refresh.
-- Optional local environment variable: `GEMINI_MODEL`. If unset, the updater uses `gemini-2.0-flash`.
+- The updater uses DeepSeek to fill missing profile translations in `src/content/profile-translations.json`.
+- DeepSeek output is treated as generated profile copy for Simplified Chinese, Japanese, Korean, and English.
+- DeepSeek failures are non-blocking. If the API returns a quota or rate-limit error, the updater keeps the existing fallback translations and still completes the attendance refresh.
+- Optional local environment variable: `DEEPSEEK_MODEL`. If unset, the updater uses `deepseek-v4-pro`.
 
 ## Content Files
 

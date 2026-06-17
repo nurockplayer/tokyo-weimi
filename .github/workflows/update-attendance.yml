@@ -1,6 +1,10 @@
 name: Update Attendance
 
 on:
+  schedule:
+    # 07:30 and 14:30 JST daily. GitHub schedules are UTC.
+    - cron: "30 22 * * *"
+    - cron: "30 5 * * *"
   workflow_dispatch:
 
 permissions:
@@ -11,24 +15,73 @@ jobs:
   update-attendance:
     runs-on: ubuntu-latest
     steps:
+      - name: Check Tailscale config
+        id: tailscale-config
+        env:
+          TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+          TAILSCALE_EXIT_NODE: ${{ secrets.TAILSCALE_EXIT_NODE }}
+        run: |
+          missing=0
+          for name in TS_OAUTH_CLIENT_ID TS_OAUTH_SECRET TAILSCALE_EXIT_NODE; do
+            if [ -z "${!name}" ]; then
+              echo "::notice::$name is not configured; attendance update will be skipped."
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 0 ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Skip attendance update
+        if: steps.tailscale-config.outputs.configured != 'true'
+        run: echo "Tailscale exit-node secrets are not configured yet."
       - uses: actions/checkout@v4
+        if: steps.tailscale-config.outputs.configured == 'true'
+      - name: Connect to Tailscale
+        if: steps.tailscale-config.outputs.configured == 'true'
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          args: --exit-node=${{ secrets.TAILSCALE_EXIT_NODE }} --exit-node-allow-lan-access
+      - name: Verify connection
+        if: steps.tailscale-config.outputs.configured == 'true'
+        run: |
+          echo "Public IP through exit node:"
+          curl -sS https://ifconfig.me || true
+          echo
+          curl -L -sS -o /dev/null -w "tokyo-weimi status=%{http_code} final_url=%{url_effective}\n" https://tokyo-weimi.com/
       - uses: pnpm/action-setup@v4
+        if: steps.tailscale-config.outputs.configured == 'true'
         with:
           version: 10
       - uses: actions/setup-node@v4
+        if: steps.tailscale-config.outputs.configured == 'true'
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        if: steps.tailscale-config.outputs.configured == 'true'
       - run: pnpm exec playwright install --with-deps chromium
+        if: steps.tailscale-config.outputs.configured == 'true'
       - run: pnpm run attendance:update
+        if: steps.tailscale-config.outputs.configured == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       - run: pnpm run typecheck
+        if: steps.tailscale-config.outputs.configured == 'true'
       - run: pnpm test
+        if: steps.tailscale-config.outputs.configured == 'true'
       - run: pnpm run build
+        if: steps.tailscale-config.outputs.configured == 'true'
       - run: pnpm run test:e2e
+        if: steps.tailscale-config.outputs.configured == 'true'
       - name: Create pull request
+        if: steps.tailscale-config.outputs.configured == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -42,7 +95,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
           git add src/content/site-data.json src/content/image-map.json src/content/image-map.ts src/content/local-image-map.json src/content/profile-translations.json
-          git add -f public/assets/old-site/today-*
+          if compgen -G "public/assets/old-site/today-*" > /dev/null; then
+            git add -f public/assets/old-site/today-*
+          fi
+          git status --short
           git commit -m "Update attendance for $(TZ=Asia/Tokyo date +%Y-%m-%d)"
           git push --force-with-lease origin "$branch"
 
@@ -55,4 +111,4 @@ jobs:
             --base main \
             --head "$branch" \
             --title "Update attendance for $(TZ=Asia/Tokyo date +%Y-%m-%d)" \
-            --body "Automated daily attendance refresh from https://tokyo-weimi.com/."
+            --body "Automated daily multi-shop attendance refresh from https://tokyo-weimi.com/ and https://hikari888.com/."
