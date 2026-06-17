@@ -111,7 +111,7 @@ const parsedSiteData = JSON.parse(siteData) as {
 assert((parsedSiteData.shops?.length || 0) >= 2, "site data should include multiple shops");
 assert(
   parsedSiteData.shops?.some((shop) => shop.id === "tokyo-weimi" && shop.sourceUrl === "https://tokyo-weimi.com/"),
-  "Tokyo Weimi should be configured as a shop source",
+  "Tokyo Night Guide should be configured as a shop source",
 );
 assert(
   parsedSiteData.shops?.some((shop) => shop.id === "hikari888" && shop.sourceUrl === "https://hikari888.com/"),
@@ -127,7 +127,7 @@ for (const profile of todayProfiles) {
 }
 assert(
   (todayByShop.get("tokyo-weimi") || 0) >= 27,
-  "Tokyo Weimi today schedule should preserve the full source homepage grid",
+  "Tokyo Night Guide today schedule should preserve the full source homepage grid",
 );
 assert(
   (todayByShop.get("hikari888") || 0) >= 20,
@@ -207,8 +207,8 @@ assert(
 );
 
 const attendanceUpdater = readFileSync(join(root, "tools/update-today-attendance.ts"), "utf8");
-assert(!attendanceUpdater.includes('"海选"'), "Tokyo Weimi parser should not blacklist regular 海选 attendance cards");
-assert(!attendanceUpdater.includes('"海選"'), "Tokyo Weimi parser should not blacklist regular 海選 attendance cards");
+assert(!attendanceUpdater.includes('"海选"'), "Tokyo Night Guide parser should not blacklist regular 海选 attendance cards");
+assert(!attendanceUpdater.includes('"海選"'), "Tokyo Night Guide parser should not blacklist regular 海選 attendance cards");
 
 const postbuild = readFileSync(join(root, "tools/postbuild.ts"), "utf8");
 for (const route of ["zh-hant", "zh-hans", "ja", "ko", "en"]) {
