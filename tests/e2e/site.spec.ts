@@ -71,6 +71,19 @@ test("renders profile videos from source URLs when available", async ({ page }) 
   await expect(page.locator(".dialog-video").first()).toHaveAttribute("src", videoProfile!.videos![0]!);
 });
 
+test("renders support screenshots separately from profile gallery", async ({ page }) => {
+  const screenshotProfile = siteData.profiles.find((profile) => profile.supportScreenshots?.length);
+  test.skip(!screenshotProfile, "No support screenshots are currently available in site data");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /20|歲|세|以上/ }).click().catch(() => {});
+  await page.locator(`[data-profile="${screenshotProfile!.id}"]`).click();
+
+  await expect(page.locator(".profile-dialog")).toBeVisible();
+  await expect(page.locator(".dialog-thumbs [data-gallery-image]")).toHaveCount(screenshotProfile!.gallery.length);
+  await expect(page.locator(".support-screenshot-grid img")).toHaveCount(screenshotProfile!.supportScreenshots!.length);
+});
+
 test("localized static routes are generated", async ({ page }) => {
   await page.goto("/ja/");
   await expect(page).toHaveTitle("東京ナイトガイド｜複数店舗の出勤情報");

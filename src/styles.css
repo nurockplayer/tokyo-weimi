@@ -887,6 +887,39 @@ dd {
   background: #141210;
 }
 
+.support-screenshots {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.support-screenshots h3 {
+  margin: 0;
+  color: var(--gold);
+  font-size: 14px;
+}
+
+.support-screenshot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.support-screenshot-grid a {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  background: #141210;
+}
+
+.support-screenshot-grid img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .dialog-videos {
   display: grid;
   gap: 12px;

@@ -469,6 +469,7 @@ const openProfile = (id: string | undefined) => {
   const copy = currentCopy();
   const profileText = getProfileCopy(profile, copy);
   const gallery = profile.gallery?.length ? profile.gallery : [profile.image];
+  const supportScreenshots = profile.supportScreenshots || [];
   const videos = profile.videos || [];
   const dialog = document.querySelector<HTMLDialogElement>(".profile-dialog");
   const content = dialog?.querySelector<HTMLElement>(".dialog-content");
@@ -488,6 +489,24 @@ const openProfile = (id: string | undefined) => {
           )
           .join("")}
       </div>
+      ${
+        supportScreenshots.length
+          ? `<div class="support-screenshots">
+              <h3>${copy.labels.supportScreenshots}</h3>
+              <div class="support-screenshot-grid">
+                ${supportScreenshots
+                  .map(
+                    (image) => `
+                      <a href="${imageSrc(image)}" target="_blank" rel="noreferrer">
+                        <img ${protectedImageAttributes} src="${imageSrc(image)}" alt="${profile.name} ${copy.labels.supportScreenshots}" loading="lazy" />
+                      </a>
+                    `,
+                  )
+                  .join("")}
+              </div>
+            </div>`
+          : ""
+      }
       ${
         videos.length
           ? `<div class="dialog-videos">

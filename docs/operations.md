@@ -8,7 +8,6 @@ These notes are for maintainers. Do not copy this wording into visible website c
 - Build command: `pnpm build`.
 - Build output directory: `dist`.
 - Node.js version: `24`.
-- The site is a Vite static frontend. Do not reintroduce PHP or Next.js unless the project direction changes.
 
 ## Attendance Refresh
 

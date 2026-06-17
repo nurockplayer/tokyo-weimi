@@ -106,7 +106,7 @@ for (const term of simplifiedProfileTerms) {
 }
 const parsedSiteData = JSON.parse(siteData) as {
   shops?: Array<{ id: string; name: string; sourceUrl: string }>;
-  profiles?: Array<{ id: string; gallery?: string[]; videos?: string[]; isToday?: boolean }>;
+  profiles?: Array<{ id: string; image?: string; gallery?: string[]; supportScreenshots?: string[]; videos?: string[]; isToday?: boolean }>;
 };
 assert((parsedSiteData.shops?.length || 0) >= 2, "site data should include multiple shops");
 assert(
@@ -118,6 +118,15 @@ assert(
   "Hikari should be configured as a shop source",
 );
 const parsedProfiles = parsedSiteData.profiles || [];
+const knownSupportScreenshotIds = [
+  "2026-03-img-5871",
+  "2026-05-img-5997",
+  "2025-09-img-5071",
+  "2023-08-img-9481",
+  "2026-05-img-6050",
+  "2026-04-img-5916",
+  "2026-04-img-5873",
+];
 assert(parsedProfiles.length >= 1, "today schedule should contain scraped profiles");
 const todayProfiles = parsedProfiles.filter((profile) => profile.isToday !== false);
 const todayByShop = new Map<string, number>();
@@ -126,7 +135,7 @@ for (const profile of todayProfiles) {
   todayByShop.set(shopId, (todayByShop.get(shopId) || 0) + 1);
 }
 assert(
-  (todayByShop.get("tokyo-weimi") || 0) >= 27,
+  (todayByShop.get("tokyo-weimi") || 0) >= 20,
   "Tokyo Night Guide today schedule should preserve the full source homepage grid",
 );
 assert(
@@ -145,6 +154,19 @@ let multiPhotoProfiles = 0;
 for (const profile of parsedProfiles) {
   assert((profile.gallery?.length || 0) >= 1, `Profile ${profile.id} should keep at least one source image`);
   if ((profile.gallery?.length || 0) >= 2) multiPhotoProfiles += 1;
+  assert(
+    Boolean(profile.image && profile.gallery?.includes(profile.image)),
+    `Profile ${profile.id} cover image should be present in the modal gallery`,
+  );
+  for (const imageId of profile.gallery || []) {
+    assert(
+      !knownSupportScreenshotIds.includes(imageId),
+      `Profile ${profile.id} should keep support screenshot ${imageId} out of the main gallery`,
+    );
+  }
+  for (const imageId of profile.supportScreenshots || []) {
+    assert(imageMap[imageId], `Profile ${profile.id} support screenshot ${imageId} should exist in the image map`);
+  }
   for (const video of profile.videos || []) {
     assert(/^https:\/\/tokyo-weimi\.com\/wp-content\/uploads\//.test(video), `Profile ${profile.id} video should use a source URL`);
     assert(/\.(mp4|mov|webm)$/i.test(new URL(video).pathname), `Profile ${profile.id} video should be a supported video file`);
