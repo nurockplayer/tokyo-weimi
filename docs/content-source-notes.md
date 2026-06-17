@@ -1,16 +1,22 @@
 # Content Source Notes
 
-This project is the static frontend replacement for the previous Tokyo Weimi WordPress/PHP site.
+This project is the static frontend replacement for multiple Tokyo night guide sources, acting as a multi-shop aggregator.
 
 These notes are for maintainers only and should not appear in customer-facing website copy.
 
 ## Source Material
 
-- Public source site: `https://tokyo-weimi.com/`
+### Primary Shops
+- **Tokyo Weimi**: `https://tokyo-weimi.com/` (Traditional Japanese/Chinese shop)
+- **Hikari (ひかり)**: `https://hikari888.com/` (Shin-Okubo based shop)
+
+### Automation & Tools
 - Full crawl script: `tools/scrape-old-site.ts`
-- Daily attendance updater: `tools/update-today-attendance.ts`
-- Manual GitHub refresh workflow: `.github/workflows/update-attendance.yml`. This remains available for manual checks, but it is not scheduled because the source site returns HTTP 403 to GitHub-hosted runners, including Playwright Chromium.
-- Scheduled refreshes run from local Codex automations at 07:30 and 14:30 JST. See `docs/operations.md`.
+- Daily multi-shop attendance updater: `tools/update-today-attendance.ts`
+- GitHub refresh workflow: `.github/workflows/update-attendance.yml`. 
+    - **Note**: Source sites often block GitHub-hosted runner IPs (HTTP 403). 
+    - **Solution**: The workflow is configured to use **Tailscale** with a residential/JP exit node to bypass IP blocking.
+- Scheduled refreshes: 07:30 and 14:30 JST via GitHub Actions.
 - Raw crawl output is local-only and ignored by git: `scraped/old-site/`
 - Downloaded image copies are local-only and ignored by git: `public/assets/old-site/`
 - The live frontend resolves image IDs through `src/content/image-map.json` and renders the source site's original image URLs.
