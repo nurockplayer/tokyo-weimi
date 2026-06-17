@@ -629,11 +629,12 @@ const extractDetailMedia = async (profile: SourceProfile): Promise<{ images: str
 
 const extractName = (profile: SourceProfile): string => {
   if (profile.name) return toTraditional(profile.name);
+  const tradTitle = toTraditional(profile.title);
   for (const name of Object.keys(knownNameIds).sort((a, b) => b.length - a.length)) {
-    if (profile.title.includes(name)) return toTraditional(name);
+    if (tradTitle.includes(toTraditional(name))) return toTraditional(name);
   }
 
-  const withoutPrefix = profile.title.replace(/^【[^】]+】/, "").trim();
+  const withoutPrefix = tradTitle.replace(/^【[^】]+】/, "").trim();
   const beforeBracket = withoutPrefix.split(/[【\s]/)[0] || "";
   const afterSpace = withoutPrefix.match(/\s([一-龥ぁ-んァ-ヶー]{1,6})\s/)?.[1] || "";
   return toTraditional(afterSpace || beforeBracket || `女孩${profile.wpId}`);
@@ -808,7 +809,10 @@ const tryTranslateWithDeepSeek = async (
       response_format: { type: "json_object" },
     }),
   });
-  if (!response.ok) throw new Error(`DeepSeek failed with HTTP ${response.status}`);
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`DeepSeek failed with HTTP ${response.status}: ${body.slice(0, 200)}`);
+  }
 
   const payload = (await response.json()) as DeepSeekChatCompletionResponse;
   const text = payload.choices?.[0]?.message?.content?.trim();
@@ -862,6 +866,7 @@ const translateProfiles = async (
       const result = await tryTranslateWithDeepSeek(missingProfiles, deepseekKey);
       mergeTranslationResponse(result, translations);
       console.log("DeepSeek translation succeeded.");
+      return translations;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.warn(`DeepSeek translation skipped: ${message}`);
