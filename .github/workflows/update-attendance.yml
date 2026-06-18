@@ -2,9 +2,9 @@ name: Update Attendance
 
 on:
   schedule:
-    # 07:30 and 14:30 JST daily. GitHub schedules are UTC.
-    - cron: "30 22 * * *"
-    - cron: "30 5 * * *"
+    # Run every 2 hours to capture updates from multiple shops.
+    # GitHub schedules are UTC. 15 past the hour is used to avoid peak traffic.
+    - cron: "15 */2 * * *"
   workflow_dispatch:
 
 permissions:
