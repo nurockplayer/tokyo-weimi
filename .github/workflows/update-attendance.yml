@@ -95,7 +95,7 @@ jobs:
           branch="automation/update-attendance-$(TZ=Asia/Tokyo date +%Y-%m-%d)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -c "$branch"
+          git switch -C "$branch"
           git add src/content/site-data.json src/content/image-map.json src/content/image-map.ts src/content/local-image-map.json src/content/profile-translations.json
           if compgen -G "public/assets/old-site/today-*" > /dev/null; then
             git add -f public/assets/old-site/today-*
@@ -110,6 +110,11 @@ jobs:
           fi
 
           gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "Update attendance for $(TZ=Asia/Tokyo date +%Y-%m-%d)" \
+            --body "Automated daily multi-shop attendance refresh from https://tokyo-weimi.com/ and https://hikari888.com/."
+   gh pr create \
             --base main \
             --head "$branch" \
             --title "Update attendance for $(TZ=Asia/Tokyo date +%Y-%m-%d)" \

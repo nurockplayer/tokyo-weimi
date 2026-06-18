@@ -44,6 +44,11 @@ type SourceProfile = {
   videos: string[];
 };
 
+type ImageDimensions = {
+  width: number;
+  height: number;
+};
+
 type TranslatedProfileText = Pick<ProfileCopy, "title" | "tags" | "summary">;
 type TranslatableLanguage = Exclude<LanguageCode, "zh-Hant">;
 type ProfileTranslations = Record<LanguageCode, Record<string, TranslatedProfileText>>;
@@ -216,6 +221,22 @@ const blacklist = [
 ];
 const defaultUnknown = "未公開";
 
+const supportScreenshotImageIds = new Set([
+  "2026-03-img-5871",
+  "2026-05-img-5997",
+  "2025-09-img-5071",
+  "2023-08-img-9481",
+  "2026-05-img-6050",
+  "2026-04-img-5916",
+  "2026-04-img-5873",
+]);
+
+const profilePhotoImageIds = new Set([
+  "2025-10-img-5293",
+  "2025-12-img-5779",
+  "2025-12-img-5779-2",
+]);
+
 const decodeEntities = (value = ""): string =>
   value
     .replace(/&#(\d+);/g, (_match, code: string) => String.fromCharCode(Number(code)))
@@ -314,6 +335,66 @@ const fetchFromSource = async (url: string, init: RequestInit = {}, retries = 2)
   }
   if (lastError instanceof Error) throw lastError;
   throw new Error(`${url} failed`);
+};
+
+const dimensionsFromJpeg = (buffer: Buffer): ImageDimensions | null => {
+  if (buffer[0] !== 0xff || buffer[1] !== 0xd8) return null;
+  let index = 2;
+  while (index < buffer.length - 9) {
+    if (buffer[index] !== 0xff) {
+      index += 1;
+      continue;
+    }
+    const marker = buffer[index + 1] ?? 0;
+    const length = buffer.readUInt16BE(index + 2);
+    const isStartOfFrame =
+      (marker >= 0xc0 && marker <= 0xc3) ||
+      (marker >= 0xc5 && marker <= 0xc7) ||
+      (marker >= 0xc9 && marker <= 0xcb) ||
+      (marker >= 0xcd && marker <= 0xcf);
+    if (isStartOfFrame) {
+      return {
+        width: buffer.readUInt16BE(index + 7),
+        height: buffer.readUInt16BE(index + 5),
+      };
+    }
+    index += 2 + length;
+  }
+  return null;
+};
+
+const dimensionsFromPng = (buffer: Buffer): ImageDimensions | null => {
+  if (buffer.toString("ascii", 1, 4) !== "PNG" || buffer.length < 24) return null;
+  return {
+    width: buffer.readUInt32BE(16),
+    height: buffer.readUInt32BE(20),
+  };
+};
+
+const imageDimensionsCache = new Map<string, ImageDimensions | null>();
+
+const fetchImageDimensions = async (url: string): Promise<ImageDimensions | null> => {
+  if (imageDimensionsCache.has(url)) return imageDimensionsCache.get(url) || null;
+  try {
+    const response = await fetchFromSource(url, {}, 1);
+    if (!response.ok) throw new Error(`${url} failed with HTTP ${response.status}`);
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const dimensions = dimensionsFromJpeg(buffer) || dimensionsFromPng(buffer);
+    imageDimensionsCache.set(url, dimensions);
+    return dimensions;
+  } catch {
+    imageDimensionsCache.set(url, null);
+    return null;
+  }
+};
+
+const isLikelySupportScreenshot = async (imageId: string, url: string): Promise<boolean> => {
+  if (supportScreenshotImageIds.has(imageId)) return true;
+  if (profilePhotoImageIds.has(imageId)) return false;
+  const dimensions = await fetchImageDimensions(url);
+  if (!dimensions) return false;
+  const landscapeRatio = dimensions.width / dimensions.height;
+  return dimensions.width > dimensions.height && landscapeRatio >= 1.15 && dimensions.height <= 1_000;
 };
 
 const fetchTextWithBrowser = async (url: string): Promise<string> => {
@@ -816,7 +897,7 @@ const tryTranslateWithGemini = async (
   missingProfiles: Profile[],
   apiKey: string,
 ): Promise<TranslationResponse> => {
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-pro";
+  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const response = await fetch(url, {
     method: "POST",
@@ -851,7 +932,7 @@ const tryTranslateWithDeepSeek = async (
   missingProfiles: Profile[],
   apiKey: string,
 ): Promise<TranslationResponse> => {
-  const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-pro";
+  const model = process.env.DEEPSEEK_MODEL || "deepseek-chat";
   const response = await fetch("https://api.deepseek.com/chat/completions", {
     method: "POST",
     headers: {
@@ -969,6 +1050,31 @@ const ensureImage = async (
   return imageId;
 };
 
+const splitProfileImages = async (
+  imageIds: string[],
+  imageMap: Record<string, string>,
+  existingSupportScreenshots: string[] = [],
+): Promise<{ gallery: string[]; supportScreenshots: string[] }> => {
+  const gallery: string[] = [];
+  const supportScreenshots: string[] = [];
+  const existingSupport = new Set(existingSupportScreenshots);
+  for (const imageId of imageIds) {
+    const url = imageMap[imageId];
+    if (profilePhotoImageIds.has(imageId)) {
+      gallery.push(imageId);
+    } else if (existingSupport.has(imageId) || (url && await isLikelySupportScreenshot(imageId, url))) {
+      supportScreenshots.push(imageId);
+    } else {
+      gallery.push(imageId);
+    }
+  }
+  for (const imageId of existingSupportScreenshots) {
+    if (!profilePhotoImageIds.has(imageId) && !supportScreenshots.includes(imageId)) supportScreenshots.push(imageId);
+  }
+  if (!gallery.length && supportScreenshots.length) gallery.push(supportScreenshots.shift()!);
+  return { gallery, supportScreenshots };
+};
+
 const siteData = readJson<SiteData>("src/content/site-data.json");
 const baselineSiteData = siteData;
 const imageMap = readJson<Record<string, string>>("src/content/image-map.json");
@@ -993,10 +1099,11 @@ const profiles: Profile[] = [];
 for (const { sourceProfile, media } of enrichedSourceProfiles) {
   const { images: imageUrls, videos } = media;
   if (!imageUrls.length) continue;
-  const gallery = [];
+  const imageIds: string[] = [];
   for (const url of imageUrls) {
-    gallery.push(await ensureImage(url, imageMap, sourceToId));
+    imageIds.push(await ensureImage(url, imageMap, sourceToId));
   }
+  const { gallery, supportScreenshots } = await splitProfileImages(imageIds, imageMap);
   const name = extractName(sourceProfile);
   const tags = deriveTags(sourceProfile);
   const id = profileId(sourceProfile, existingByName);
@@ -1019,6 +1126,7 @@ for (const { sourceProfile, media } of enrichedSourceProfiles) {
       : withFallback(deriveSummary(sourceProfile), deriveTitle(sourceProfile, tags)),
     image: gallery[0] || "",
     gallery,
+    ...(supportScreenshots.length ? { supportScreenshots } : {}),
     videos: videos.length ? videos : previousProfile?.videos,
     isToday: true,
   });
@@ -1027,9 +1135,21 @@ for (const { sourceProfile, media } of enrichedSourceProfiles) {
 if (!profiles.length) throw new Error("No profiles remained after image processing");
 
 const todayProfileIds = new Set(profiles.map((profile) => profile.id));
-const preservedProfiles = baselineSiteData.profiles
-  .filter((profile) => !todayProfileIds.has(profile.id))
-  .map((profile) => ({ ...profile, shopId: profile.shopId || "tokyo-weimi", isToday: false }));
+const preservedProfiles: Profile[] = [];
+for (const profile of baselineSiteData.profiles.filter((item) => !todayProfileIds.has(item.id))) {
+  const { gallery, supportScreenshots } = await splitProfileImages(
+    [...new Set([profile.image, ...(profile.gallery || [])].filter(Boolean))],
+    imageMap,
+    profile.supportScreenshots || [],
+  );
+  preservedProfiles.push({
+    ...profile,
+    shopId: profile.shopId || "tokyo-weimi",
+    gallery,
+    ...(supportScreenshots.length ? { supportScreenshots } : { supportScreenshots: undefined }),
+    isToday: false,
+  });
+}
 
 siteData.shops = shopSources;
 siteData.contact = tokyoWeimiContact;
