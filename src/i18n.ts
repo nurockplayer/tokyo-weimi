@@ -603,6 +603,7 @@ const common = {
     },
     labels: {
       updated: "更新",
+      lastActive: "最後出勤",
       photos: "張照片",
       search: "搜尋",
       searchPlaceholder: "輸入名稱、地區或標籤",
@@ -740,6 +741,7 @@ export const dictionaries = {
     },
     labels: {
       updated: "更新",
+      lastActive: "最后出勤",
       photos: "张照片",
       search: "搜索",
       searchPlaceholder: "输入名称、地区或标签",
@@ -934,6 +936,7 @@ export const dictionaries = {
     },
     labels: {
       updated: "更新",
+      lastActive: "最終出勤",
       photos: "枚の写真",
       search: "検索",
       searchPlaceholder: "名前、地域、タグを入力",
@@ -1128,6 +1131,7 @@ export const dictionaries = {
     },
     labels: {
       updated: "업데이트",
+      lastActive: "마지막 출근",
       photos: "장 사진",
       search: "검색",
       searchPlaceholder: "이름, 지역 또는 태그 입력",
@@ -1322,6 +1326,7 @@ export const dictionaries = {
     },
     labels: {
       updated: "updated",
+      lastActive: "last active",
       photos: "photos",
       search: "Search",
       searchPlaceholder: "Name, area, or tag",

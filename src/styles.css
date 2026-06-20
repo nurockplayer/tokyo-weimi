@@ -887,26 +887,30 @@ dd {
   background: #141210;
 }
 
-.support-screenshots {
+.support-screenshots,
+.supplemental-media {
   display: grid;
   gap: 10px;
   border-top: 1px solid var(--line);
   padding-top: 12px;
 }
 
-.support-screenshots h3 {
+.support-screenshots h3,
+.supplemental-media h3 {
   margin: 0;
   color: var(--gold);
   font-size: 14px;
 }
 
-.support-screenshot-grid {
+.support-screenshot-grid,
+.supplemental-media-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 8px;
 }
 
-.support-screenshot-grid a {
+.support-screenshot-grid a,
+.supplemental-media-grid a {
   display: block;
   border: 1px solid var(--line);
   border-radius: 4px;
@@ -914,7 +918,8 @@ dd {
   background: #141210;
 }
 
-.support-screenshot-grid img {
+.support-screenshot-grid img,
+.supplemental-media-grid img {
   display: block;
   width: 100%;
   height: auto;

@@ -215,7 +215,7 @@ const renderProfileCard = (profile: Profile) => {
   const photoTotal = profile.gallery?.length || 1;
   const isToday = isTodayProfile(profile);
   const displayDate = isToday ? profile.date : (profile.lastSeen || profile.date);
-  const dateLabel = isToday ? copy.labels.updated : "Last Active";
+  const dateLabel = isToday ? copy.labels.updated : copy.labels.lastActive;
 
   return `
   <article class="profile-card">
@@ -476,6 +476,9 @@ const openProfile = (id: string | undefined) => {
   const supportScreenshots = profile.supportScreenshots || [];
   const supplementalMedia = profile.supplementalMedia || [];
   const videos = profile.videos || [];
+  const isToday = isTodayProfile(profile);
+  const displayDate = isToday ? profile.date : (profile.lastSeen || profile.date);
+  const dateLabel = isToday ? copy.labels.updated : copy.labels.lastActive;
   const dialog = document.querySelector<HTMLDialogElement>(".profile-dialog");
   const content = dialog?.querySelector<HTMLElement>(".dialog-content");
   if (!dialog || !content) return;
@@ -514,9 +517,9 @@ const openProfile = (id: string | undefined) => {
       }
       ${
         supplementalMedia.length
-          ? `<div class="support-screenshots">
+          ? `<div class="supplemental-media">
               <h3>${copy.labels.supplementalMedia}</h3>
-              <div class="support-screenshot-grid">
+              <div class="supplemental-media-grid">
                 ${supplementalMedia
                   .map(
                     (image) => `
@@ -545,7 +548,7 @@ const openProfile = (id: string | undefined) => {
       }
     </div>
     <div>
-      <span class="section-kicker">${formatDate(profile.isToday !== false ? profile.date : (profile.lastSeen || profile.date))} ${profile.isToday !== false ? copy.labels.updated : "Last Active"}</span>
+      <span class="section-kicker">${formatDate(displayDate)} ${dateLabel}</span>
       <h2>${profile.name}｜${profileText.title}</h2>
       <p>${profileText.summary}</p>
       <p class="gallery-count">${formatPhotoCount(gallery.length, copy)}</p>

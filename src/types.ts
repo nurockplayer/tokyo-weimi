@@ -96,6 +96,7 @@ type SectionKey =
 
 type LabelKey =
   | "updated"
+  | "lastActive"
   | "photos"
   | "search"
   | "searchPlaceholder"
