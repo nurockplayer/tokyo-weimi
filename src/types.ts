@@ -37,6 +37,7 @@ export type Profile = {
   image: string;
   gallery: string[];
   supportScreenshots?: string[];
+  supplementalMedia?: string[];
   origin: string;
   age: string;
   height: string;
@@ -47,6 +48,7 @@ export type Profile = {
   summary: string;
   videos?: string[];
   isToday?: boolean;
+  lastSeen?: string;
 };
 
 export type Hotel = {
@@ -111,6 +113,7 @@ type LabelKey =
   | "updateFrequency"
   | "lineGallery"
   | "supportScreenshots"
+  | "supplementalMedia"
   | "viewPhoto"
   | "photoOrdinalSuffix"
   | "hotelAlt"

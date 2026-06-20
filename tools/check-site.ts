@@ -106,7 +106,7 @@ for (const term of simplifiedProfileTerms) {
 }
 const parsedSiteData = JSON.parse(siteData) as {
   shops?: Array<{ id: string; name: string; sourceUrl: string }>;
-  profiles?: Array<{ id: string; image?: string; gallery?: string[]; supportScreenshots?: string[]; videos?: string[]; isToday?: boolean }>;
+  profiles?: Array<{ id: string; image?: string; gallery?: string[]; supportScreenshots?: string[]; supplementalMedia?: string[]; videos?: string[]; isToday?: boolean }>;
 };
 assert((parsedSiteData.shops?.length || 0) >= 2, "site data should include multiple shops");
 assert(
@@ -126,6 +126,34 @@ const knownSupportScreenshotIds = [
   "2026-05-img-6050",
   "2026-04-img-5916",
   "2026-04-img-5873",
+  "2026-06-img-6171",
+];
+const knownSupplementalMediaIds = [
+  "2024-07-img-1336",
+  "2024-07-img-1337",
+  "2024-07-img-1346",
+  "2024-05-img-0678",
+  "2024-05-img-0677",
+  "2024-05-img-0676",
+  "2024-05-img-0674",
+  "2024-05-img-0675",
+  "2024-10-img-2446",
+  "2024-10-img-2448",
+  "2024-11-img-2612",
+  "2023-04-8dfe8ac2-6a67-4e9d-bd51-a7f337e91783",
+  "2023-04-f5b9c816-3fbb-415b-9587-b854065a84c0",
+  "2023-04-af583bad-59e6-4016-9f23-18a223463e0a",
+  "2023-04-37d04928-9203-458c-8bb6-da471a577edb",
+  "2023-04-3ade51fa-60bf-46ed-a61d-101d5be91a15",
+  "2023-04-58ba6657-4776-429b-8230-d97d9e8b6041",
+  "2023-04-c0b60151-053c-45fe-ab89-cf9bfb668d49",
+];
+const knownGalleryLandscapeIds = [
+  "2025-10-img-5293",
+  "2025-12-img-5779",
+  "2025-12-img-5779-2",
+  "2024-08-img-1778",
+  "2024-05-img-0673",
 ];
 assert(parsedProfiles.length >= 1, "today schedule should contain scraped profiles");
 const todayProfiles = parsedProfiles.filter((profile) => profile.isToday !== false);
@@ -163,14 +191,36 @@ for (const profile of parsedProfiles) {
       !knownSupportScreenshotIds.includes(imageId),
       `Profile ${profile.id} should keep support screenshot ${imageId} out of the main gallery`,
     );
+    assert(
+      !knownSupplementalMediaIds.includes(imageId),
+      `Profile ${profile.id} should keep supplemental media ${imageId} out of the main gallery`,
+    );
   }
   for (const imageId of profile.supportScreenshots || []) {
     assert(imageMap[imageId], `Profile ${profile.id} support screenshot ${imageId} should exist in the image map`);
+  }
+  for (const imageId of profile.supplementalMedia || []) {
+    assert(imageMap[imageId], `Profile ${profile.id} supplemental media ${imageId} should exist in the image map`);
   }
   for (const video of profile.videos || []) {
     assert(/^https:\/\/tokyo-weimi\.com\/wp-content\/uploads\//.test(video), `Profile ${profile.id} video should use a source URL`);
     assert(/\.(mp4|mov|webm)$/i.test(new URL(video).pathname), `Profile ${profile.id} video should be a supported video file`);
   }
+}
+for (const imageId of knownGalleryLandscapeIds) {
+  const profilesWithImage = parsedProfiles.filter((profile) =>
+    [
+      profile.image,
+      ...(profile.gallery || []),
+      ...(profile.supportScreenshots || []),
+      ...(profile.supplementalMedia || []),
+    ].includes(imageId),
+  );
+  if (!profilesWithImage.length) continue;
+  assert(
+    profilesWithImage.some((profile) => profile.gallery?.includes(imageId)),
+    `Landscape profile photo ${imageId} should remain in a main gallery`,
+  );
 }
 assert(multiPhotoProfiles >= 40, "most profiles should keep multi-photo galleries from source detail pages");
 const { dictionaries, languageOptions } = await import("../src/i18n.ts");
