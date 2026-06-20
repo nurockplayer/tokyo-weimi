@@ -44,11 +44,6 @@ type SourceProfile = {
   videos: string[];
 };
 
-type ImageDimensions = {
-  width: number;
-  height: number;
-};
-
 type TranslatedProfileText = Pick<ProfileCopy, "title" | "tags" | "summary">;
 type TranslatableLanguage = Exclude<LanguageCode, "zh-Hant">;
 type ProfileTranslations = Record<LanguageCode, Record<string, TranslatedProfileText>>;
@@ -171,7 +166,7 @@ const textReplacements: Array<[RegExp, string]> = [
   [/开发/g, "開發"],
   [/喜欢/g, "喜歡"],
   [/快来/g, "快來"],
-  [/长相/g, "長相"],
+  [/长相/g, "長項"],
   [/紧致/g, "緊緻"],
   [/精致/g, "精緻"],
   [/岁/g, "歲"],
@@ -229,12 +224,36 @@ const supportScreenshotImageIds = new Set([
   "2026-05-img-6050",
   "2026-04-img-5916",
   "2026-04-img-5873",
+  "2026-06-img-6171",
 ]);
 
 const profilePhotoImageIds = new Set([
   "2025-10-img-5293",
   "2025-12-img-5779",
   "2025-12-img-5779-2",
+  "2024-08-img-1778",
+  "2024-05-img-0673",
+]);
+
+const supplementalMediaImageIds = new Set([
+  "2024-07-img-1336",
+  "2024-07-img-1337",
+  "2024-07-img-1346",
+  "2024-05-img-0678",
+  "2024-05-img-0677",
+  "2024-05-img-0676",
+  "2024-05-img-0674",
+  "2024-05-img-0675",
+  "2024-10-img-2446",
+  "2024-10-img-2448",
+  "2024-11-img-2612",
+  "2023-04-8dfe8ac2-6a67-4e9d-bd51-a7f337e91783",
+  "2023-04-f5b9c816-3fbb-415b-9587-b854065a84c0",
+  "2023-04-af583bad-59e6-4016-9f23-18a223463e0a",
+  "2023-04-37d04928-9203-458c-8bb6-da471a577edb",
+  "2023-04-3ade51fa-60bf-46ed-a61d-101d5be91a15",
+  "2023-04-58ba6657-4776-429b-8230-d97d9e8b6041",
+  "2023-04-c0b60151-053c-45fe-ab89-cf9bfb668d49",
 ]);
 
 const decodeEntities = (value = ""): string =>
@@ -335,66 +354,6 @@ const fetchFromSource = async (url: string, init: RequestInit = {}, retries = 2)
   }
   if (lastError instanceof Error) throw lastError;
   throw new Error(`${url} failed`);
-};
-
-const dimensionsFromJpeg = (buffer: Buffer): ImageDimensions | null => {
-  if (buffer[0] !== 0xff || buffer[1] !== 0xd8) return null;
-  let index = 2;
-  while (index < buffer.length - 9) {
-    if (buffer[index] !== 0xff) {
-      index += 1;
-      continue;
-    }
-    const marker = buffer[index + 1] ?? 0;
-    const length = buffer.readUInt16BE(index + 2);
-    const isStartOfFrame =
-      (marker >= 0xc0 && marker <= 0xc3) ||
-      (marker >= 0xc5 && marker <= 0xc7) ||
-      (marker >= 0xc9 && marker <= 0xcb) ||
-      (marker >= 0xcd && marker <= 0xcf);
-    if (isStartOfFrame) {
-      return {
-        width: buffer.readUInt16BE(index + 7),
-        height: buffer.readUInt16BE(index + 5),
-      };
-    }
-    index += 2 + length;
-  }
-  return null;
-};
-
-const dimensionsFromPng = (buffer: Buffer): ImageDimensions | null => {
-  if (buffer.toString("ascii", 1, 4) !== "PNG" || buffer.length < 24) return null;
-  return {
-    width: buffer.readUInt32BE(16),
-    height: buffer.readUInt32BE(20),
-  };
-};
-
-const imageDimensionsCache = new Map<string, ImageDimensions | null>();
-
-const fetchImageDimensions = async (url: string): Promise<ImageDimensions | null> => {
-  if (imageDimensionsCache.has(url)) return imageDimensionsCache.get(url) || null;
-  try {
-    const response = await fetchFromSource(url, {}, 1);
-    if (!response.ok) throw new Error(`${url} failed with HTTP ${response.status}`);
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const dimensions = dimensionsFromJpeg(buffer) || dimensionsFromPng(buffer);
-    imageDimensionsCache.set(url, dimensions);
-    return dimensions;
-  } catch {
-    imageDimensionsCache.set(url, null);
-    return null;
-  }
-};
-
-const isLikelySupportScreenshot = async (imageId: string, url: string): Promise<boolean> => {
-  if (supportScreenshotImageIds.has(imageId)) return true;
-  if (profilePhotoImageIds.has(imageId)) return false;
-  const dimensions = await fetchImageDimensions(url);
-  if (!dimensions) return false;
-  const landscapeRatio = dimensions.width / dimensions.height;
-  return dimensions.width > dimensions.height && landscapeRatio >= 1.15 && dimensions.height <= 1_000;
 };
 
 const fetchTextWithBrowser = async (url: string): Promise<string> => {
@@ -897,7 +856,7 @@ const tryTranslateWithGemini = async (
   missingProfiles: Profile[],
   apiKey: string,
 ): Promise<TranslationResponse> => {
-  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-2.5-pro";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const response = await fetch(url, {
     method: "POST",
@@ -932,7 +891,7 @@ const tryTranslateWithDeepSeek = async (
   missingProfiles: Profile[],
   apiKey: string,
 ): Promise<TranslationResponse> => {
-  const model = process.env.DEEPSEEK_MODEL || "deepseek-chat";
+  const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-pro";
   const response = await fetch("https://api.deepseek.com/chat/completions", {
     method: "POST",
     headers: {
@@ -1050,29 +1009,40 @@ const ensureImage = async (
   return imageId;
 };
 
-const splitProfileImages = async (
+const unique = (values: string[]): string[] => [...new Set(values.filter(Boolean))];
+
+const splitProfileMedia = (
   imageIds: string[],
-  imageMap: Record<string, string>,
-  existingSupportScreenshots: string[] = [],
-): Promise<{ gallery: string[]; supportScreenshots: string[] }> => {
+  previousProfile?: Profile,
+): { gallery: string[]; supportScreenshots: string[]; supplementalMedia: string[] } => {
+  const previousSupport = new Set(previousProfile?.supportScreenshots || []);
+  const previousSupplemental = new Set(previousProfile?.supplementalMedia || []);
   const gallery: string[] = [];
   const supportScreenshots: string[] = [];
-  const existingSupport = new Set(existingSupportScreenshots);
-  for (const imageId of imageIds) {
-    const url = imageMap[imageId];
+  const supplementalMedia: string[] = [];
+
+  for (const imageId of unique(imageIds)) {
     if (profilePhotoImageIds.has(imageId)) {
       gallery.push(imageId);
-    } else if (existingSupport.has(imageId) || (url && await isLikelySupportScreenshot(imageId, url))) {
+    } else if (supportScreenshotImageIds.has(imageId)) {
       supportScreenshots.push(imageId);
+    } else if (supplementalMediaImageIds.has(imageId)) {
+      supplementalMedia.push(imageId);
+    } else if (previousSupport.has(imageId)) {
+      supportScreenshots.push(imageId);
+    } else if (previousSupplemental.has(imageId)) {
+      supplementalMedia.push(imageId);
     } else {
       gallery.push(imageId);
     }
   }
-  for (const imageId of existingSupportScreenshots) {
-    if (!profilePhotoImageIds.has(imageId) && !supportScreenshots.includes(imageId)) supportScreenshots.push(imageId);
+
+  if (!gallery.length) {
+    const fallback = supplementalMedia.shift() || supportScreenshots.shift();
+    if (fallback) gallery.push(fallback);
   }
-  if (!gallery.length && supportScreenshots.length) gallery.push(supportScreenshots.shift()!);
-  return { gallery, supportScreenshots };
+
+  return { gallery, supportScreenshots, supplementalMedia };
 };
 
 const siteData = readJson<SiteData>("src/content/site-data.json");
@@ -1095,6 +1065,13 @@ const enrichedSourceProfiles = await mapWithConcurrency(sourceProfiles, 5, async
   })),
 }));
 
+const jstDate = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+}).format(new Date());
+
 const profiles: Profile[] = [];
 for (const { sourceProfile, media } of enrichedSourceProfiles) {
   const { images: imageUrls, videos } = media;
@@ -1103,11 +1080,11 @@ for (const { sourceProfile, media } of enrichedSourceProfiles) {
   for (const url of imageUrls) {
     imageIds.push(await ensureImage(url, imageMap, sourceToId));
   }
-  const { gallery, supportScreenshots } = await splitProfileImages(imageIds, imageMap);
   const name = extractName(sourceProfile);
   const tags = deriveTags(sourceProfile);
   const id = profileId(sourceProfile, existingByName);
   const previousProfile = existingById.get(id);
+  const { gallery, supportScreenshots, supplementalMedia } = splitProfileMedia(imageIds, previousProfile);
   profiles.push({
     id,
     shopId: sourceProfile.shopId,
@@ -1127,29 +1104,39 @@ for (const { sourceProfile, media } of enrichedSourceProfiles) {
     image: gallery[0] || "",
     gallery,
     ...(supportScreenshots.length ? { supportScreenshots } : {}),
+    ...(supplementalMedia.length ? { supplementalMedia } : {}),
     videos: videos.length ? videos : previousProfile?.videos,
     isToday: true,
+    lastSeen: jstDate,
   });
 }
 
 if (!profiles.length) throw new Error("No profiles remained after image processing");
 
 const todayProfileIds = new Set(profiles.map((profile) => profile.id));
-const preservedProfiles: Profile[] = [];
-for (const profile of baselineSiteData.profiles.filter((item) => !todayProfileIds.has(item.id))) {
-  const { gallery, supportScreenshots } = await splitProfileImages(
-    [...new Set([profile.image, ...(profile.gallery || [])].filter(Boolean))],
-    imageMap,
-    profile.supportScreenshots || [],
-  );
-  preservedProfiles.push({
-    ...profile,
-    shopId: profile.shopId || "tokyo-weimi",
-    gallery,
-    ...(supportScreenshots.length ? { supportScreenshots } : { supportScreenshots: undefined }),
-    isToday: false,
+const preservedProfiles = baselineSiteData.profiles
+  .filter((profile) => !todayProfileIds.has(profile.id))
+  .map((profile) => {
+    const { gallery, supportScreenshots, supplementalMedia } = splitProfileMedia(
+      [
+        profile.image,
+        ...(profile.gallery || []),
+        ...(profile.supportScreenshots || []),
+        ...(profile.supplementalMedia || []),
+      ],
+      profile,
+    );
+    return {
+      ...profile,
+      image: gallery[0] || profile.image,
+      gallery,
+      ...(supportScreenshots.length ? { supportScreenshots } : { supportScreenshots: undefined }),
+      ...(supplementalMedia.length ? { supplementalMedia } : { supplementalMedia: undefined }),
+      shopId: profile.shopId || "tokyo-weimi",
+      isToday: false,
+      lastSeen: profile.lastSeen || profile.date,
+    };
   });
-}
 
 siteData.shops = shopSources;
 siteData.contact = tokyoWeimiContact;

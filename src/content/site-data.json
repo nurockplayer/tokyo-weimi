@@ -537,12 +537,12 @@
       "gallery": [
         "2024-07-img-1345"
       ],
-      "supportScreenshots": [
+      "isToday": true,
+      "supplementalMedia": [
         "2024-07-img-1336",
         "2024-07-img-1337",
         "2024-07-img-1346"
-      ],
-      "isToday": true
+      ]
     },
     {
       "id": "tokyo-weimi-girl-20205",
@@ -594,10 +594,10 @@
         "2024-11-img-2614",
         "2024-11-img-2613"
       ],
-      "supportScreenshots": [
+      "isToday": true,
+      "supplementalMedia": [
         "2024-11-img-2612"
-      ],
-      "isToday": true
+      ]
     },
     {
       "id": "tokyo-weimi-girl-18874",
@@ -620,14 +620,14 @@
       "gallery": [
         "2024-05-img-0673"
       ],
-      "supportScreenshots": [
+      "isToday": true,
+      "supplementalMedia": [
         "2024-05-img-0678",
         "2024-05-img-0676",
         "2024-05-img-0677",
         "2024-05-img-0675",
         "2024-05-img-0674"
-      ],
-      "isToday": true
+      ]
     },
     {
       "id": "tokyo-weimi-girl-21756",
@@ -650,11 +650,11 @@
         "2024-10-img-2445",
         "2024-10-img-2447"
       ],
-      "supportScreenshots": [
+      "isToday": true,
+      "supplementalMedia": [
         "2024-10-img-2446",
         "2024-10-img-2448"
-      ],
-      "isToday": true
+      ]
     },
     {
       "id": "tokyo-weimi-girl-13085",
@@ -678,7 +678,8 @@
         "2024-02-img-1277",
         "2023-04-0cef358d-db30-47b9-bcbb-8aac1ddf16fc"
       ],
-      "supportScreenshots": [
+      "isToday": true,
+      "supplementalMedia": [
         "2023-04-8dfe8ac2-6a67-4e9d-bd51-a7f337e91783",
         "2023-04-f5b9c816-3fbb-415b-9587-b854065a84c0",
         "2023-04-37d04928-9203-458c-8bb6-da471a577edb",
@@ -686,8 +687,7 @@
         "2023-04-3ade51fa-60bf-46ed-a61d-101d5be91a15",
         "2023-04-58ba6657-4776-429b-8230-d97d9e8b6041",
         "2023-04-c0b60151-053c-45fe-ab89-cf9bfb668d49"
-      ],
-      "isToday": true
+      ]
     },
     {
       "id": "hikari888-girl-990",

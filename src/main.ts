@@ -213,11 +213,15 @@ const renderProfileCard = (profile: Profile) => {
   const copy = currentCopy();
   const profileText = getProfileCopy(profile, copy);
   const photoTotal = profile.gallery?.length || 1;
+  const isToday = isTodayProfile(profile);
+  const displayDate = isToday ? profile.date : (profile.lastSeen || profile.date);
+  const dateLabel = isToday ? copy.labels.updated : copy.labels.lastActive;
+
   return `
   <article class="profile-card">
     <div class="profile-image">
       <img ${protectedImageAttributes} src="${imageSrc(profile.image)}" alt="${profile.name} ${profileText.title}" loading="lazy" />
-      <span class="date-badge">${formatDate(profile.date)} ${copy.labels.updated}</span>
+      <span class="date-badge">${formatDate(displayDate)} ${dateLabel}</span>
       <span class="photo-badge">${formatPhotoCount(photoTotal, copy)}</span>
     </div>
     <div class="profile-body">
@@ -470,7 +474,11 @@ const openProfile = (id: string | undefined) => {
   const profileText = getProfileCopy(profile, copy);
   const gallery = profile.gallery?.length ? profile.gallery : [profile.image];
   const supportScreenshots = profile.supportScreenshots || [];
+  const supplementalMedia = profile.supplementalMedia || [];
   const videos = profile.videos || [];
+  const isToday = isTodayProfile(profile);
+  const displayDate = isToday ? profile.date : (profile.lastSeen || profile.date);
+  const dateLabel = isToday ? copy.labels.updated : copy.labels.lastActive;
   const dialog = document.querySelector<HTMLDialogElement>(".profile-dialog");
   const content = dialog?.querySelector<HTMLElement>(".dialog-content");
   if (!dialog || !content) return;
@@ -508,6 +516,24 @@ const openProfile = (id: string | undefined) => {
           : ""
       }
       ${
+        supplementalMedia.length
+          ? `<div class="supplemental-media">
+              <h3>${copy.labels.supplementalMedia}</h3>
+              <div class="supplemental-media-grid">
+                ${supplementalMedia
+                  .map(
+                    (image) => `
+                      <a href="${imageSrc(image)}" target="_blank" rel="noreferrer">
+                        <img ${protectedImageAttributes} src="${imageSrc(image)}" alt="${profile.name} ${copy.labels.supplementalMedia}" loading="lazy" />
+                      </a>
+                    `,
+                  )
+                  .join("")}
+              </div>
+            </div>`
+          : ""
+      }
+      ${
         videos.length
           ? `<div class="dialog-videos">
               ${videos
@@ -522,7 +548,7 @@ const openProfile = (id: string | undefined) => {
       }
     </div>
     <div>
-      <span class="section-kicker">${formatDate(profile.date)} ${copy.labels.updated}</span>
+      <span class="section-kicker">${formatDate(displayDate)} ${dateLabel}</span>
       <h2>${profile.name}｜${profileText.title}</h2>
       <p>${profileText.summary}</p>
       <p class="gallery-count">${formatPhotoCount(gallery.length, copy)}</p>
