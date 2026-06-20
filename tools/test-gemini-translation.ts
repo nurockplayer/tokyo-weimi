@@ -141,7 +141,7 @@ const main = async (): Promise<void> => {
     process.exit(1);
   }
 
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-pro";
+  const model = process.env.GEMINI_MODEL || "gemini-3.5-flash";
 
   const siteData = loadSiteData();
   const existingTranslations = loadExistingTranslations();

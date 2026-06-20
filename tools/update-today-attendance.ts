@@ -856,7 +856,7 @@ const tryTranslateWithGemini = async (
   missingProfiles: Profile[],
   apiKey: string,
 ): Promise<TranslationResponse> => {
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-pro";
+  const model = process.env.GEMINI_MODEL || "gemini-3.5-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const response = await fetch(url, {
     method: "POST",

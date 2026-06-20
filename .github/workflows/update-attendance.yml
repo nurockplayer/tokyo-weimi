@@ -46,14 +46,16 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-          args: --exit-node=${{ secrets.TAILSCALE_EXIT_NODE }} --exit-node-allow-lan-access
-      - name: Verify connection
+      - name: Use Tailscale exit node
         if: steps.tailscale-config.outputs.configured == 'true'
+        env:
+          TAILSCALE_EXIT_NODE: ${{ secrets.TAILSCALE_EXIT_NODE }}
         run: |
+          sudo -E tailscale set --exit-node="$TAILSCALE_EXIT_NODE"
           echo "Public IP through exit node:"
-          curl -sS https://ifconfig.me || true
+          curl --retry 5 --retry-delay 3 --retry-all-errors -sS https://ifconfig.me || true
           echo
-          curl -L -sS -o /dev/null -w "tokyo-weimi status=%{http_code} final_url=%{url_effective}\n" https://tokyo-weimi.com/
+          curl --retry 5 --retry-delay 3 --retry-all-errors -L -sS -o /dev/null -w "tokyo-weimi status=%{http_code} final_url=%{url_effective}\n" https://tokyo-weimi.com/
       - uses: pnpm/action-setup@v4
         if: steps.tailscale-config.outputs.configured == 'true'
         with:
@@ -110,11 +112,6 @@ jobs:
           fi
 
           gh pr create \
-            --base main \
-            --head "$branch" \
-            --title "Update attendance for $(TZ=Asia/Tokyo date +%Y-%m-%d)" \
-            --body "Automated daily multi-shop attendance refresh from https://tokyo-weimi.com/ and https://hikari888.com/."
-   gh pr create \
             --base main \
             --head "$branch" \
             --title "Update attendance for $(TZ=Asia/Tokyo date +%Y-%m-%d)" \
