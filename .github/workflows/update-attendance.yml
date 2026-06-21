@@ -46,12 +46,10 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-      - name: Use Tailscale exit node
+          args: --exit-node=${{ secrets.TAILSCALE_EXIT_NODE }} --exit-node-allow-lan-access
+      - name: Verify Tailscale exit node
         if: steps.tailscale-config.outputs.configured == 'true'
-        env:
-          TAILSCALE_EXIT_NODE: ${{ secrets.TAILSCALE_EXIT_NODE }}
         run: |
-          sudo -E tailscale set --exit-node="$TAILSCALE_EXIT_NODE"
           echo "Public IP through exit node:"
           curl --retry 5 --retry-delay 3 --retry-all-errors -sS https://ifconfig.me || true
           echo
