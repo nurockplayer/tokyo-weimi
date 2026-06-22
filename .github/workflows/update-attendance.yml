@@ -46,14 +46,24 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-          args: --exit-node=${{ secrets.TAILSCALE_EXIT_NODE }} --exit-node-allow-lan-access
+          # Keep the GitHub runner resolver; tailnet DNS can break public lookups after selecting this exit node.
+          args: --exit-node=${{ secrets.TAILSCALE_EXIT_NODE }} --exit-node-allow-lan-access --accept-dns=false
       - name: Verify Tailscale exit node
         if: steps.tailscale-config.outputs.configured == 'true'
         run: |
-          echo "Public IP through exit node:"
-          curl --retry 5 --retry-delay 3 --retry-all-errors -sS https://ifconfig.me || true
+          set -euo pipefail
+          echo "DNS resolver configuration:"
+          resolvectl status || cat /etc/resolv.conf
           echo
-          curl --retry 5 --retry-delay 3 --retry-all-errors -L -sS -o /dev/null -w "tokyo-weimi status=%{http_code} final_url=%{url_effective}\n" https://tokyo-weimi.com/
+          echo "Source host resolution:"
+          for host in tokyo-weimi.com hikari888.com vip6969.com; do
+            getent hosts "$host"
+          done
+          echo
+          echo "Public IP through exit node:"
+          curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 10 -sS https://ifconfig.me || echo "::warning::Unable to read public IP through exit node."
+          echo
+          curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 10 -L -sS -o /dev/null -w "tokyo-weimi status=%{http_code} final_url=%{url_effective}\n" https://tokyo-weimi.com/
       - uses: pnpm/action-setup@v4
         if: steps.tailscale-config.outputs.configured == 'true'
         with:
