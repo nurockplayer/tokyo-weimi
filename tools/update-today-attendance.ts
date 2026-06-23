@@ -370,14 +370,12 @@ const fetchTextWithBrowser = async (url: string, retries = 2): Promise<string> =
         },
         userAgent: requestHeaders["user-agent"],
       });
-      const response = await page.goto(url, {
+      await page.goto(url, {
         waitUntil: "load",
         timeout: requestTimeoutMs * 2,
       });
-      const status = response?.status() || 0;
-      if (!response || status >= 400) throw new Error(`${url} browser fallback failed with HTTP ${status}`);
       await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => {});
-      return page.content();
+      return await page.content();
     } catch (error) {
       lastError = error;
     } finally {
