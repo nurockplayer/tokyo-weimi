@@ -356,28 +356,36 @@ const fetchFromSource = async (url: string, init: RequestInit = {}, retries = 2)
   throw new Error(`${url} failed`);
 };
 
-const fetchTextWithBrowser = async (url: string): Promise<string> => {
-  const { chromium } = await import("@playwright/test");
-  const browser = await chromium.launch({ headless: true });
-  try {
-    const page = await browser.newPage({
-      extraHTTPHeaders: {
-        "accept-language": requestHeaders["accept-language"],
-        "cache-control": "no-cache",
-        "pragma": "no-cache",
-      },
-      userAgent: requestHeaders["user-agent"],
-    });
-    const response = await page.goto(url, {
-      waitUntil: "domcontentloaded",
-      timeout: requestTimeoutMs,
-    });
-    const status = response?.status() || 0;
-    if (!response || status >= 400) throw new Error(`${url} browser fallback failed with HTTP ${status}`);
-    return page.content();
-  } finally {
-    await browser.close();
+const fetchTextWithBrowser = async (url: string, retries = 2): Promise<string> => {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const { chromium } = await import("@playwright/test");
+    const browser = await chromium.launch({ headless: true });
+    try {
+      const page = await browser.newPage({
+        extraHTTPHeaders: {
+          "accept-language": requestHeaders["accept-language"],
+          "cache-control": "no-cache",
+          "pragma": "no-cache",
+        },
+        userAgent: requestHeaders["user-agent"],
+      });
+      const response = await page.goto(url, {
+        waitUntil: "load",
+        timeout: requestTimeoutMs * 2,
+      });
+      const status = response?.status() || 0;
+      if (!response || status >= 400) throw new Error(`${url} browser fallback failed with HTTP ${status}`);
+      await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => {});
+      return page.content();
+    } catch (error) {
+      lastError = error;
+    } finally {
+      await browser.close().catch(() => {});
+    }
+    if (attempt < retries) await wait(1_000 * (attempt + 1));
   }
+  throw lastError;
 };
 
 const fetchText = async (url: string): Promise<string> => {
