@@ -112,6 +112,7 @@ jobs:
           fi
           git status --short
           git commit -m "Update attendance for $(TZ=Asia/Tokyo date +%Y-%m-%d)"
+          git fetch origin "$branch" 2>/dev/null || true
           git push --force-with-lease origin "$branch"
 
           if gh pr view "$branch" --json number >/dev/null 2>&1; then
