@@ -63,7 +63,9 @@ jobs:
           echo "Public IP through exit node:"
           curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 10 -sS https://ifconfig.me || echo "::warning::Unable to read public IP through exit node."
           echo
-          curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 10 -L -sS -o /dev/null -w "tokyo-weimi status=%{http_code} final_url=%{url_effective}\n" https://tokyo-weimi.com/
+          # Verify exit node connectivity using a less restrictive source site
+          echo "Verifying exit node connectivity to source sites:"
+          curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 10 -L -sS -o /dev/null -w "hikari888 status=%{http_code} final_url=%{url_effective}\n" https://hikari888.com/
       - uses: pnpm/action-setup@v4
         if: steps.tailscale-config.outputs.configured == 'true'
         with:
