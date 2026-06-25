@@ -65,7 +65,7 @@ jobs:
           echo
           # Verify exit node connectivity using a less restrictive source site
           echo "Verifying exit node connectivity to source sites:"
-          curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 10 -L -sS -o /dev/null -w "hikari888 status=%{http_code} final_url=%{url_effective}\n" https://hikari888.com/
+          curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 10 -L -sS -o /dev/null -w "hikari888 status=%{http_code} final_url=%{url_effective}\n" https://hikari888.com/ || echo "::warning::Exit node connectivity check failed, but continuing workflow."
       - uses: pnpm/action-setup@v4
         if: steps.tailscale-config.outputs.configured == 'true'
         with:
