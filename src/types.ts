@@ -141,3 +141,55 @@ export type Dictionary = {
   nav: Array<[string, string]>;
   hotelArea: string;
 };
+
+// === Bridge Refactor Types ===
+
+// Public-facing shop (no sourceUrl — D-05)
+export type PublicShop = Omit<Shop, "sourceUrl">;
+
+// Synchronous data provider interface (D-04)
+export interface DataProvider {
+  getShops(): readonly PublicShop[];
+  getProfiles(): readonly Profile[];
+  getHotels(): readonly Hotel[];
+  getHeroImages(): readonly string[];
+  getDefaultContact(): Contact;
+  getShop(id: string): PublicShop | undefined;
+  getProfile(id: string): Profile | undefined;
+}
+
+// i18n configuration interface (D-06)
+export interface I18nConfig<L extends string = LanguageCode> {
+  defaultLanguage: L;
+  languageOptions: readonly LanguageOption[];
+  routes: Record<L, string>;
+  dictionaries: Record<L, Dictionary>;
+}
+
+// Filter configuration (D-15)
+export type FilterConfig<K extends string = FilterKey> = {
+  defaultKey: K;
+  keys: readonly K[];
+  rules: Partial<Record<K, (profile: Profile) => boolean>>;
+};
+
+// Render context — passed to every render function (D-03, D-09)
+export interface RenderContext {
+  copy: Dictionary;
+  language: LanguageCode;
+  languageOption: LanguageOption;
+  imageSrc: (id: string) => string;
+  videoSrc: (url: string) => string;
+  data: DataProvider;
+  activeFilter: FilterKey;
+  activeShopId: string;
+  query: string;
+}
+
+// Application configuration (D-18)
+export interface YorustarConfig {
+  storagePrefix: string;
+}
+
+// Media resolver interfaces (D-13)
+export type VideoSrcResolver = (videoUrl: string) => string;

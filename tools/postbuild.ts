@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { dictionaries, getLanguageOption, languageOptions } from "../src/i18n.ts";
 import type { LanguageCode } from "../src/types.ts";
+import { escapeHtml } from "../src/helpers/escape-html.ts";
 
 const siteUrl = "https://tokyo-weimi.pages.dev";
 const distDir = join(process.cwd(), "dist");
@@ -17,13 +18,6 @@ const routeFor = (code: LanguageCode) => {
   } satisfies Record<LanguageCode, string>;
   return routes[code];
 };
-
-const escapeHtml = (value: string) =>
-  String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
 
 const alternateLinks = languageOptions
   .map((option) => {
