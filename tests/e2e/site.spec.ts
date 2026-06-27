@@ -7,9 +7,6 @@ import type { SiteData } from "../../src/types.ts";
 const siteData = JSON.parse(
   readFileSync(new URL("../../src/content/site-data.json", import.meta.url), "utf8"),
 ) as SiteData;
-const imageMap = JSON.parse(
-  readFileSync(new URL("../../src/content/image-map.json", import.meta.url), "utf8"),
-) as Record<string, string>;
 const todayProfileCount = siteData.profiles.filter((profile) => profile.isToday !== false).length;
 const featuredProfileCount = siteData.profiles.filter((profile) => profile.isToday === false).length;
 const japaneseTodayProfileCount = siteData.profiles.filter(
@@ -48,7 +45,7 @@ test("renders localized homepage and profile gallery", async ({ page }) => {
   const firstVisibleProfileId = await firstVisibleProfileCard.getAttribute("data-profile");
   const firstVisibleProfile = siteData.profiles.find((profile) => profile.id === firstVisibleProfileId);
   expect(firstVisibleProfile).toBeTruthy();
-  const expectedImageSrc = imageMap[firstVisibleProfile!.image];
+  const expectedImageSrc = `/img/${encodeURIComponent(firstVisibleProfile!.image)}.jpg`;
   expect(expectedImageSrc).toBeTruthy();
 
   await firstVisibleProfileCard.click();

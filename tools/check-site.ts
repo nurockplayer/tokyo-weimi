@@ -56,8 +56,8 @@ assert(mainSource.includes("trackEvent("), "CTA tracking must be wired through t
 assert(mainSource.includes("imageSrc("), "Images must be rendered through the media helper");
 assert(mainSource.includes("videoSrc("), "Profile videos must be rendered through the media helper");
 assert(
-  readFileSync(join(root, "src/media.ts"), "utf8").includes("sourceImages[imageId]"),
-  "image helper must resolve image ids to source image URLs",
+  readFileSync(join(root, "src/media.ts"), "utf8").includes("encodeURIComponent"),
+  "image helper must resolve image ids to /img/{id}.jpg URLs",
 );
 
 const imageMap = JSON.parse(readFileSync(join(root, "src/content/image-map.json"), "utf8")) as Record<string, string>;
