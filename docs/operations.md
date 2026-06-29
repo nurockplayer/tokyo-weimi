@@ -33,7 +33,9 @@ These notes are for maintainers. Do not copy this wording into visible website c
 - `TAILSCALE_EXIT_NODE` should be the GL-AXT1800 Tailscale machine name or its `100.x.y.z` tailnet IP.
 - The GL-AXT1800 must advertise itself as a Tailscale exit node and be approved as an exit node in the Tailscale admin console.
 - Local Codex automations may remain as a fallback path, but the primary scheduled refresh path is GitHub Actions through Tailscale.
-- Automation pull requests should be reviewed before merge. They should not be auto-merged.
+- Automation pull requests are auto-merged only by `.github/workflows/auto-merge-attendance.yml` after guarded checks pass.
+- Guarded auto-merge requires an `automation/update-attendance-YYYY-MM-DD` branch for today's JST date, the expected title, GitHub Actions as author, `main` as base branch, only approved content files changed, bounded additions/deletions, valid content JSON, and all reported PR checks green.
+- Any PR that fails a guard remains open for manual review.
 
 ## Source Diagnostics
 
