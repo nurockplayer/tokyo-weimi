@@ -1,0 +1,283 @@
+name: Auto Merge Attendance
+
+on:
+  workflow_run:
+    workflows:
+      - Update Attendance
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  checks: read
+  contents: write
+  pull-requests: write
+  statuses: read
+
+jobs:
+  guarded-auto-merge:
+    name: Guarded attendance auto-merge
+    runs-on: ubuntu-latest
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        github.event.workflow_run.conclusion == 'success'
+      }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MAX_FILES_CHANGED: "20"
+      MAX_TOTAL_ADDITIONS: "4000"
+      MAX_TOTAL_DELETIONS: "1800"
+    steps:
+      - name: Merge safe attendance PRs
+        run: |
+          set -euo pipefail
+
+          repo="$GITHUB_REPOSITORY"
+          allowed_file_regex='^(src/content/(site-data\.json|image-map\.json|image-map\.ts|local-image-map\.json|profile-translations\.json)|public/assets/old-site/today-[^/]+)$'
+          pr_numbers="$(gh pr list \
+            --repo "$repo" \
+            --state open \
+            --limit 30 \
+            --json number,title,headRefName,baseRefName,author,isDraft \
+            --jq '.[] | select(.headRefName | test("^automation/update-attendance-[0-9]{4}-[0-9]{2}-[0-9]{2}$")) | .number')"
+
+          if [ -z "$pr_numbers" ]; then
+            echo "No open attendance automation PRs found."
+            exit 0
+          fi
+
+          merged=0
+          skipped=0
+          failed=0
+          current_jst_date="$(TZ=Asia/Tokyo date +%Y-%m-%d)"
+
+          for pr_number in $pr_numbers; do
+            echo "::group::Evaluating PR #${pr_number}"
+            pr_json="$(gh pr view "$pr_number" \
+              --repo "$repo" \
+              --json number,title,state,isDraft,baseRefName,headRefName,author,mergeable,statusCheckRollup,files,url)"
+
+            title="$(jq -r '.title' <<< "$pr_json")"
+            url="$(jq -r '.url' <<< "$pr_json")"
+            head_ref="$(jq -r '.headRefName' <<< "$pr_json")"
+            author="$(jq -r '.author.login' <<< "$pr_json")"
+            expected_date="${head_ref#automation/update-attendance-}"
+            expected_title="Update attendance for ${expected_date}"
+
+            echo "PR: ${url}"
+            echo "Title: ${title}"
+            echo "Head: ${head_ref}"
+            echo "Author: ${author}"
+
+            if [ "$(jq -r '.state' <<< "$pr_json")" != "OPEN" ]; then
+              echo "::notice::Skipping #${pr_number}: PR is not open."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+            if [ "$(jq -r '.isDraft' <<< "$pr_json")" != "false" ]; then
+              echo "::notice::Skipping #${pr_number}: draft PR."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+            if [ "$(jq -r '.baseRefName' <<< "$pr_json")" != "main" ]; then
+              echo "::warning::Skipping #${pr_number}: base branch is not main."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+            if ! [[ "$head_ref" =~ ^automation/update-attendance-[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+              echo "::warning::Skipping #${pr_number}: head branch is not an attendance automation branch."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+            if [ "$title" != "$expected_title" ]; then
+              echo "::warning::Skipping #${pr_number}: title does not match expected automation title."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+            if [ "$expected_date" != "$current_jst_date" ]; then
+              echo "::notice::Skipping #${pr_number}: attendance date ${expected_date} is not today's JST date ${current_jst_date}."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+            if [ "$author" != "app/github-actions" ] && [ "$author" != "github-actions[bot]" ]; then
+              echo "::warning::Skipping #${pr_number}: author is not GitHub Actions."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+
+            file_count="$(jq '.files | length' <<< "$pr_json")"
+            total_additions="$(jq '[.files[].additions] | add // 0' <<< "$pr_json")"
+            total_deletions="$(jq '[.files[].deletions] | add // 0' <<< "$pr_json")"
+            echo "Files changed: ${file_count}; additions: ${total_additions}; deletions: ${total_deletions}"
+
+            if [ "$file_count" -gt "$MAX_FILES_CHANGED" ]; then
+              echo "::warning::Skipping #${pr_number}: changed ${file_count} files, limit is ${MAX_FILES_CHANGED}."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+            if [ "$total_additions" -gt "$MAX_TOTAL_ADDITIONS" ]; then
+              echo "::warning::Skipping #${pr_number}: additions ${total_additions} exceed limit ${MAX_TOTAL_ADDITIONS}."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+            if [ "$total_deletions" -gt "$MAX_TOTAL_DELETIONS" ]; then
+              echo "::warning::Skipping #${pr_number}: deletions ${total_deletions} exceed limit ${MAX_TOTAL_DELETIONS}."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+
+            disallowed_files="$(jq -r --arg re "$allowed_file_regex" '.files[].path | select(test($re) | not)' <<< "$pr_json")"
+            if [ -n "$disallowed_files" ]; then
+              echo "::warning::Skipping #${pr_number}: disallowed files changed:"
+              echo "$disallowed_files"
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+
+            removed_or_renamed="$(jq -r '.files[] | select(.changeType == "REMOVED" or .changeType == "RENAMED") | .path' <<< "$pr_json")"
+            if [ -n "$removed_or_renamed" ]; then
+              echo "::warning::Skipping #${pr_number}: removed or renamed files are not auto-mergeable:"
+              echo "$removed_or_renamed"
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+
+            tmpdir="$(mktemp -d)"
+            content_guard_failed=0
+
+            for path in \
+              src/content/site-data.json \
+              src/content/image-map.json \
+              src/content/profile-translations.json; do
+              mkdir -p "$tmpdir/$(dirname "$path")"
+              if ! gh api "repos/${repo}/contents/${path}?ref=${head_ref}" --jq '.content' \
+                | base64 -d > "$tmpdir/$path"; then
+                echo "::warning::Unable to read ${path} from ${head_ref}."
+                content_guard_failed=1
+              fi
+            done
+            if [ "$content_guard_failed" -ne 0 ]; then
+              rm -rf "$tmpdir"
+              echo "::warning::Skipping #${pr_number}: content files could not be read."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+
+            if ! jq -e '
+              (.shops | type == "array" and length >= 2) and
+              (.shops | any(.id == "tokyo-weimi")) and
+              (.shops | any(.id == "hikari888")) and
+              (.profiles | type == "array" and length >= 40) and
+              ([.profiles[] | select((.shopId // "") == "tokyo-weimi" and (.isToday // true) != false)] | length >= 20) and
+              ([.profiles[] | select((.shopId // "") == "hikari888" and (.isToday // true) != false)] | length >= 20) and
+              (.profiles | any((.isToday // true) == false))
+            ' "$tmpdir/src/content/site-data.json" >/dev/null; then
+              rm -rf "$tmpdir"
+              echo "::warning::Skipping #${pr_number}: site-data.json failed content integrity checks."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+
+            if ! jq -e 'type == "object" and length >= 30' "$tmpdir/src/content/image-map.json" >/dev/null; then
+              rm -rf "$tmpdir"
+              echo "::warning::Skipping #${pr_number}: image-map.json failed content integrity checks."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+
+            if ! jq -e '
+              type == "object" and
+              has("zh-Hant") and
+              has("zh-Hans") and
+              has("ja") and
+              has("ko") and
+              has("en")
+            ' "$tmpdir/src/content/profile-translations.json" >/dev/null; then
+              rm -rf "$tmpdir"
+              echo "::warning::Skipping #${pr_number}: profile-translations.json failed content integrity checks."
+              skipped=$((skipped + 1))
+              echo "::endgroup::"
+              continue
+            fi
+
+            rm -rf "$tmpdir"
+
+            echo "Content guards passed."
+
+            for attempt in $(seq 1 30); do
+              pr_json="$(gh pr view "$pr_number" \
+                --repo "$repo" \
+                --json mergeable,statusCheckRollup)"
+
+              mergeable="$(jq -r '.mergeable' <<< "$pr_json")"
+              pending_checks="$(jq -r '
+                [
+                  .statusCheckRollup[]
+                  | select(
+                      (.__typename == "CheckRun" and (.status != "COMPLETED")) or
+                      (.__typename == "StatusContext" and (.state == "PENDING" or .state == "EXPECTED"))
+                    )
+                ] | length
+              ' <<< "$pr_json")"
+              failing_checks="$(jq -r '
+                [
+                  .statusCheckRollup[]
+                  | select(
+                      (.__typename == "CheckRun" and (.conclusion != "SUCCESS" and .conclusion != "NEUTRAL" and .conclusion != "SKIPPED")) or
+                      (.__typename == "StatusContext" and (.state != "SUCCESS"))
+                    )
+                ] | length
+              ' <<< "$pr_json")"
+              check_count="$(jq '.statusCheckRollup | length' <<< "$pr_json")"
+
+              if [ "$failing_checks" -gt 0 ]; then
+                echo "::warning::Skipping #${pr_number}: at least one check failed."
+                skipped=$((skipped + 1))
+                echo "::endgroup::"
+                continue 2
+              fi
+
+              if [ "$check_count" -gt 0 ] && [ "$pending_checks" -eq 0 ] && [ "$mergeable" = "MERGEABLE" ]; then
+                echo "All reported checks are green and PR is mergeable."
+                break
+              fi
+
+              if [ "$attempt" -eq 30 ]; then
+                echo "::warning::Skipping #${pr_number}: checks or mergeability did not settle in time."
+                skipped=$((skipped + 1))
+                echo "::endgroup::"
+                continue 2
+              fi
+
+              echo "Waiting for checks/mergeability to settle: attempt ${attempt}/30, checks=${check_count}, pending=${pending_checks}, mergeable=${mergeable}."
+              sleep 20
+            done
+
+            gh pr merge "$pr_number" \
+              --repo "$repo" \
+              --merge \
+              --delete-branch \
+              --subject "Merge attendance update ${expected_date}" \
+              --body "Guarded auto-merge after attendance workflow verification, file-scope checks, content integrity checks, and green reported PR checks."
+            echo "Merged #${pr_number}."
+            merged=$((merged + 1))
+            echo "::endgroup::"
+          done
+
+          echo "Merged: ${merged}; skipped: ${skipped}; failed: ${failed}."
