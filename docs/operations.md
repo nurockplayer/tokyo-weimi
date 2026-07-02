@@ -9,11 +9,20 @@ These notes are for maintainers. Do not copy this wording into visible website c
 - Build output directory: `dist`.
 - Node.js version: `24`.
 
+## Workflow Failure Tracking
+
+- Failure log workflow: `.github/workflows/record-workflow-failure.yml`.
+- Central tracking issue: `GitHub Actions Failure Log` ([#50](https://github.com/nurockplayer/tokyo-weimi/issues/50)).
+- Any GitHub Actions workflow that completes with `failure`, `timed_out`, or `action_required` is recorded in the central `GitHub Actions Failure Log` issue.
+- The recorder creates the issue automatically if it does not exist and labels it `ci-failure-log`.
+- Each failure comment includes the run link, attempt number, event, branch, commit, failed jobs, failed steps, a log excerpt, and an initial heuristic classification.
+- When fixing a workflow failure, reference the failure-log comment or issue from the remediation PR. This keeps recurring failures comparable instead of losing root-cause notes in chat.
+
 ## Attendance Refresh
 
 - Updater script: `tools/update-today-attendance.ts`.
 - GitHub workflow: `.github/workflows/update-attendance.yml`.
-- The workflow runs at 07:30 and 14:30 JST through GitHub Actions.
+- The workflow runs every 2 hours through GitHub Actions.
 - GitHub-hosted runners are blocked by the source site when they use the default GitHub/Azure egress IP.
 - To avoid that block, the workflow joins the Tailscale tailnet and routes traffic through the home GL-AXT1800 exit node before running the updater.
 - Required GitHub repository secrets:
@@ -24,7 +33,9 @@ These notes are for maintainers. Do not copy this wording into visible website c
 - `TAILSCALE_EXIT_NODE` should be the GL-AXT1800 Tailscale machine name or its `100.x.y.z` tailnet IP.
 - The GL-AXT1800 must advertise itself as a Tailscale exit node and be approved as an exit node in the Tailscale admin console.
 - Local Codex automations may remain as a fallback path, but the primary scheduled refresh path is GitHub Actions through Tailscale.
-- Automation pull requests should be reviewed before merge. They should not be auto-merged.
+- Automation pull requests are auto-merged only by `.github/workflows/auto-merge-attendance.yml` after guarded checks pass.
+- Guarded auto-merge requires an `automation/update-attendance-YYYY-MM-DD` branch for today's JST date, the expected title, GitHub Actions as author, `main` as base branch, only approved content files changed, bounded additions/deletions, valid content JSON, and all reported PR checks green.
+- Any PR that fails a guard remains open for manual review.
 
 ## Source Diagnostics
 
@@ -67,7 +78,7 @@ pnpm run test:e2e
 
 ## Known Constraints
 
-- GitHub-hosted scheduled scraping is disabled because the source site blocks GitHub runner traffic.
+- GitHub-hosted scheduled scraping requires Tailscale exit-node routing because the source site blocks default GitHub/Azure egress traffic.
 - Local Mac networking currently succeeds for the source site.
 - Images are rendered as original source URLs resolved from `src/content/image-map.json`; profile videos are also rendered from original source URLs.
 - The frontend prevents casual right-click, drag, and direct UI download paths, but public web images cannot be made impossible to retrieve by a determined user.
