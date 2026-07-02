@@ -1,11 +1,6 @@
-import { imageMap } from "./content/image-map.ts";
+export const imageSrc = (imageId: string): string =>
+  `/img/${encodeURIComponent(imageId)}.jpg`;
 
-const sourceImages = imageMap as Record<string, string>;
-const isAbsoluteMediaUrl = (value: string) => /^https?:\/\//i.test(value);
+export type VideoSrcResolver = (url: string) => string;
 
-export const imageSrc = (imageId: string) => {
-  if (isAbsoluteMediaUrl(imageId)) return imageId;
-  return sourceImages[imageId] || `/img/${encodeURIComponent(imageId)}.jpg`;
-};
-
-export const videoSrc = (videoUrl: string) => videoUrl;
+export const videoSrc: VideoSrcResolver = (videoUrl: string) => videoUrl;

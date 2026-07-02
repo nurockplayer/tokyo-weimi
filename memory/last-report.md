@@ -1,3 +1,4 @@
+
 # Workflow Failure Tracking Report
 
 ## 完成了什麼
@@ -23,3 +24,4 @@
 - `actionlint` 本機不可用，因此未執行 GitHub Actions 專用 lint；已用 YAML parse、shellcheck、以及實際 `gh`/`jq` 模擬補強驗證。
 - Guarded auto-merge 只處理當天 JST 日期的 attendance PR；較舊的 open attendance PR 會保守跳過，保留人工處理。
 - Guarded auto-merge 依賴 GitHub API 回報 PR checks；如果沒有任何 reported check，會保守跳過 auto-merge。
+
