@@ -1,0 +1,209 @@
+name: Record Workflow Failure
+
+on:
+  workflow_run:
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  record-failure:
+    name: Record failed workflow run
+    runs-on: ubuntu-latest
+    if: >-
+      ${{
+        github.event.workflow_run.name != 'Record Workflow Failure' &&
+        (
+          github.event.workflow_run.conclusion == 'failure' ||
+          github.event.workflow_run.conclusion == 'timed_out' ||
+          github.event.workflow_run.conclusion == 'action_required'
+        )
+      }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+      ISSUE_TITLE: GitHub Actions Failure Log
+      ISSUE_LABEL: ci-failure-log
+    steps:
+      - name: Build failure report
+        run: |
+          set -euo pipefail
+
+          mkdir -p .ci-failure-report
+          gh run view "$RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json conclusion,createdAt,event,headBranch,headSha,jobs,name,status,updatedAt,url,workflowName \
+            > .ci-failure-report/run.json
+
+          gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > .ci-failure-report/failed.log 2>&1 || true
+          sed -E 's/\x1b\[[0-9;]*[A-Za-z]//g' .ci-failure-report/failed.log \
+            | tail -n 120 > .ci-failure-report/failed-excerpt.log || true
+
+          if [ ! -s .ci-failure-report/failed-excerpt.log ]; then
+            failed_job_id="$(jq -r '
+              [
+                .jobs[]?
+                | select((.conclusion // "") as $c | $c != "success" and $c != "skipped" and $c != "")
+                | .databaseId // empty
+              ][0] // ""
+            ' .ci-failure-report/run.json)"
+            if [ -n "$failed_job_id" ]; then
+              gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${failed_job_id}/logs" \
+                > .ci-failure-report/failed-job.log 2>/dev/null || true
+              if [ -s .ci-failure-report/failed-job.log ]; then
+                sed -E 's/\x1b\[[0-9;]*[A-Za-z]//g' .ci-failure-report/failed-job.log \
+                  | grep -Ei '##\[error\]|ERR_|error|failed|failure|timeout|timed out|curl:' \
+                  | tail -n 120 > .ci-failure-report/failed-excerpt.log || true
+                if [ ! -s .ci-failure-report/failed-excerpt.log ]; then
+                  sed -E 's/\x1b\[[0-9;]*[A-Za-z]//g' .ci-failure-report/failed-job.log \
+                    | grep -Ei 'warning|pnpm|tailscale|exit node' \
+                    | tail -n 120 > .ci-failure-report/failed-excerpt.log || true
+                fi
+                if [ ! -s .ci-failure-report/failed-excerpt.log ]; then
+                  sed -E 's/\x1b\[[0-9;]*[A-Za-z]//g' .ci-failure-report/failed-job.log \
+                    | tail -n 120 > .ci-failure-report/failed-excerpt.log || true
+                fi
+              fi
+            fi
+          fi
+
+          workflow_name="$(jq -r '.workflowName // .name // "unknown workflow"' .ci-failure-report/run.json)"
+          conclusion="$(jq -r '.conclusion // "unknown"' .ci-failure-report/run.json)"
+          event_name="$(jq -r '.event // "unknown"' .ci-failure-report/run.json)"
+          head_branch="$(jq -r '.headBranch // "unknown"' .ci-failure-report/run.json)"
+          head_sha="$(jq -r '.headSha // "unknown"' .ci-failure-report/run.json)"
+          run_url="$(jq -r '.url // ""' .ci-failure-report/run.json)"
+          created_at="$(jq -r '.createdAt // "unknown"' .ci-failure-report/run.json)"
+          short_sha="${head_sha:0:12}"
+
+          failed_jobs="$(jq -r '
+            [
+              .jobs[]?
+              | select((.conclusion // "") as $c | $c != "success" and $c != "skipped" and $c != "")
+              | "- " + .name + " (`" + (.conclusion // "unknown") + "`)"
+            ]
+            | if length == 0 then "- No failed job metadata available." else .[] end
+          ' .ci-failure-report/run.json)"
+
+          failed_steps="$(jq -r '
+            [
+              .jobs[]? as $job
+              | $job.steps[]?
+              | select((.conclusion // "") as $c |
+                  $c == "failure" or
+                  $c == "timed_out" or
+                  $c == "cancelled" or
+                  $c == "action_required"
+                )
+              | "- " + $job.name + " / " + .name + " (`" + (.conclusion // "unknown") + "`)"
+            ]
+            | if length == 0 then "- No failed step metadata available." else .[] end
+          ' .ci-failure-report/run.json)"
+
+          combined_report="$(printf '%s\n%s\n' "$failed_jobs" "$failed_steps"; cat .ci-failure-report/failed-excerpt.log)"
+          classification="Unclassified workflow failure"
+          if grep -Eiq 'pnpm/action-setup|ERR_SOCKET_TIMEOUT|socket timeout|corepack|pnpm setup' <<< "$combined_report"; then
+            classification="Package manager setup or network timeout"
+          elif grep -Eiq 'tailscale|exit node|resolvectl|getent hosts|DNS resolver|ifconfig.me' <<< "$combined_report"; then
+            classification="Tailscale, DNS, or exit-node connectivity"
+          elif grep -Eiq 'attendance:update|update-today-attendance|HTTP 403|HTTP 429|source site|tokyo-weimi|hikari888|vip6969' <<< "$combined_report"; then
+            classification="Attendance source scraping or upstream site response"
+          elif grep -Eiq 'typecheck|tsc --noEmit|TypeScript' <<< "$combined_report"; then
+            classification="TypeScript typecheck"
+          elif grep -Eiq 'test:e2e|playwright' <<< "$combined_report"; then
+            classification="Playwright end-to-end test"
+          elif grep -Eiq 'pnpm test|check-site' <<< "$combined_report"; then
+            classification="Project validation test"
+          elif grep -Eiq 'pnpm run build|vite build|postbuild' <<< "$combined_report"; then
+            classification="Build or postbuild"
+          elif grep -Eiq 'gh pr create|git push|force-with-lease|Create pull request' <<< "$combined_report"; then
+            classification="Automation branch push or PR creation"
+          fi
+
+          marker="<!-- workflow-failure-log run_id=${RUN_ID} run_attempt=${RUN_ATTEMPT:-1} -->"
+          jst_time="$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M:%S JST')"
+          utc_time="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+          {
+            echo "$marker"
+            echo "### ${workflow_name} failed"
+            echo
+            echo "- Run: [${RUN_ID}](${run_url})"
+            echo "- Attempt: ${RUN_ATTEMPT:-1}"
+            echo "- Conclusion: \`${conclusion}\`"
+            echo "- Event: \`${event_name}\`"
+            echo "- Branch: \`${head_branch}\`"
+            echo "- Commit: \`${short_sha}\`"
+            echo "- Started: \`${created_at}\`"
+            echo "- Recorded: \`${jst_time}\` / \`${utc_time}\`"
+            echo "- Initial classification: **${classification}**"
+            echo
+            echo "**Failed jobs**"
+            echo "$failed_jobs"
+            echo
+            echo "**Failed steps**"
+            echo "$failed_steps"
+            echo
+            echo "**Log excerpt**"
+            echo '```text'
+            if [ -s .ci-failure-report/failed-excerpt.log ]; then
+              cat .ci-failure-report/failed-excerpt.log
+            else
+              echo "No failed log excerpt was available from gh run view --log-failed."
+            fi
+            echo '```'
+          } > .ci-failure-report/comment.md
+
+          {
+            echo "# GitHub Actions Failure Log"
+            echo
+            echo "This issue is maintained by \`.github/workflows/record-workflow-failure.yml\`."
+            echo
+            echo "Each comment records one failed workflow run with the failed job, failed step, initial classification, run link, and log excerpt."
+            echo
+            echo "When fixing a failure, reply to the relevant comment or reference this issue from the remediation PR so repeated failures can be compared over time."
+          } > .ci-failure-report/issue-body.md
+
+      - name: Append report to tracking issue
+        run: |
+          set -euo pipefail
+
+          gh label create "$ISSUE_LABEL" \
+            --repo "$GITHUB_REPOSITORY" \
+            --color "B60205" \
+            --description "Central log for failed GitHub Actions workflow runs" \
+            2>/dev/null || true
+
+          issue_number="$(gh issue list \
+            --repo "$GITHUB_REPOSITORY" \
+            --state open \
+            --label "$ISSUE_LABEL" \
+            --json number,title \
+            --jq '.[] | select(.title == "GitHub Actions Failure Log") | .number' \
+            | head -n 1 || true)"
+
+          if [ -z "$issue_number" ]; then
+            issue_url="$(gh issue create \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$ISSUE_TITLE" \
+              --label "$ISSUE_LABEL" \
+              --body-file .ci-failure-report/issue-body.md)"
+            issue_number="${issue_url##*/}"
+          fi
+
+          marker="<!-- workflow-failure-log run_id=${RUN_ID} run_attempt=${RUN_ATTEMPT:-1} -->"
+          if gh api "repos/${GITHUB_REPOSITORY}/issues/${issue_number}/comments" \
+            --paginate \
+            --jq '.[].body' \
+            | grep -Fq "$marker"; then
+            echo "Failure report for run ${RUN_ID} attempt ${RUN_ATTEMPT:-1} already exists in issue #${issue_number}."
+            exit 0
+          fi
+
+          gh issue comment "$issue_number" --repo "$GITHUB_REPOSITORY" --body-file .ci-failure-report/comment.md
+          echo "Recorded workflow failure in issue #${issue_number}."
