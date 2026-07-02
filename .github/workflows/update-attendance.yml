@@ -74,28 +74,36 @@ jobs:
           done
           echo
           echo "Public IP through exit node:"
-          curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 10 -sS https://ifconfig.me || echo "::warning::Unable to read public IP through exit node."
-          echo
-          # Verify exit node connectivity using a less restrictive source site
-          echo "Verifying exit node connectivity to source sites:"
-          curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 10 -L -sS -o /dev/null -w "hikari888 status=%{http_code} final_url=%{url_effective}\n" https://hikari888.com/ || echo "::warning::Exit node connectivity check failed, but continuing workflow."
-      - run: pnpm run attendance:update
+          curl --retry 2 --retry-delay 2 --retry-all-errors --connect-timeout 8 --max-time 10 -sS https://ifconfig.me || echo "::warning::Unable to read public IP through exit node."
+      - name: Gate on exit node connectivity
+        id: gate
         if: steps.tailscale-config.outputs.configured == 'true'
+        run: |
+          for host in tokyo-weimi.com hikari888.com vip6969.com; do
+            if curl --connect-timeout 8 --max-time 12 -L -sS -o /dev/null -w "%{http_code}" "https://${host}/" | grep -qE '^[23]'; then
+              echo "${host} reachable via exit node"
+              exit 0
+            fi
+          done
+          echo "::warning::All source sites unreachable through exit node — skipping attendance update."
+          echo "skip_reason=exit_node_unreachable" >> "$GITHUB_OUTPUT"
+      - run: pnpm run attendance:update
+        if: steps.tailscale-config.outputs.configured == 'true' && steps.gate.outputs.skip_reason != 'exit_node_unreachable'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL || secrets.GEMINI_MODEL }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL || secrets.DEEPSEEK_MODEL }}
       - run: pnpm run typecheck
-        if: steps.tailscale-config.outputs.configured == 'true'
+        if: steps.tailscale-config.outputs.configured == 'true' && steps.gate.outputs.skip_reason != 'exit_node_unreachable'
       - run: pnpm test
-        if: steps.tailscale-config.outputs.configured == 'true'
+        if: steps.tailscale-config.outputs.configured == 'true' && steps.gate.outputs.skip_reason != 'exit_node_unreachable'
       - run: pnpm run build
-        if: steps.tailscale-config.outputs.configured == 'true'
+        if: steps.tailscale-config.outputs.configured == 'true' && steps.gate.outputs.skip_reason != 'exit_node_unreachable'
       - run: pnpm run test:e2e
-        if: steps.tailscale-config.outputs.configured == 'true'
+        if: steps.tailscale-config.outputs.configured == 'true' && steps.gate.outputs.skip_reason != 'exit_node_unreachable'
       - name: Create pull request
-        if: steps.tailscale-config.outputs.configured == 'true'
+        if: steps.tailscale-config.outputs.configured == 'true' && steps.gate.outputs.skip_reason != 'exit_node_unreachable'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

@@ -10,7 +10,7 @@ const tokyoWeimiUrl = "https://tokyo-weimi.com";
 const hikariUrl = "https://hikari888.com";
 const vipUrl = "https://vip6969.com";
 const recentWindowDays = 120;
-const requestTimeoutMs = 8_000;
+const requestTimeoutMs = 12_000;
 const requestHeaders = {
   "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
   "accept-language": "zh-TW,zh;q=0.9,ja;q=0.8,en-US;q=0.7,en;q=0.6",
@@ -393,7 +393,7 @@ const fetchText = async (url: string): Promise<string> => {
     return response.text();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (message.includes("HTTP 403") || message.includes("HTTP 429")) return fetchTextWithBrowser(url);
+    if (message.includes("HTTP 403") || message.includes("HTTP 429")) return fetchTextWithBrowser(url, 3);
     throw error;
   }
 };
