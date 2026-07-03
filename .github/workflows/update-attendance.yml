@@ -20,10 +20,10 @@ jobs:
         env:
           TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
-          TAILSCALE_EXIT_NODE: ${{ secrets.TAILSCALE_EXIT_NODE }}
+          TAILSCALE_EXIT_NODES: ${{ secrets.TAILSCALE_EXIT_NODES }}
         run: |
           missing=0
-          for name in TS_OAUTH_CLIENT_ID TS_OAUTH_SECRET TAILSCALE_EXIT_NODE; do
+          for name in TS_OAUTH_CLIENT_ID TS_OAUTH_SECRET TAILSCALE_EXIT_NODES; do
             if [ -z "${!name}" ]; then
               echo "::notice::$name is not configured; attendance update will be skipped."
               missing=1
@@ -59,33 +59,68 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-          # Keep the GitHub runner resolver; tailnet DNS can break public lookups after selecting this exit node.
-          args: --exit-node=${{ secrets.TAILSCALE_EXIT_NODE }} --exit-node-allow-lan-access --accept-dns=false
-      - name: Verify Tailscale exit node
-        if: steps.tailscale-config.outputs.configured == 'true'
-        run: |
-          set -euo pipefail
-          echo "DNS resolver configuration:"
-          resolvectl status || cat /etc/resolv.conf
-          echo
-          echo "Source host resolution:"
-          for host in tokyo-weimi.com hikari888.com vip6969.com; do
-            getent hosts "$host"
-          done
-          echo
-          echo "Public IP through exit node:"
-          curl --retry 2 --retry-delay 2 --retry-all-errors --connect-timeout 8 --max-time 10 -sS https://ifconfig.me || echo "::warning::Unable to read public IP through exit node."
+          args: --accept-dns=false
       - name: Gate on exit node connectivity
         id: gate
         if: steps.tailscale-config.outputs.configured == 'true'
+        env:
+          TAILSCALE_EXIT_NODES: ${{ secrets.TAILSCALE_EXIT_NODES }}
         run: |
-          for host in tokyo-weimi.com hikari888.com vip6969.com; do
-            if curl --connect-timeout 8 --max-time 12 -L -sS -o /dev/null -w "%{http_code}" "https://${host}/" | grep -qE '^[23]'; then
-              echo "${host} reachable via exit node"
-              exit 0
+          set -u -o pipefail
+
+          SOURCE_HOSTS=(tokyo-weimi.com hikari888.com vip6969.com)
+          NODES=()
+
+          while IFS= read -r raw_node; do
+            node="$(printf '%s' "$raw_node" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+            [ -z "$node" ] && continue
+            if [[ "$node" =~ [[:space:]] ]]; then
+              echo "::warning::Ignoring malformed exit-node entry containing internal whitespace."
+              continue
             fi
+            NODES+=("$node")
+          done <<< "${TAILSCALE_EXIT_NODES:-}"
+
+          if [ "${#NODES[@]}" -eq 0 ]; then
+            echo "::warning::No valid Tailscale exit nodes configured; skipping attendance update."
+            echo "skip_reason=exit_node_unreachable" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          for i in "${!NODES[@]}"; do
+            node="${NODES[$i]}"
+            label="exit node #$((i + 1))"
+
+            echo "::group::Probe ${label}"
+
+            if ! sudo tailscale set \
+              --exit-node="$node" \
+              --exit-node-allow-lan-access=true \
+              --accept-dns=false; then
+              echo "::warning::Unable to select ${label}."
+              echo "::endgroup::"
+              continue
+            fi
+
+            for delay in 2 4 6; do
+              sleep "$delay"
+
+              for host in "${SOURCE_HOSTS[@]}"; do
+                status="$(curl --connect-timeout 8 --max-time 12 -L -sS -o /dev/null -w "%{http_code}" "https://${host}/" || true)"
+                if [[ "$status" =~ ^[23] ]]; then
+                  echo "${host} reachable via ${label}"
+                  echo "::endgroup::"
+                  exit 0
+                fi
+                echo "${host} not reachable via ${label}; status=${status}"
+              done
+            done
+
+            echo "::warning::${label} selected but did not reach any source host."
+            echo "::endgroup::"
           done
-          echo "::warning::All source sites unreachable through exit node — skipping attendance update."
+
+          echo "::warning::All configured Tailscale exit nodes are unable to reach source sites; skipping attendance update."
           echo "skip_reason=exit_node_unreachable" >> "$GITHUB_OUTPUT"
       - run: pnpm run attendance:update
         if: steps.tailscale-config.outputs.configured == 'true' && steps.gate.outputs.skip_reason != 'exit_node_unreachable'
