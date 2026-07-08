@@ -12,12 +12,14 @@ Issue #55 的回報內容 parser 沒問題，是 workflow 根本沒執行。
 
 ## PR 清單
 
-| PR | Diff | 內容 |
-|----|------|------|
-| #58 | YAML only | Secret 名稱修正 + fail-fast |
-| #60 | YAML + docs | 診斷強化（tailscale status、stderr、IP、per-host） |
-| #63 | YAML + docs | AXT1800 drift 文件化 + 診斷提示 |
-| #64 | YAML + docs | Codex spec gaps 修復 |
+| PR | Diff | 內容 | 合併方式 |
+|----|------|------|----------|
+| #58 | YAML only | Secret 名稱修正 (`TAILSCALE_EXIT_NODES` → `TAILSCALE_EXIT_NODE`) + fail-fast (missing config 不再假 success) | PR |
+| #60 | YAML + docs | 診斷強化（tailscale status、stderr 捕捉、public IP 輪詢、per-host HTTP status） | PR |
+| #62 | content only | Update attendance for 2026-07-08（包含 25799、26980） | PR |
+| #63 | YAML + docs | AXT1800 exit-node state drift docs + diagnostics 提示 | PR |
+| #64 | content only | Update attendance for 2026-07-09 | 手動合併 |
+| #65 | YAML + docs + memory | Codex retrospective / dual verification 後的 spec gaps 修復（Source Diagnostics exit 1、drift message 泛用化、docs 矛盾修正） | PR |
 
 ## Codex 回顧審查
 
