@@ -30,10 +30,11 @@ These notes are for maintainers. Do not copy this wording into visible website c
   - `TS_OAUTH_SECRET`
   - `TAILSCALE_EXIT_NODE`
   - `DEEPSEEK_API_KEY`
-- `TAILSCALE_EXIT_NODE` is a newline-separated list of Tailscale machine names or `100.x.y.z` tailnet IPs. The workflow probes each node in order, and uses the first one that can reach at least one source site.
+- `TAILSCALE_EXIT_NODE` is the Tailscale machine name or `100.x.y.z` tailnet IP of the exit node. The primary exit node is `gl-axt1800` (the GL-AXT1800 router in a JP residential network). Only this node's network can reliably reach the source sites.
+- If multiple nodes are listed (newline-separated), the workflow probes in order and uses the first reachable exit node that can also reach at least one source site. **Do not list `tachinas`** — it is in Taiwan and its egress cannot reach the source sites.
 - Missing or expired Tailscale secrets cause the workflow to **fail immediately** (not silently skip). The failure is recorded in the central failure log.
-- All exit nodes must advertise themselves as Tailscale exit nodes and be approved in the Tailscale admin console.
-- Put the most reliable exit node first. The GL-AXT1800 can remain in the list but should not be the only entry.
+- All exit nodes must advertise themselves as Tailscale exit nodes and be approved in the Tailscale admin console. The primary exit node is `gl-axt1800`.
+- Put the most reliable exit node first. The GL-AXT1800 is the primary exit node. **Do not list `tachinas`.**
 - Local Codex automations may remain as a fallback path, but the primary scheduled refresh path is GitHub Actions through Tailscale.
 - Automation pull requests are auto-merged only by `.github/workflows/auto-merge-attendance.yml` after guarded checks pass.
 - Guarded auto-merge requires an `automation/update-attendance-YYYY-MM-DD` branch for today's JST date, the expected title, GitHub Actions as author, `main` as base branch, only approved content files changed, bounded additions/deletions, valid content JSON, and all reported PR checks green.

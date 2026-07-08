@@ -1,34 +1,34 @@
-# Fix: Update Attendance workflow false success — issue #55/#56 修復報告
+# Fix: Update Attendance workflow false success + exit node state drift — 最終修復報告
 
-## 根因分析
+## 根因分析（雙層）
 
-GitHub repo secret `TAILSCALE_EXIT_NODES`（複數）不存在，只有舊的 `TAILSCALE_EXIT_NODE`（單數）。Workflow 永遠讀不到 exit node → `configured=false` → 全部 skipped → job 仍回傳 `conclusion: success` → auto-merge 看到 success 但沒有 open PR → content 停留在 2026-06-27。
+### 第一層：Secret 名稱不匹配
+GitHub repo secret 是 `TAILSCALE_EXIT_NODE`（單數），workflow 誤寫為 `TAILSCALE_EXIT_NODES`（複數）。Check 永遠讀不到 → `configured=false` → 全部 skipped → job 仍 success → auto-merge 沒 PR 可合 → content 從 2026-06-27 開始停滯。
 
-Issue #55 的回報內容實際上在 parser 範疇內並無缺失（兩個 profile 都在首頁），是 workflow 根本沒執行。
+Issue #55 的回報內容 parser 沒問題，是 workflow 根本沒執行。
 
-## 修改內容
+### 第二層：GL.iNet AXT1800 exit-node advertise state drift
+修好 secret 後，workflow 跑到 gate step 失敗，因為 `gl-axt1800` 在 Tailscale 上未廣告 exit node。GL.iNet 的 `/usr/bin/gl_tailscale` wrapper 在重啟後重新執行 `tailscale up` 不帶 `--advertise-exit-node`，導致之前手動設定的狀態被清掉。
 
-### `.github/workflows/update-attendance.yml`
-- 新增 `TAILSCALE_EXIT_NODE`（單數）legacy fallback，支援兩種 secret 名稱
-- `Check Tailscale config` 改為 `::error::` + 設 `configured=false`
-- `Skip attendance update` → `Abort on missing Tailscale config`（`exit 1`，不再假 success）
-- Gate step 不再靠 `skip_reason` 優雅退出，不能用 exit node 就直接 `exit 1`
-- 下游 steps 條件簡化：不再檢查 `skip_reason`
+## PR 清單
 
-### `.github/workflows/source-diagnostics.yml`
-- 同上的 `TAILSCALE_EXIT_NODE` legacy fallback
-- Exit node step 改用 `exit_nodes` env var
+| PR | Diff | 內容 |
+|----|------|------|
+| #58 | YAML only | Secret 名稱修正 + fail-fast |
+| #60 | YAML + docs | 診斷強化（tailscale status、stderr、IP、per-host） |
+| #63 | YAML + docs | AXT1800 drift 文件化 + 診斷提示 |
+| #64 | YAML + docs | Codex spec gaps 修復 |
 
-### `docs/operations.md`
-- 更新 secret 清單，標記 legacy `TAILSCALE_EXIT_NODE` fallback
-- 說明 missing secret 會使 workflow 直接失敗而非靜默跳過
+## Codex 回顧審查
 
-## 驗證狀態
-
-- `pnpm test` — PASSED（check-site.ts 包含 `TAILSCALE_EXIT_NODE` 字串檢查）
-- YAML diff review 已完成
+Verdict: SAFE（retrospective 補做）
+- Source Diagnostics 加 `exit 1`（原本 loop 結束後無錯誤碼）
+- workflow 提示訊息改為泛用（`Node '$node'` 而非 hardcode `gl-axt1800`）
+- docs 中多 exit node 與固定 gl-axt1800 的矛盾已修正
+- memory/last-report.md 已更新
 
 ## 殘餘風險
 
-- 需要手動補 `TAILSCALE_EXIT_NODES` secret（複製 `TAILSCALE_EXIT_NODE` 值）
-- Workflow 改動無法在本地完整模擬，需觀察下一次排程或手動 workflow_dispatch
+- GL.iNet AXT1800 exit-node advertise state 可能再次漂移。發生時 workflow 每 2h 失敗一次，failure-log 會留言。
+- Source Diagnostics 不攔截 `tachinas`——依賴 source-host probe 被動拒絕。
+- `check-site.ts` 只檢查 `TAILSCALE_EXIT_NODE` 字串存在，不檢查 fail-fast 邏輯。

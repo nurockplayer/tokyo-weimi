@@ -125,7 +125,7 @@ jobs:
               echo "  4. tag:ci ACL does not permit using this exit node"
               if echo "$ts_err" | grep -q "not advertising"; then
                 echo ""
-                echo "gl-axt1800 is online but not advertising exit-node capability."
+                echo "Node '$node' is online but not advertising exit-node capability."
                 echo "Possible GL.iNet state drift: re-apply --advertise-exit-node on the AXT1800"
                 echo "and approve it in Tailscale admin."
                 echo "Do not switch to tachinas for this workflow."
