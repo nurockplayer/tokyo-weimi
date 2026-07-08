@@ -43,7 +43,70 @@ These notes are for maintainers. Do not copy this wording into visible website c
 
 - Manual diagnostic workflow: `.github/workflows/source-diagnostics.yml`.
 - Use it after changing Tailscale secrets, exit-node settings, or source scraping behavior.
-- It reports the GitHub runner public IP before Tailscale, the public IP after selecting the exit node, and HTTP status for the source homepage, WordPress REST API, and detail pages.
+- It reports the GitHub runner public IP before Tailscale, `tailscale status`, whether `tailscale set --exit-node` succeeds, public IP after the exit node, and HTTP status for each source endpoint.
+- The diagnostics workflow can be triggered even when the attendance update gate is failing — run it first to determine the root cause.
+
+## Tailscale Exit Node Troubleshooting
+
+When `Gate on exit node connectivity` fails in `Update Attendance`, first run `Source Diagnostics` manually.
+
+### 1. `tailscale set` fails (no stderr)
+
+The gate step logs will show:
+```
+tailscale set FAILED for exit node #1.
+Possible causes:
+  1. Node is offline or not in the tailnet
+  2. Node does not advertise exit-node capability
+  3. Exit node is not approved in Tailscale admin console
+  4. tag:ci ACL does not permit using this exit node
+```
+
+Checklist:
+- **Is the node online?** Log into the machine and confirm it is connected to Tailscale (`tailscale status`).
+- **Does it advertise exit node?** On the machine, check `tailscale set --advertise-exit-node` is configured.
+- **Is it approved?** In the Tailscale admin console (https://login.tailscale.com/admin/machines), find the node and confirm the **Exit node** toggle is enabled.
+- **Can `tag:ci` use it?** In Tailscale admin console → **Access controls**, verify the ACL allows `tag:ci` or the GitHub Actions device to use exit nodes. The ACL should include something like:
+  ```json
+  "nodeAttrs": [
+    { "target": ["*"], "attr": ["exit-node"] }
+  ]
+  ```
+
+### 2. `tailscale set` succeeds but source hosts return non-2xx/3xx
+
+The gate step will show:
+```
+Public IP after exit node (waiting for route to establish):
+  2s: <IP>
+  4s: <IP>
+  6s: <IP>
+```
+
+- If the public IP does not change after the exit node, the route is not working — check that `--exit-node-allow-lan-access=true` is set and the exit node's firewall allows forwarding.
+- If the public IP changes but all hosts return HTTP 403/429/000, the exit node's IP may be blocked by the source sites. Try a different exit node or check with the source site operator.
+- If only some hosts fail, adjust `SOURCE_HOSTS` in the workflow or add fallback exit nodes.
+
+### 3. `TAILSCALE_EXIT_NODE` secret value
+
+- The secret is a newline-separated list of Tailscale machine names or `100.x.y.z` tailnet IPs.
+- Machine names must exactly match what appears in `tailscale status` on the GitHub Actions runner.
+- Tailnet IPs (`100.x.y.z`) are more reliable than hostnames.
+- After updating the secret, run `Source Diagnostics` to verify.
+
+### 4. Common Tailscale admin steps
+
+```bash
+# On the exit node machine — check exit node is advertised
+tailscale status
+tailscale exit-node list
+
+# Advertise exit node (if not already)
+sudo tailscale set --advertise-exit-node
+
+# After advertising, approve in admin console
+# https://login.tailscale.com/admin/machines → toggle "Exit node" on
+```
 
 ## DeepSeek Translation
 

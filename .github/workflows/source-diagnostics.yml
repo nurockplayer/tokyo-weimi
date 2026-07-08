@@ -38,6 +38,13 @@ jobs:
           TAILSCALE_EXIT_NODE: ${{ secrets.TAILSCALE_EXIT_NODE }}
         run: |
           set -u -o pipefail
+
+          echo "=== Public IP before Tailscale exit node ==="
+          curl -sS --connect-timeout 8 --max-time 12 https://ifconfig.me || echo "(unreachable)"
+
+          echo "=== Tailscale status before exit node ==="
+          sudo tailscale status 2>&1 | head -20 || true
+
           NODES=()
           while IFS= read -r raw_node; do
             node="$(printf '%s' "$raw_node" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
@@ -46,36 +53,66 @@ jobs:
           done <<< "${TAILSCALE_EXIT_NODE:-}"
 
           if [ "${#NODES[@]}" -eq 0 ]; then
-            echo "::error::No valid exit nodes in TAILSCALE_EXIT_NODE"
+            echo "::error::No valid exit nodes in TAILSCALE_EXIT_NODE secret."
             exit 1
           fi
 
           for i in "${!NODES[@]}"; do
             node="${NODES[$i]}"
-            echo "::group::Exit node #$((i + 1)): ${node}"
-            sudo tailscale set --exit-node="$node" --exit-node-allow-lan-access=true --accept-dns=false || true
+            echo "::group::Exit node #$((i + 1))"
+
+            echo "Attempting: sudo tailscale set --exit-node=..."
+            ts_stderr="$(mktemp)"
+            if sudo tailscale set \
+              --exit-node="$node" \
+              --exit-node-allow-lan-access=true \
+              --accept-dns=false \
+              2>"$ts_stderr"; then
+              echo "tailscale set succeeded."
+            else
+              ts_err="$(cat "$ts_stderr")"
+              rm -f "$ts_stderr"
+              echo "::error::tailscale set FAILED."
+              [ -n "$ts_err" ] && echo "stderr: ${ts_err}"
+              echo ""
+              echo "Possible causes:"
+              echo "  1. Node '$node' does not match any machine in the tailnet"
+              echo "  2. Node is offline"
+              echo "  3. Node does not advertise exit-node capability"
+              echo "  4. Exit node not approved in Tailscale admin console"
+              echo "  5. tag:ci ACL does not permit using this exit node"
+              echo ""
+              echo "Check: sudo tailscale status"
+              sudo tailscale status 2>&1 | head -20 || true
+              echo "::endgroup::"
+              continue
+            fi
+            rm -f "$ts_stderr"
+
+            echo "Tailscale status after selecting exit node:"
+            sudo tailscale status 2>&1 | head -20 || true
+
             sleep 4
             echo "Public IP through exit node:"
-            curl -sS --connect-timeout 8 --max-time 12 https://ifconfig.me || true
-            echo
-            echo "::endgroup::"
-          done
-      - name: Diagnose source endpoints
-        run: |
-          set -u
-          for url in \
-            "https://tokyo-weimi.com/" \
-            "https://tokyo-weimi.com/wp-json/wp/v2/posts?per_page=5" \
-            "https://tokyo-weimi.com/wp-json/wp/v2/posts/26846" \
-            "https://tokyo-weimi.com/girls/26846" \
-            "https://tokyo-weimi.com/?p=26846" \
-            "https://hikari888.com/" \
-            "https://hikari888.com/1020/" \
-            "https://vip6969.com/" \
-            "https://vip6969.com/system/"; do
-            echo "::group::$url"
-            curl -L -sS -o /tmp/response.txt -w "status=%{http_code} content_type=%{content_type} size=%{size_download} final_url=%{url_effective}\n" "$url" || true
-            head -c 500 /tmp/response.txt || true
-            echo
+            public_ip="$(curl -sS --connect-timeout 8 --max-time 12 https://ifconfig.me || true)"
+            echo "  ${public_ip:-"(no response)"}"
+
+            echo "Probing source hosts:"
+            for url in \
+              "https://tokyo-weimi.com/" \
+              "https://tokyo-weimi.com/wp-json/wp/v2/posts?per_page=5" \
+              "https://tokyo-weimi.com/wp-json/wp/v2/posts/26846" \
+              "https://tokyo-weimi.com/girls/26846" \
+              "https://tokyo-weimi.com/?p=26846" \
+              "https://hikari888.com/" \
+              "https://hikari888.com/1020/" \
+              "https://vip6969.com/" \
+              "https://vip6969.com/system/"; do
+              echo "  ${url}"
+              curl -L -sS -o /tmp/response.txt -w "    status=%{http_code} content_type=%{content_type} size=%{size_download} final_url=%{url_effective}\n" "$url" || echo "    (curl failed)"
+              head -c 300 /tmp/response.txt 2>/dev/null || true
+              echo
+            done
+
             echo "::endgroup::"
           done
