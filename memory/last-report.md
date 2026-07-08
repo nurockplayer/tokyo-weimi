@@ -1,27 +1,34 @@
+# Fix: Update Attendance workflow false success — issue #55/#56 修復報告
 
-# Workflow Failure Tracking Report
+## 根因分析
 
-## 完成了什麼
+GitHub repo secret `TAILSCALE_EXIT_NODES`（複數）不存在，只有舊的 `TAILSCALE_EXIT_NODE`（單數）。Workflow 永遠讀不到 exit node → `configured=false` → 全部 skipped → job 仍回傳 `conclusion: success` → auto-merge 看到 success 但沒有 open PR → content 停留在 2026-06-27。
 
-- 新增 `.github/workflows/auto-merge-attendance.yml`，在 `Update Attendance` 成功後掃描 open 的 attendance automation PR，通過 guard 才自動 merge。
-- 新增 `.github/workflows/record-workflow-failure.yml`，透過 `workflow_run` 監聽 GitHub Actions 失敗、逾時或需要人工處理的 run。
-- 已建立 GitHub tracking issue `#50`，Reporter 會更新 `GitHub Actions Failure Log` issue，並用 `ci-failure-log` label 集中保存失敗紀錄。
-- 已在 `#50` 留下一則手動回填摘要，整理最近 12 次 `Update Attendance` 失敗；這批都停在 `pnpm/action-setup@v4`，關鍵錯誤是 pnpm metadata fetch socket timeout。
-- 每次失敗會留言記錄 run link、attempt、event、branch、commit、failed jobs、failed steps、log excerpt，以及初步分類。
-- 更新 `docs/operations.md`，加入 workflow failure tracking 操作規則，並修正 attendance workflow 排程與 Tailscale 限制描述。
+Issue #55 的回報內容實際上在 parser 範疇內並無缺失（兩個 profile 都在首頁），是 workflow 根本沒執行。
+
+## 修改內容
+
+### `.github/workflows/update-attendance.yml`
+- 新增 `TAILSCALE_EXIT_NODE`（單數）legacy fallback，支援兩種 secret 名稱
+- `Check Tailscale config` 改為 `::error::` + 設 `configured=false`
+- `Skip attendance update` → `Abort on missing Tailscale config`（`exit 1`，不再假 success）
+- Gate step 不再靠 `skip_reason` 優雅退出，不能用 exit node 就直接 `exit 1`
+- 下游 steps 條件簡化：不再檢查 `skip_reason`
+
+### `.github/workflows/source-diagnostics.yml`
+- 同上的 `TAILSCALE_EXIT_NODE` legacy fallback
+- Exit node step 改用 `exit_nodes` env var
+
+### `docs/operations.md`
+- 更新 secret 清單，標記 legacy `TAILSCALE_EXIT_NODE` fallback
+- 說明 missing secret 會使 workflow 直接失敗而非靜默跳過
 
 ## 驗證狀態
 
-- YAML parse 檢查通過。
-- Embedded bash 以 `shellcheck -s bash` 檢查通過。
-- 使用既有失敗 run `28349590705` 在 `/tmp` 做只讀模擬，確認可以抓到 failed job/step、job log excerpt，並分類為 package manager setup/network timeout。
-- Guarded auto-merge dry-run 確認既有舊 attendance PR `#44`-`#48` 會因為不是今天 JST 日期而被跳過，不會被批量 merge。
-- `pnpm test` 未跑到專案測試：本地 Codex pnpm wrapper 在 dependency install 階段因 `esbuild@0.28.0` build script 尚未 approve 而停止。
+- `pnpm test` — PASSED（check-site.ts 包含 `TAILSCALE_EXIT_NODE` 字串檢查）
+- YAML diff review 已完成
 
 ## 殘餘風險
 
-- 新 workflow 只有 merge 到 default branch 後才會開始記錄未來失敗，不會自動回補過去一個月的歷史失敗。
-- `actionlint` 本機不可用，因此未執行 GitHub Actions 專用 lint；已用 YAML parse、shellcheck、以及實際 `gh`/`jq` 模擬補強驗證。
-- Guarded auto-merge 只處理當天 JST 日期的 attendance PR；較舊的 open attendance PR 會保守跳過，保留人工處理。
-- Guarded auto-merge 依賴 GitHub API 回報 PR checks；如果沒有任何 reported check，會保守跳過 auto-merge。
-
+- 需要手動補 `TAILSCALE_EXIT_NODES` secret（複製 `TAILSCALE_EXIT_NODE` 值）
+- Workflow 改動無法在本地完整模擬，需觀察下一次排程或手動 workflow_dispatch
