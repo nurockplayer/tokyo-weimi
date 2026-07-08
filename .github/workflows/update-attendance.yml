@@ -123,6 +123,13 @@ jobs:
               echo "  2. Node '$node' does not advertise exit-node capability"
               echo "  3. Exit node is not approved in Tailscale admin console"
               echo "  4. tag:ci ACL does not permit using this exit node"
+              if echo "$ts_err" | grep -q "not advertising"; then
+                echo ""
+                echo "gl-axt1800 is online but not advertising exit-node capability."
+                echo "Possible GL.iNet state drift: re-apply --advertise-exit-node on the AXT1800"
+                echo "and approve it in Tailscale admin."
+                echo "Do not switch to tachinas for this workflow."
+              fi
               echo "Diagnose: run 'sudo tailscale status' and verify the node is online and lists 'exit node:'"
               echo "Fix: https://tailscale.com/kb/1103/exit-nodes"
               echo "::endgroup::"

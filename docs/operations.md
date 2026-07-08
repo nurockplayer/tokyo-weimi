@@ -50,6 +50,132 @@ These notes are for maintainers. Do not copy this wording into visible website c
 
 When `Gate on exit node connectivity` fails in `Update Attendance`, first run `Source Diagnostics` manually.
 
+### Intended exit node
+
+This workflow **must** use `gl-axt1800` / `AXT1800` as its exit node. That GL.iNet router is in a residential JP network that can reach `tokyo-weimi.com`, `hikari888.com`, and `vip6969.com`.
+
+**Do not switch this workflow to `tachinas`.** `tachinas` (a Synology NAS in Taiwan) does advertise exit-node capability and appears selectable, but its egress cannot reach the Tokyo source sites. Using it would make `tailscale set` succeed but all source probes return non-2xx.
+
+You can tell which node the runner is configured to use by checking the `TAILSCALE_EXIT_NODE` secret in GitHub Settings → Secrets and variables → Actions. The correct value is `gl-axt1800` or its tailnet IP.
+
+### Recognizing exit-node advertise state drift
+
+The most reliable check is the GitHub Actions log from `Source Diagnostics` or `Update Attendance`. Look for `tailscale status` output:
+
+Healthy — node is advertising exit node:
+```
+100.100.4.126   tachinas       nurockplayer@  linux  idle; offers exit node
+***             gl-axt1800     nurockplayer@  linux  idle; offers exit node
+```
+
+Drifted — node is online but not advertising:
+```
+100.100.4.126   tachinas       nurockplayer@  linux  idle; offers exit node
+***             gl-axt1800     nurockplayer@  linux  -
+```
+
+In the drifted state, `gl-axt1800` has a `-` in the rightmost column instead of `offers exit node`. This causes `tailscale set --exit-node=gl-axt1800` to fail with:
+```
+stderr: node gl-axt1800 is not advertising an exit node
+```
+
+### Why this happens (GL.iNet state drift)
+
+The GL.iNet AXT1800 manages Tailscale through its own integration layer. The relevant script is `/usr/bin/gl_tailscale`. When the router boots, Tailscale restarts, firmware updates, packages update, or the GL.iNet UI applies a setting change, this wrapper re-runs `tailscale up`.
+
+The key problem: the wrapper's `tailscale up` invocation does **not** include `--advertise-exit-node`. So even though you previously configured exit-node advertising (via `tailscale up --advertise-exit-node` or `tailscale set --advertise-exit-node`), the next GL.iNet-managed restart clears it.
+
+This has happened at least twice:
+- 2026-06-26: workflow failed, `gl-axt1800` re-configured manually, worked again
+- 2026-07-08: same failure pattern reappeared (recorded in issue #61)
+
+The `tailscale set --advertise-exit-node` flag is in-memory state managed by the tailscaled daemon. It is not written to a persistent config file that survives GL.iNet's own Tailscale management cycle. When GL.iNet's boot sequence calls its own `tailscale up`, the daemon's previous `--advertise-exit-node` is replaced by whatever flags GL.iNet passes — which is none.
+
+### Short-term recovery
+
+When the workflow gate fails with "not advertising an exit node":
+
+```bash
+# SSH into the AXT1800
+ssh root@gl-axt1800
+
+# Re-apply the advertise-exit-node flag
+sudo tailscale up --advertise-exit-node --accept-dns=false
+```
+
+Then check that the router now shows the capability:
+```bash
+tailscale status | grep axt1800
+```
+Expected: `gl-axt1800` with `offers exit node` in the right column.
+
+Next, go to the Tailscale admin console (https://login.tailscale.com/admin/machines):
+- Find `gl-axt1800`
+- Confirm the **Exit node** toggle is enabled (if not, turn it on)
+- Confirm the device is still approved
+
+After recovery:
+1. Re-run `Source Diagnostics` (manual trigger)
+2. Confirm `gl-axt1800` shows `offers exit node`
+3. Confirm `tailscale set --exit-node=gl-axt1800` succeeds
+4. Confirm the public IP after exit node is the AXT1800-side network (Japanese residential, not Taiwanese)
+5. Re-run `Update Attendance`
+6. Confirm `pnpm run attendance:update` executes
+
+### Long-term persistence
+
+The goal is to make `--advertise-exit-node` survive reboots and GL.iNet Tailscale management cycles without manual re-application.
+
+**Option A — GL.iNet Web UI (preferred if available)**
+
+Log into the GL.iNet admin panel (http://192.168.8.1):
+Applications → Tailscale → Advanced settings.
+Look for a checkbox or toggle labelled "Advertise as Exit Node", "出口節點", or similar.
+If the setting survives a reboot, this is the best long-term fix.
+
+**Option B — LuCI startup script (if UI cannot persist the setting)**
+
+GL.iNet firmware includes LuCI (OpenWrt web UI). The "Local startup" script runs after boot and can re-apply flags after GL.iNet's own Tailscale startup completes.
+
+Recommended startup script:
+```sh
+(
+  sleep 90
+  tailscale set --advertise-exit-node=true
+) &
+```
+
+The `sleep 90` is critical: the script must wait until after GL.iNet has finished its own `tailscale up` (which would clear the flag). If the installed `tailscale set` does not accept `--advertise-exit-node=true`, use the `tailscale up` form instead:
+```sh
+(
+  sleep 90
+  tailscale up --advertise-exit-node --accept-dns=false
+) &
+```
+
+To install: GL.iNet Admin → Advanced Settings → Go to LuCI → System → Startup → Local Startup → paste the script → Save & Apply → reboot to verify.
+
+**Option C — Edit `/usr/bin/gl_tailscale` (not preferred)**
+
+Editing the vendor script directly:
+```bash
+vi /usr/bin/gl_tailscale
+```
+Find the `tailscale up` invocation and add `--advertise-exit-node`. However, GL.iNet firmware/package updates may overwrite this file, so this is a temporary fix only.
+
+### Diagnosing drift from the workflow logs
+
+The `Source Diagnostics` and `Update Attendance` workflows now print specific messages when `gl-axt1800` is seen online but not advertising:
+
+```text
+gl-axt1800 is online but not advertising exit-node capability.
+Possible GL.iNet state drift: re-apply --advertise-exit-node on the AXT1800
+and approve it in Tailscale admin.
+Do not switch to tachinas for this workflow.
+```
+
+If you see "tailscale set FAILED" but the `tailscale status` does show other machines offering exit node, compare the rightmost column carefully. `tachinas` will show `offers exit node` but is in Taiwan and cannot reach source sites — do not switch to it.
+
 ### 1. `tailscale set` fails (no stderr)
 
 The gate step logs will show:
@@ -93,20 +219,6 @@ Public IP after exit node (waiting for route to establish):
 - Machine names must exactly match what appears in `tailscale status` on the GitHub Actions runner.
 - Tailnet IPs (`100.x.y.z`) are more reliable than hostnames.
 - After updating the secret, run `Source Diagnostics` to verify.
-
-### 4. Common Tailscale admin steps
-
-```bash
-# On the exit node machine — check exit node is advertised
-tailscale status
-tailscale exit-node list
-
-# Advertise exit node (if not already)
-sudo tailscale set --advertise-exit-node
-
-# After advertising, approve in admin console
-# https://login.tailscale.com/admin/machines → toggle "Exit node" on
-```
 
 ## DeepSeek Translation
 
