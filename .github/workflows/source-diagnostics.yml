@@ -57,6 +57,8 @@ jobs:
             exit 1
           fi
 
+	          exit_nodes_found=0
+
           for i in "${!NODES[@]}"; do
             node="${NODES[$i]}"
             echo "::group::Exit node #$((i + 1))"
@@ -120,7 +122,11 @@ jobs:
             done
 
             echo "::endgroup::"
+            exit_nodes_found=1
+            break
           done
 
-          echo "::error::All configured exit nodes failed. Diagnostics cannot verify source connectivity."
-          exit 1
+          if [ "$exit_nodes_found" -eq 0 ]; then
+            echo "::error::All configured exit nodes failed. Diagnostics cannot verify source connectivity."
+            exit 1
+          fi
