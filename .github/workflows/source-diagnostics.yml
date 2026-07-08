@@ -16,27 +16,15 @@ jobs:
         env:
           TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
-          TAILSCALE_EXIT_NODES: ${{ secrets.TAILSCALE_EXIT_NODES }}
           TAILSCALE_EXIT_NODE: ${{ secrets.TAILSCALE_EXIT_NODE }}
         run: |
           missing=0
-          for name in TS_OAUTH_CLIENT_ID TS_OAUTH_SECRET; do
+          for name in TS_OAUTH_CLIENT_ID TS_OAUTH_SECRET TAILSCALE_EXIT_NODE; do
             if [ -z "${!name}" ]; then
               echo "::error::$name is required for source diagnostics."
               missing=1
             fi
           done
-          # Support both TAILSCALE_EXIT_NODES (new) and TAILSCALE_EXIT_NODE (legacy)
-          if [ -n "$TAILSCALE_EXIT_NODES" ]; then
-            echo "TAILSCALE_EXIT_NODES is configured."
-            echo "exit_nodes=$TAILSCALE_EXIT_NODES" >> "$GITHUB_ENV"
-          elif [ -n "$TAILSCALE_EXIT_NODE" ]; then
-            echo "Using legacy TAILSCALE_EXIT_NODE (renamed to TAILSCALE_EXIT_NODES)."
-            echo "exit_nodes=$TAILSCALE_EXIT_NODE" >> "$GITHUB_ENV"
-          else
-            echo "::error::TAILSCALE_EXIT_NODES or TAILSCALE_EXIT_NODE is required for source diagnostics."
-            missing=1
-          fi
           exit "$missing"
       - name: Connect to Tailscale
         uses: tailscale/github-action@v4
@@ -46,6 +34,8 @@ jobs:
           tags: tag:ci
           args: --accept-dns=false
       - name: Try exit nodes and verify
+        env:
+          TAILSCALE_EXIT_NODE: ${{ secrets.TAILSCALE_EXIT_NODE }}
         run: |
           set -u -o pipefail
           NODES=()
@@ -53,10 +43,10 @@ jobs:
             node="$(printf '%s' "$raw_node" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
             [ -z "$node" ] && continue
             NODES+=("$node")
-          done <<< "${exit_nodes:-}"
+          done <<< "${TAILSCALE_EXIT_NODE:-}"
 
           if [ "${#NODES[@]}" -eq 0 ]; then
-            echo "::error::No valid exit nodes in TAILSCALE_EXIT_NODES"
+            echo "::error::No valid exit nodes in TAILSCALE_EXIT_NODE"
             exit 1
           fi
 

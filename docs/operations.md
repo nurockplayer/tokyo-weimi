@@ -28,10 +28,9 @@ These notes are for maintainers. Do not copy this wording into visible website c
 - Required GitHub repository secrets:
   - `TS_OAUTH_CLIENT_ID`
   - `TS_OAUTH_SECRET`
-  - `TAILSCALE_EXIT_NODES` (or legacy `TAILSCALE_EXIT_NODE`)
+  - `TAILSCALE_EXIT_NODE`
   - `DEEPSEEK_API_KEY`
-- `TAILSCALE_EXIT_NODES` is a newline-separated list of Tailscale machine names or `100.x.y.z` tailnet IPs. The workflow probes each node in order, and uses the first one that can reach at least one source site.
-- Legacy `TAILSCALE_EXIT_NODE` (single node) is supported as a fallback, but migrating to the plural `TAILSCALE_EXIT_NODES` is recommended.
+- `TAILSCALE_EXIT_NODE` is a newline-separated list of Tailscale machine names or `100.x.y.z` tailnet IPs. The workflow probes each node in order, and uses the first one that can reach at least one source site.
 - Missing or expired Tailscale secrets cause the workflow to **fail immediately** (not silently skip). The failure is recorded in the central failure log.
 - All exit nodes must advertise themselves as Tailscale exit nodes and be approved in the Tailscale admin console.
 - Put the most reliable exit node first. The GL-AXT1800 can remain in the list but should not be the only entry.
