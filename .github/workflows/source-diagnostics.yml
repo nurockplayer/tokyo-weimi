@@ -75,7 +75,7 @@ jobs:
               echo "::error::tailscale set FAILED."
               [ -n "$ts_err" ] && echo "stderr: ${ts_err}"
               [ -n "$ts_err" ] && echo "$ts_err" | grep -q "not advertising" && \
-                echo "gl-axt1800 is online but not advertising exit-node capability." && \
+                echo "Node is online but not advertising exit-node capability." && \
                 echo "Possible GL.iNet state drift: re-apply --advertise-exit-node on the AXT1800" && \
                 echo "and approve it in Tailscale admin." && \
                 echo "Do not switch to tachinas for this workflow."
@@ -121,3 +121,6 @@ jobs:
 
             echo "::endgroup::"
           done
+
+          echo "::error::All configured exit nodes failed. Diagnostics cannot verify source connectivity."
+          exit 1
