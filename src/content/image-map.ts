@@ -354,5 +354,8 @@ export const imageMap = {
   "2026-07-20260708-541-thumb": "https://vip6969.com/wp-content/uploads/2026/07/20260708_541.thumb.jpg",
   "2026-07-20260704-867-thumb": "https://vip6969.com/wp-content/uploads/2026/07/20260704_867.thumb.jpg",
   "2026-07-20260702-370-thumb": "https://vip6969.com/wp-content/uploads/2026/07/20260702_370.thumb.jpg",
-  "2026-06-20260622-128-thumb": "https://vip6969.com/wp-content/uploads/2026/06/20260622_128.thumb.jpg"
+  "2026-06-20260622-128-thumb": "https://vip6969.com/wp-content/uploads/2026/06/20260622_128.thumb.jpg",
+  "2026-06-20260629-c69a2836-8653-49e6-bafa-54c64f9c2d20-thumb": "https://vip6969.com/wp-content/uploads/2026/06/20260629_C69A2836-8653-49E6-BAFA-54C64F9C2D20.thumb.jpg",
+  "2026-06-20260628-106-thumb": "https://vip6969.com/wp-content/uploads/2026/06/20260628_106.thumb.jpg",
+  "2026-06-20260615-img-2231-thumb": "https://vip6969.com/wp-content/uploads/2026/06/20260615_IMG_2231.thumb.jpg"
 } satisfies Record<string, string>;
