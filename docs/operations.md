@@ -123,6 +123,54 @@ After recovery:
 5. Re-run `Update Attendance`
 6. Confirm `pnpm run attendance:update` executes
 
+### Post-recovery verification (reboot persistence)
+
+Manual recovery (`tailscale up --advertise-exit-node`) only works until the next router reboot or Tailscale restart. To verify the startup script survives reboots:
+
+1. Reboot gl-axt1800:
+   ```bash
+   ssh root@gl-axt1800 'reboot'
+   ```
+2. Wait 2 minutes for the router to boot and GL.iNet to finish its Tailscale setup.
+3. Check exit-node status:
+   ```bash
+   ssh root@gl-axt1800 'tailscale status | grep axt1800'
+   ```
+   Expected: `gl-axt1800` shows `offers exit node`.
+4. Run `Source Diagnostics` from GitHub Actions and confirm:
+   - `gl-axt1800` shows `offers exit node`
+   - `tailscale set --exit-node=gl-axt1800` succeeds
+   - Gate on exit node connectivity passes
+5. If the status still shows `-` instead of `offers exit node` after reboot, the startup script did not execute. Investigate:
+   - Check `/etc/rc.local` exists and is non-empty:
+     ```bash
+     cat /etc/rc.local
+     ```
+   - Check `/etc/init.d/done` is enabled:
+     ```bash
+     ls -l /etc/rc.d/S95done
+     ```
+   - Check the script target file still exists:
+     ```bash
+     ls -l /tmp/verify-exit-node.sh
+     ```
+   - Check syslog for execution:
+     ```bash
+     logread | grep exit-node-persistence
+     ```
+
+### Actual installed configuration (as of 2026-07-09)
+
+The AXT1800 has the following persistence mechanism installed:
+
+- **Script:** `/tmp/verify-exit-node.sh` — re-applies `tailscale set --advertise-exit-node=true` with retry (60s initial delay, 3 attempts, 30s between attempts)
+- **Trigger:** `/etc/rc.local` calls `sh /tmp/verify-exit-node.sh &` before `exit 0`
+- **OpenWrt init:** `/etc/init.d/done` (START=95) runs `sh /etc/rc.local` during boot sequence
+- **Tailscale version on AXT1800:** 1.80.3 (supports `tailscale set --advertise-exit-node=true`)
+
+If this still fails after reboot, open a new issue titled:
+"GL.iNet AXT1800 rc.local persistence does not survive reboot"
+
 ### Long-term persistence
 
 The goal is to make `--advertise-exit-node` survive reboots and GL.iNet Tailscale management cycles without manual re-application.

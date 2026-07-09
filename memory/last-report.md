@@ -34,3 +34,13 @@ Verdict: SAFE（retrospective 補做）
 - GL.iNet AXT1800 exit-node advertise state 可能再次漂移。發生時 workflow 每 2h 失敗一次，failure-log 會留言。
 - Source Diagnostics 不攔截 `tachinas`——依賴 source-host probe 被動拒絕。
 - `check-site.ts` 只檢查 `TAILSCALE_EXIT_NODE` 字串存在，不檢查 fail-fast 邏輯。
+
+## 2026-07-09 再次發生 state drift
+
+- **Failed run:** #29002767814
+- **Root cause:** `gl-axt1800` 再次發生 state drift（在線但 `-`，無 `offers exit node`）
+- **Symptom:** `stderr: node gl-axt1800 is not advertising an exit node`
+- **Recovery:** SSH → `sudo tailscale up --accept-dns=false --advertise-exit-node --accept-routes --advertise-routes=192.168.0.0/24`
+- **Persistence installed:** `/tmp/verify-exit-node.sh` + `/etc/rc.local` call + `/etc/init.d/done` (START=95)
+- **Validation run:** #29003773744 — all steps success (gate → attendance:update → typecheck → test → build → e2e → PR)
+- **Open risk:** 尚未確認 reboot 後 persistence 是否真正生效
