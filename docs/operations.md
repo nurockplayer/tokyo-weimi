@@ -163,10 +163,17 @@ Manual recovery (`tailscale up --advertise-exit-node`) only works until the next
 
 The AXT1800 has the following persistence mechanism installed:
 
-- **Script:** `/tmp/verify-exit-node.sh` — re-applies `tailscale set --advertise-exit-node=true` with retry (60s initial delay, 3 attempts, 30s between attempts)
-- **Trigger:** `/etc/rc.local` calls `sh /tmp/verify-exit-node.sh &` before `exit 0`
+- **Script:** `/etc/verify-exit-node.sh` — re-applies `tailscale set --advertise-exit-node=true` with retry (90s initial delay, 3 attempts, 30s between attempts)
+- **Trigger:** `/etc/rc.local` calls `sh /etc/verify-exit-node.sh &` before `exit 0`
 - **OpenWrt init:** `/etc/init.d/done` (START=95) runs `sh /etc/rc.local` during boot sequence
 - **Tailscale version on AXT1800:** 1.80.3 (supports `tailscale set --advertise-exit-node=true`)
+
+**Important:** Do not put persistence scripts in `/tmp`. OpenWrt/GL.iNet uses tmpfs for `/tmp`, which is cleared on reboot. The script is installed at `/etc/verify-exit-node.sh` (persistent flash storage).
+
+**Status:** Manual recovery has succeeded and rc.local hook is installed. Durable reboot persistence has NOT yet been verified by an actual reboot test. A reboot test is required to confirm:
+1. After reboot, `/etc/verify-exit-node.sh` still exists (not in tmpfs)
+2. `tailscale status` shows `gl-axt1800 ... offers exit node` after the GL.iNet wrapper runs
+3. Source Diagnostics confirms exit node selectable
 
 If this still fails after reboot, open a new issue titled:
 "GL.iNet AXT1800 rc.local persistence does not survive reboot"

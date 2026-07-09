@@ -41,6 +41,7 @@ Verdict: SAFE（retrospective 補做）
 - **Root cause:** `gl-axt1800` 再次發生 state drift（在線但 `-`，無 `offers exit node`）
 - **Symptom:** `stderr: node gl-axt1800 is not advertising an exit node`
 - **Recovery:** SSH → `sudo tailscale up --accept-dns=false --advertise-exit-node --accept-routes --advertise-routes=192.168.0.0/24`
-- **Persistence installed:** `/tmp/verify-exit-node.sh` + `/etc/rc.local` call + `/etc/init.d/done` (START=95)
+- **Persistence installed:** `/etc/verify-exit-node.sh` + `/etc/rc.local` call + `/etc/init.d/done` (START=95)
+- **Important:** Script is at `/etc/` (persistent flash), NOT `/tmp` (tmpfs cleared on reboot)
 - **Validation run:** #29003773744 — all steps success (gate → attendance:update → typecheck → test → build → e2e → PR)
-- **Open risk:** 尚未確認 reboot 後 persistence 是否真正生效
+- **Open risk:** rc.local persistence is installed but has NOT been verified by an actual reboot test. Reboot test is required before marking this as resolved.
