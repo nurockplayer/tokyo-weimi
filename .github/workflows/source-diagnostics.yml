@@ -57,7 +57,7 @@ jobs:
             exit 1
           fi
 
-	          exit_nodes_found=0
+          exit_nodes_found=0
 
           for i in "${!NODES[@]}"; do
             node="${NODES[$i]}"
