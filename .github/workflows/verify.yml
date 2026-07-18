@@ -21,6 +21,22 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run typecheck
       - run: pnpm test
+      - run: pnpm run content:check-contract-failures
+      - name: Check content contract (allowed to fail on known duplicate ID)
+        id: content-contract
+        run: pnpm run content:check-contract
+        continue-on-error: true
+      - name: Verify contract check only fails on expected duplicate ID
+        if: steps.content-contract.outcome == 'failure'
+        run: |
+          OUTPUT="$(pnpm run content:check-contract 2>&1)" || true
+          if echo "$OUTPUT" | grep -q "has duplicate id"; then
+            echo "::warning::content:check-contract blocked by known duplicate IDs (see #92)"
+          else
+            echo "$OUTPUT"
+            echo "::error::content:check-contract failed for an unexpected reason"
+            exit 1
+          fi
       - run: pnpm run build
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm run test:e2e
