@@ -21,6 +21,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run typecheck
       - run: pnpm test
+      - run: pnpm run content:check-contract-failures
       - run: pnpm run build
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm run test:e2e
