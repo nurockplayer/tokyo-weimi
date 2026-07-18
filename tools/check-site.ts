@@ -278,7 +278,7 @@ assert(
   "source diagnostics should test the WordPress REST API",
 );
 
-const attendanceUpdater = readFileSync(join(root, "tools/update-today-attendance.ts"), "utf8");
+const attendanceUpdater = readFileSync(join(root, "tools/attendance/refresh.ts"), "utf8");
 assert(!attendanceUpdater.includes('"海选"'), "Tokyo Night Guide parser should not blacklist regular 海选 attendance cards");
 assert(!attendanceUpdater.includes('"海選"'), "Tokyo Night Guide parser should not blacklist regular 海選 attendance cards");
 
