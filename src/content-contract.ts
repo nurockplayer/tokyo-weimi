@@ -201,7 +201,7 @@ export function assertContentSnapshotV1(value: unknown): asserts value is Conten
     // for shop contacts are done in a separate pass below after imageMap init.
   }
 
-  // data.hotels
+  // data.hotels (early shape check; full validation including area below)
   if (!isArray(data.hotels)) {
     throw new Error(`${prefix}.data.hotels must be an array`);
   }
@@ -291,16 +291,26 @@ export function assertContentSnapshotV1(value: unknown): asserts value is Conten
       }
     }
 
-    // Optional typed fields: isToday must be boolean if present, lastSeen must be string if present
-    if (p.isToday !== undefined && p.isToday !== null && typeof p.isToday !== "boolean") {
+    // Optional typed fields: isToday must be boolean if present; null rejected
+    if (p.isToday === null) {
+      throw new Error(`${pPath}.isToday must not be null`);
+    }
+    if (p.isToday !== undefined && typeof p.isToday !== "boolean") {
       throw new Error(`${pPath}.isToday must be a boolean`);
     }
-    if (p.lastSeen !== undefined && p.lastSeen !== null && !isString(p.lastSeen)) {
+    // lastSeen: optional string; null rejected
+    if (p.lastSeen === null) {
+      throw new Error(`${pPath}.lastSeen must not be null`);
+    }
+    if (p.lastSeen !== undefined && !isString(p.lastSeen)) {
       throw new Error(`${pPath}.lastSeen must be a string`);
     }
-    // videos: optional, must be string array if present
+    // videos: optional, must be string array if present; null rejected
     const vids = p.videos;
-    if (vids !== undefined && vids !== null) {
+    if (vids === null) {
+      throw new Error(`${pPath}.videos must not be null`);
+    }
+    if (vids !== undefined) {
       if (!isArray(vids)) {
         throw new Error(`${pPath}.videos must be an array`);
       }
@@ -341,9 +351,12 @@ export function assertContentSnapshotV1(value: unknown): asserts value is Conten
       }
     }
 
-    // supportScreenshots — optional, must be string array with valid image refs
+    // supportScreenshots — optional, must be string array with valid image refs; null rejected
     const ss = p.supportScreenshots;
-    if (ss !== undefined && ss !== null) {
+    if (ss === null) {
+      throw new Error(`${pPath}.supportScreenshots must not be null`);
+    }
+    if (ss !== undefined) {
       if (!isArray(ss)) {
         throw new Error(`${pPath}.supportScreenshots must be an array`);
       }
@@ -357,9 +370,12 @@ export function assertContentSnapshotV1(value: unknown): asserts value is Conten
       }
     }
 
-    // supplementalMedia — optional, must be string array with valid image refs
+    // supplementalMedia — optional, must be string array with valid image refs; null rejected
     const sm = p.supplementalMedia;
-    if (sm !== undefined && sm !== null) {
+    if (sm === null) {
+      throw new Error(`${pPath}.supplementalMedia must not be null`);
+    }
+    if (sm !== undefined) {
       if (!isArray(sm)) {
         throw new Error(`${pPath}.supplementalMedia must be an array`);
       }
@@ -397,7 +413,7 @@ export function assertContentSnapshotV1(value: unknown): asserts value is Conten
     }
   }
 
-  // Validate hotels[].image references
+  // Validate hotels[].image references and required fields
   const hotels = data.hotels as Record<string, unknown>[];
   for (let i = 0; i < hotels.length; i++) {
     const hotel = hotels[i];
@@ -406,11 +422,15 @@ export function assertContentSnapshotV1(value: unknown): asserts value is Conten
     }
     const hotelImage = hotel.image;
     const hotelAddr = hotel.address;
+    const hotelArea = hotel.area;
     if (!isString(hotelImage)) {
       throw new Error(`${prefix}.data.hotels[${i}].image must be a string`);
     }
     if (!isString(hotelAddr)) {
       throw new Error(`${prefix}.data.hotels[${i}].address must be a string`);
+    }
+    if (!isString(hotelArea)) {
+      throw new Error(`${prefix}.data.hotels[${i}].area must be a string`);
     }
     if (hotelImage.length > 0 && !imageMapKeys.has(hotelImage)) {
       throw new Error(`${prefix}.data.hotels[${i}].image references missing image id: ${hotelImage}`);

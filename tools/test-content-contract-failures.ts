@@ -501,6 +501,88 @@ test("hotel missing address", () => {
   }, "hotels[0].address must be a string");
 });
 
+test("hotel missing area", () => {
+  expectThrow(() => {
+    const snap = validSnapshot({
+      data: {
+        ...baseData(),
+        hotels: [{ address: "", image: "img1" }],
+      },
+    });
+    assertContentSnapshotV1(snap);
+  }, "hotels[0].area must be a string");
+});
+
+test("isToday is null", () => {
+  expectThrow(() => {
+    const snap = validSnapshot({
+      data: {
+        ...baseData(),
+        profiles: [
+          { id: "p1", shopId: "shop-a", name: "", title: "", date: "", image: "img1", gallery: ["img1"], origin: "", age: "", height: "", weight: "", cup: "", tags: [], price: "", summary: "", isToday: null },
+        ],
+      },
+    });
+    assertContentSnapshotV1(snap);
+  }, "isToday must not be null");
+});
+
+test("lastSeen is null", () => {
+  expectThrow(() => {
+    const snap = validSnapshot({
+      data: {
+        ...baseData(),
+        profiles: [
+          { id: "p1", shopId: "shop-a", name: "", title: "", date: "", image: "img1", gallery: ["img1"], origin: "", age: "", height: "", weight: "", cup: "", tags: [], price: "", summary: "", lastSeen: null },
+        ],
+      },
+    });
+    assertContentSnapshotV1(snap);
+  }, "lastSeen must not be null");
+});
+
+test("videos is null", () => {
+  expectThrow(() => {
+    const snap = validSnapshot({
+      data: {
+        ...baseData(),
+        profiles: [
+          { id: "p1", shopId: "shop-a", name: "", title: "", date: "", image: "img1", gallery: ["img1"], origin: "", age: "", height: "", weight: "", cup: "", tags: [], price: "", summary: "", videos: null },
+        ],
+      },
+    });
+    assertContentSnapshotV1(snap);
+  }, "videos must not be null");
+});
+
+test("supportScreenshots is null", () => {
+  expectThrow(() => {
+    const snap = validSnapshot({
+      data: {
+        ...baseData(),
+        profiles: [
+          { id: "p1", shopId: "shop-a", name: "", title: "", date: "", image: "img1", gallery: ["img1"], origin: "", age: "", height: "", weight: "", cup: "", tags: [], price: "", summary: "", supportScreenshots: null },
+        ],
+      },
+    });
+    assertContentSnapshotV1(snap);
+  }, "supportScreenshots must not be null");
+});
+
+test("supplementalMedia is null", () => {
+  expectThrow(() => {
+    const snap = validSnapshot({
+      data: {
+        ...baseData(),
+        profiles: [
+          { id: "p1", shopId: "shop-a", name: "", title: "", date: "", image: "img1", gallery: ["img1"], origin: "", age: "", height: "", weight: "", cup: "", tags: [], price: "", summary: "", supplementalMedia: null },
+        ],
+      },
+    });
+    assertContentSnapshotV1(snap);
+  }, "supplementalMedia must not be null");
+});
+
 // ---------------------------------------------------------------------------
 // Manifest failure cases
 // ---------------------------------------------------------------------------
