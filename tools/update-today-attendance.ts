@@ -1,10 +1,9 @@
-import crypto from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { Contact, LanguageCode, Profile, ProfileCopy, Shop, SiteData } from "../src/types.ts";
-import { nameKey, buildExistingByName, vipProfileIdFromUrl } from "./profile-identity.ts";
+import { nameKey, buildExistingByName, vipProfileIdFromUrl, vipWpId, resolveVipProfileId } from "./profile-identity.ts";
 
 const rootDir = new URL("..", import.meta.url).pathname;
 const contentDir = path.join(rootDir, "src", "content");
@@ -691,13 +690,8 @@ const extractVipProfiles = async (): Promise<SourceProfile[]> => {
 
     if (!name || !image || !title) continue;
 
-    // Use SHA-256 hash of canonical primary image URL as the stable
-    // discriminator.  Unlike the previous Buffer(name).hex.slice(0,8)
-    // approach, this won't collide for names sharing the same UTF-8
-    // prefix.  The canonical URL is the most stable card-specific
-    // identifier available since VIP cards have no individual detail page.
     const canonUrl = absolutize(image);
-    const wpId = `vip-${crypto.createHash("sha256").update(canonUrl).digest("hex").slice(0, 12)}`;
+    const wpId = vipWpId(canonUrl);
 
     profiles.push({
       shopId: "ikebukuro-vip",
@@ -765,16 +759,13 @@ const vipProfileId = (
   sourceProfile: SourceProfile,
   primaryImageId: string | undefined,
 ): string => {
-  const imgMatch = baselineSiteData.profiles.find(
-    (p) => p.shopId === "ikebukuro-vip" && p.image === primaryImageId,
+  return resolveVipProfileId(
+    extractName(sourceProfile),
+    primaryImageId || "",
+    existingByName,
+    existingById,
+    absolutize(sourceProfile.images[0]),
   );
-  if (imgMatch) return imgMatch.id;
-
-  const nameIds = existingByName.get(nameKey("ikebukuro-vip", extractName(sourceProfile)));
-  if (nameIds && nameIds.size === 1) return nameIds.values().next().value!;
-
-  const canonUrl = absolutize(sourceProfile.images[0]);
-  return vipProfileIdFromUrl(canonUrl);
 };
 
 const deriveTags = (profile: SourceProfile): string[] => {
