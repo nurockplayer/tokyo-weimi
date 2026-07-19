@@ -691,7 +691,7 @@ const extractVipProfiles = async (): Promise<SourceProfile[]> => {
     if (!name || !image || !title) continue;
 
     const canonUrl = absolutize(image);
-    const wpId = vipWpId(canonUrl);
+    const wpId = vipWpId(name, canonUrl);
 
     profiles.push({
       shopId: "ikebukuro-vip",

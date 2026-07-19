@@ -29,24 +29,25 @@ export function buildExistingByName(
 }
 
 /**
- * Generate a stable profile ID for a VIP card from its canonical
- * primary image URL.  Same URL → same ID, every time.
+ * Generate a stable profile ID for a VIP card from its normalised name
+ * and canonical primary image URL.  Same name + same URL → same ID.
+ * Different names sharing the same image URL produce different IDs.
  */
-export function vipProfileIdFromUrl(canonicalUrl: string): string {
-  const hash = crypto.createHash("sha256").update(canonicalUrl).digest("hex").slice(0, 12);
+export function vipProfileIdFromUrl(name: string, canonicalUrl: string): string {
+  const hash = crypto.createHash("sha256").update(`${name}\x00${canonicalUrl}`).digest("hex").slice(0, 12);
   return `ikebukuro-vip-girl-${hash}`;
 }
 
 /**
  * Generate a collision-resistant wpId for a VIP source profile.
- * Uses the canonical primary image URL as a stable discriminator
- * (VIP cards have no individual detail page URL).
+ * Combines normalised name and canonical primary image URL so that
+ * different-name profiles sharing the same image still get distinct wpIds.
  *
  * This is the single place where VIP wpIds are produced — both the
  * production updater and tests go through this function.
  */
-export function vipWpId(canonicalUrl: string): string {
-  return `vip-${crypto.createHash("sha256").update(canonicalUrl).digest("hex").slice(0, 12)}`;
+export function vipWpId(name: string, canonicalUrl: string): string {
+  return `vip-${crypto.createHash("sha256").update(`${name}\x00${canonicalUrl}`).digest("hex").slice(0, 12)}`;
 }
 
 /**
@@ -91,6 +92,6 @@ export function resolveVipProfileId(
     return nameIds.values().next().value!;
   }
 
-  // Priority 3: fresh deterministic ID from canonical URL
-  return vipProfileIdFromUrl(canonicalUrl);
+  // Priority 3: fresh deterministic ID from name + canonical URL
+  return vipProfileIdFromUrl(name, canonicalUrl);
 }

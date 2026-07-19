@@ -64,45 +64,70 @@ describe("buildExistingByName", () => {
 // === vipProfileIdFromUrl / vipWpId ===
 
 describe("vipProfileIdFromUrl", () => {
-  it("produces stable ID for same URL across calls", () => {
+  it("same name + same URL → same ID", () => {
     const url = "https://vip6969.com/wp-content/uploads/2026/07/20260714-img-1663-thumb.jpg";
-    const a = vipProfileIdFromUrl(url);
-    const b = vipProfileIdFromUrl(url);
+    const a = vipProfileIdFromUrl("小奈斯", url);
+    const b = vipProfileIdFromUrl("小奈斯", url);
     assert.equal(a, b);
   });
 
-  it("produces different IDs for different URLs", () => {
+  it("different names, same URL → different IDs", () => {
+    const url = "https://vip6969.com/wp-content/uploads/2026/07/20260714-img-1663-thumb.jpg";
+    const idA = vipProfileIdFromUrl("小奈斯", url);
+    const idB = vipProfileIdFromUrl("小安妮", url);
+    assert.notEqual(idA, idB,
+      "different names sharing the same image URL must get different fallback IDs");
+  });
+
+  it("different URLs → different IDs (same name)", () => {
     const urlA = "https://vip6969.com/wp-content/uploads/2026/07/20260714-img-1663-thumb.jpg";
     const urlB = "https://vip6969.com/wp-content/uploads/2026/07/20260711-img-1547-thumb.jpg";
-    assert.notEqual(vipProfileIdFromUrl(urlA), vipProfileIdFromUrl(urlB));
+    assert.notEqual(vipProfileIdFromUrl("小奈斯", urlA), vipProfileIdFromUrl("小奈斯", urlB));
+  });
+
+  it("reversing order preserves same-card-to-ID mapping", () => {
+    const url = "https://vip6969.com/img/shared.jpg";
+    // Forward
+    const fwd = [
+      vipProfileIdFromUrl("名字A", url),
+      vipProfileIdFromUrl("名字B", url),
+    ];
+    // Reverse order of calls
+    const rev = [
+      vipProfileIdFromUrl("名字B", url),
+      vipProfileIdFromUrl("名字A", url),
+    ];
+    assert.equal(fwd[0], rev[1], "名字A→url must be same regardless of call order");
+    assert.equal(fwd[1], rev[0], "名字B→url must be same regardless of call order");
   });
 });
 
 describe("vipWpId", () => {
   it("produces hex-only ID with vip- prefix", () => {
-    const url = "https://vip6969.com/wp-content/uploads/2026/07/test.jpg";
-    assert.match(vipWpId(url), /^vip-[0-9a-f]{12}$/);
+    assert.match(vipWpId("小奈斯", "https://vip6969.com/wp-content/uploads/2026/07/test.jpg"), /^vip-[0-9a-f]{12}$/);
   });
 
-  it("same url -> same wpId", () => {
+  it("same name + same url -> same wpId", () => {
     const url = "https://vip6969.com/wp-content/uploads/2026/07/20260714-img-1663-thumb.jpg";
-    assert.equal(vipWpId(url), vipWpId(url));
+    assert.equal(vipWpId("小奈斯", url), vipWpId("小奈斯", url));
+  });
+
+  it("different names same url -> different wpId", () => {
+    const url = "https://vip6969.com/wp-content/uploads/2026/07/20260714-img-1663-thumb.jpg";
+    assert.notEqual(vipWpId("小奈斯", url), vipWpId("小安妮", url));
   });
 
   it("harmonized with vipProfileIdFromUrl (same hash source)", () => {
     const url = "https://vip6969.com/wp-content/uploads/2026/07/20260714-img-1663-thumb.jpg";
-    const expectedProfileId = `ikebukuro-vip-girl-${vipWpId(url).replace("vip-", "")}`;
-    assert.equal(vipProfileIdFromUrl(url), expectedProfileId);
+    const name = "小奈斯";
+    const expectedProfileId = `ikebukuro-vip-girl-${vipWpId(name, url).replace("vip-", "")}`;
+    assert.equal(vipProfileIdFromUrl(name, url), expectedProfileId);
   });
 });
 
 // === resolveVipProfileId — full resolver ===
 
 describe("resolveVipProfileId — full matching rules", () => {
-  // Baseline:
-  //   妮娜: unique name → one existing ID
-  //   小奈斯 + 小安妮: same prefix name, different images → two distinct existing IDs
-  //   西川口: duplicate name (2nd entry with -2 suffix)
   const baselineProfiles = [
     { shopId: "ikebukuro-vip", name: "妮娜", id: "ikebukuro-vip-girl-vip-a", image: "img-a" },
     { shopId: "ikebukuro-vip", name: "小奈斯", id: "ikebukuro-vip-girl-vip-b", image: "img-b" },
@@ -115,7 +140,6 @@ describe("resolveVipProfileId — full matching rules", () => {
   const byId = new Map(baselineProfiles.map((p) => [p.id, { image: p.image }]));
 
   it("unique existing name preserves its existing ID", () => {
-    // 妮娜 has 1 baseline entry and 1 current card
     const id = resolveVipProfileId("妮娜", "", 1, byName, byId, "https://vip6969.com/img/nina.jpg");
     assert.equal(id, "ikebukuro-vip-girl-vip-a");
   });
@@ -142,17 +166,12 @@ describe("resolveVipProfileId — full matching rules", () => {
       ["ikebukuro-vip-girl-anne-a", { image: "img-a" }],
       ["ikebukuro-vip-girl-anne-b", { image: "img-b" }],
     ]);
-    // currentNameCount=2 prevents unique-name fallback
     const url = "https://vip6969.com/wp-content/uploads/2026/07/new-card.jpg";
     const id = resolveVipProfileId("小安妮", "img-z", 2, localByName, localById, url);
-    assert.equal(id, vipProfileIdFromUrl(url));
+    assert.equal(id, vipProfileIdFromUrl("小安妮", url));
   });
 
-  // === New tests for one-baseline-to-multiple-current ===
-
   it("baseline has 1 X, current has 2 X, one image matches", () => {
-    // Baseline: one profile named "yoyo" with image "old-img"
-    // Current: two cards named "yoyo", one with "old-img", one with "new-img"
     const localByName = buildExistingByName([
       { shopId: "ikebukuro-vip", name: "yoyo", id: "ikebukuro-vip-girl-yoyo-old" },
     ]);
@@ -160,16 +179,13 @@ describe("resolveVipProfileId — full matching rules", () => {
       ["ikebukuro-vip-girl-yoyo-old", { image: "old-img" }],
     ]);
 
-    // Card with matching image keeps old ID
     const idMatch = resolveVipProfileId("yoyo", "old-img", 2, localByName, localById, "https://vip6969.com/img/old.jpg");
     assert.equal(idMatch, "ikebukuro-vip-girl-yoyo-old");
 
-    // Card with non-matching image gets its own URL-based ID (not reused)
     const urlNew = "https://vip6969.com/img/new.jpg";
     const idNoMatch = resolveVipProfileId("yoyo", "new-img", 2, localByName, localById, urlNew);
-    assert.equal(idNoMatch, vipProfileIdFromUrl(urlNew));
-    assert.notEqual(idNoMatch, "ikebukuro-vip-girl-yoyo-old",
-      "second X card must not reuse the sole baseline ID");
+    assert.equal(idNoMatch, vipProfileIdFromUrl("yoyo", urlNew));
+    assert.notEqual(idNoMatch, "ikebukuro-vip-girl-yoyo-old");
   });
 
   it("baseline has 1 X, current has 2 X, neither image matches", () => {
@@ -185,11 +201,10 @@ describe("resolveVipProfileId — full matching rules", () => {
     const idA = resolveVipProfileId("yoyo", "img-a", 2, localByName, localById, urlA);
     const idB = resolveVipProfileId("yoyo", "img-b", 2, localByName, localById, urlB);
 
-    assert.equal(idA, vipProfileIdFromUrl(urlA));
-    assert.equal(idB, vipProfileIdFromUrl(urlB));
+    assert.equal(idA, vipProfileIdFromUrl("yoyo", urlA));
+    assert.equal(idB, vipProfileIdFromUrl("yoyo", urlB));
     assert.notEqual(idA, idB, "both cards must get distinct IDs");
-    assert.notEqual(idA, "ikebukuro-vip-girl-yoyo-old",
-      "baseline ID must not be reused when no image matches");
+    assert.notEqual(idA, "ikebukuro-vip-girl-yoyo-old");
   });
 
   it("baseline and current each have 1 X: unique-name fallback keeps old ID", () => {
@@ -199,7 +214,6 @@ describe("resolveVipProfileId — full matching rules", () => {
     const localById = new Map([
       ["ikebukuro-vip-girl-yoyo-old", { image: "old-img" }],
     ]);
-    // currentNameCount=1 allows unique-name fallback even without image match
     const id = resolveVipProfileId("yoyo", "new-img", 1, localByName, localById, "https://vip6969.com/img/whatever.jpg");
     assert.equal(id, "ikebukuro-vip-girl-yoyo-old");
   });
@@ -217,20 +231,86 @@ describe("resolveVipProfileId — full matching rules", () => {
       { name: "yoyo", imageId: "new-img", url: "https://vip6969.com/img/b.jpg" },
     ];
 
-    // Forward
     const fwd = cards.map((c) =>
       resolveVipProfileId(c.name, c.imageId, 2, localByName, localById, c.url),
     );
-    // Reversed
     const rev = cards.slice().reverse().map((c) =>
       resolveVipProfileId(c.name, c.imageId, 2, localByName, localById, c.url),
     );
 
-    // Card-to-ID mapping must match after reversing list order
-    // Forward: card0→fwd[0]=old, card1→fwd[1]=URL-based
-    // Reverse: card1→rev[0]=URL-based, card0→rev[1]=old
-    assert.equal(fwd[0], rev[1], "card0 must get same ID both orders");
-    assert.equal(fwd[1], rev[0], "card1 must get same ID both orders");
+    assert.equal(fwd[0], rev[1]);
+    assert.equal(fwd[1], rev[0]);
+  });
+
+  // === Same-image-different-name ===
+
+  it("same image URL, different names → different fallback IDs", () => {
+    const localByName = buildExistingByName([
+      { shopId: "ikebukuro-vip", name: "阿花", id: "ikebukuro-vip-girl-ahua" },
+    ]);
+    const localById = new Map([
+      ["ikebukuro-vip-girl-ahua", { image: "img-orig" }],
+    ]);
+
+    // Two new cards with different names but the same image URL
+    const sharedUrl = "https://vip6969.com/img/shared-selfie.jpg";
+    const id1 = resolveVipProfileId("小璇", "", 2, localByName, localById, sharedUrl);
+    const id2 = resolveVipProfileId("小彤", "", 2, localByName, localById, sharedUrl);
+
+    assert.notEqual(id1, id2,
+      "two different-name cards sharing the same image URL must get distinct fallback IDs");
+  });
+
+  it("same-image same-name remains deterministic", () => {
+    const localByName = buildExistingByName([
+      { shopId: "ikebukuro-vip", name: "阿花", id: "ikebukuro-vip-girl-ahua" },
+    ]);
+    const localById = new Map([
+      ["ikebukuro-vip-girl-ahua", { image: "img-orig" }],
+    ]);
+
+    const sharedUrl = "https://vip6969.com/img/shared-selfie.jpg";
+    const a = resolveVipProfileId("小璇", "", 2, localByName, localById, sharedUrl);
+    const b = resolveVipProfileId("小璇", "", 2, localByName, localById, sharedUrl);
+    assert.equal(a, b);
+  });
+
+  it("existing different-name profiles sharing an image keep legacy IDs", () => {
+    // Baseline: two different-name profiles happen to use the same image
+    // (this is the scenario where image-only fallback would collide)
+    const localByName2 = buildExistingByName([
+      { shopId: "ikebukuro-vip", name: "阿花", id: "ikebukuro-vip-girl-ahua" },
+      { shopId: "ikebukuro-vip", name: "小草", id: "ikebukuro-vip-girl-xiaocao" },
+    ]);
+    const localById2 = new Map([
+      ["ikebukuro-vip-girl-ahua", { image: "img-shared" }],
+      ["ikebukuro-vip-girl-xiaocao", { image: "img-shared" }],
+    ]);
+
+    // Exact image match should find the correct baseline ID (priority 1)
+    const idA = resolveVipProfileId("阿花", "img-shared", 1, localByName2, localById2, "https://vip6969.com/img/shared.jpg");
+    const idB = resolveVipProfileId("小草", "img-shared", 1, localByName2, localById2, "https://vip6969.com/img/shared.jpg");
+
+    assert.equal(idA, "ikebukuro-vip-girl-ahua");
+    assert.equal(idB, "ikebukuro-vip-girl-xiaocao");
+  });
+
+  it("reverse same-image different-name order preserves mapping", () => {
+    const localByName = buildExistingByName([
+      { shopId: "ikebukuro-vip", name: "阿花", id: "ikebukuro-vip-girl-ahua" },
+    ]);
+    const localById = new Map([
+      ["ikebukuro-vip-girl-ahua", { image: "img-orig" }],
+    ]);
+
+    const sharedUrl = "https://vip6969.com/img/shared-selfie.jpg";
+    const names = ["小璇", "小彤"];
+
+    const fwd = names.map((n) => resolveVipProfileId(n, "", 2, localByName, localById, sharedUrl));
+    const rev = names.slice().reverse().map((n) => resolveVipProfileId(n, "", 2, localByName, localById, sharedUrl));
+
+    assert.equal(fwd[0], rev[1], "小璇 → sharedUrl must be same regardless of call order");
+    assert.equal(fwd[1], rev[0], "小彤 → sharedUrl must be same regardless of call order");
   });
 
   it("final output contains no duplicate IDs", () => {
@@ -254,7 +334,7 @@ describe("resolveVipProfileId — full matching rules", () => {
   it("unknown name with unknown image gets deterministic ID from URL", () => {
     const url = "https://vip6969.com/wp-content/uploads/2026/07/brand-new.jpg";
     const id = resolveVipProfileId("全新名字", "", 1, byName, byId, url);
-    assert.equal(id, vipProfileIdFromUrl(url));
+    assert.equal(id, vipProfileIdFromUrl("全新名字", url));
   });
 
   it("same-name-and-same-card reappears with same ID", () => {
