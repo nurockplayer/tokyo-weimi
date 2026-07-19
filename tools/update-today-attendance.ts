@@ -1,8 +1,10 @@
+import crypto from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { Contact, LanguageCode, Profile, ProfileCopy, Shop, SiteData } from "../src/types.ts";
+import { nameKey, buildExistingByName, vipProfileIdFromUrl } from "./profile-identity.ts";
 
 const rootDir = new URL("..", import.meta.url).pathname;
 const contentDir = path.join(rootDir, "src", "content");
@@ -689,8 +691,13 @@ const extractVipProfiles = async (): Promise<SourceProfile[]> => {
 
     if (!name || !image || !title) continue;
 
-    // Use name hash as a stable identifier since we don't have WP IDs
-    const wpId = `vip-${Buffer.from(name).toString("hex").slice(0, 8)}`;
+    // Use SHA-256 hash of canonical primary image URL as the stable
+    // discriminator.  Unlike the previous Buffer(name).hex.slice(0,8)
+    // approach, this won't collide for names sharing the same UTF-8
+    // prefix.  The canonical URL is the most stable card-specific
+    // identifier available since VIP cards have no individual detail page.
+    const canonUrl = absolutize(image);
+    const wpId = `vip-${crypto.createHash("sha256").update(canonUrl).digest("hex").slice(0, 12)}`;
 
     profiles.push({
       shopId: "ikebukuro-vip",
@@ -742,9 +749,32 @@ const extractName = (profile: SourceProfile): string => {
   return toTraditional(afterSpace || beforeBracket || `女孩${profile.wpId}`);
 };
 
-const profileId = (profile: SourceProfile, existingByName: Map<string, string>): string => {
+const profileId = (profile: SourceProfile): string => {
   const name = extractName(profile);
-  return existingByName.get(`${profile.shopId}:${name}`) || (profile.shopId === "tokyo-weimi" ? knownNameIds[name] : "") || `${profile.shopId}-girl-${profile.wpId}`;
+  const ids = existingByName.get(nameKey(profile.shopId, name));
+  if (ids && ids.size === 1) {
+    return ids.values().next().value!;
+  }
+  if (profile.shopId === "tokyo-weimi" && knownNameIds[name]) {
+    return knownNameIds[name];
+  }
+  return `${profile.shopId}-girl-${profile.wpId}`;
+};
+
+const vipProfileId = (
+  sourceProfile: SourceProfile,
+  primaryImageId: string | undefined,
+): string => {
+  const imgMatch = baselineSiteData.profiles.find(
+    (p) => p.shopId === "ikebukuro-vip" && p.image === primaryImageId,
+  );
+  if (imgMatch) return imgMatch.id;
+
+  const nameIds = existingByName.get(nameKey("ikebukuro-vip", extractName(sourceProfile)));
+  if (nameIds && nameIds.size === 1) return nameIds.values().next().value!;
+
+  const canonUrl = absolutize(sourceProfile.images[0]);
+  return vipProfileIdFromUrl(canonUrl);
 };
 
 const deriveTags = (profile: SourceProfile): string[] => {
@@ -1057,7 +1087,7 @@ const imageMap = readJson<Record<string, string>>("src/content/image-map.json");
 const localImageMap = readJson<Record<string, string>>("src/content/local-image-map.json");
 const profileTranslations = readProfileTranslations();
 const sourceToId = new Map(Object.entries(imageMap).map(([id, source]) => [source, id]));
-const existingByName = new Map(baselineSiteData.profiles.map((profile) => [`${profile.shopId || "tokyo-weimi"}:${profile.name}`, profile.id]));
+const existingByName = buildExistingByName(baselineSiteData.profiles);
 const existingById = new Map(baselineSiteData.profiles.map((profile) => [profile.id, profile]));
 
 const sourceProfiles = [...(await extractHomeProfiles()), ...(await extractHikariProfiles()), ...(await extractVipProfiles())];
@@ -1088,7 +1118,15 @@ for (const { sourceProfile, media } of enrichedSourceProfiles) {
   }
   const name = extractName(sourceProfile);
   const tags = deriveTags(sourceProfile);
-  const id = profileId(sourceProfile, existingByName);
+
+  // VIP identity: use canonical primary image URL as the stable discriminator.
+  // Priority: (1) existing profile whose primary image matches (backward compat),
+  // (2) single existing profile with this name, (3) fresh deterministic ID.
+  const id =
+    sourceProfile.shopId === "ikebukuro-vip"
+      ? vipProfileId(sourceProfile, imageIds[0])
+      : profileId(sourceProfile);
+
   const previousProfile = existingById.get(id);
   const { gallery, supportScreenshots, supplementalMedia } = splitProfileMedia(imageIds, previousProfile);
   profiles.push({
