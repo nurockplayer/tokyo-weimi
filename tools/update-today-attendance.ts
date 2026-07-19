@@ -758,10 +758,12 @@ const profileId = (profile: SourceProfile): string => {
 const vipProfileId = (
   sourceProfile: SourceProfile,
   primaryImageId: string | undefined,
+  currentNameCount: number,
 ): string => {
   return resolveVipProfileId(
     extractName(sourceProfile),
     primaryImageId || "",
+    currentNameCount,
     existingByName,
     existingById,
     absolutize(sourceProfile.images[0]),
@@ -1099,6 +1101,16 @@ const jstDate = new Intl.DateTimeFormat("en-CA", {
   day: "2-digit",
 }).format(new Date());
 
+// Precompute current VIP name counts so unique-name fallback only fires
+// when both baseline AND current source have exactly one card per name.
+const currentVipNameCounts = new Map<string, number>();
+for (const s of enrichedSourceProfiles) {
+  if (s.sourceProfile.shopId === "ikebukuro-vip") {
+    const n = extractName(s.sourceProfile);
+    currentVipNameCounts.set(n, (currentVipNameCounts.get(n) || 0) + 1);
+  }
+}
+
 const profiles: Profile[] = [];
 for (const { sourceProfile, media } of enrichedSourceProfiles) {
   const { images: imageUrls, videos } = media;
@@ -1115,7 +1127,7 @@ for (const { sourceProfile, media } of enrichedSourceProfiles) {
   // (2) single existing profile with this name, (3) fresh deterministic ID.
   const id =
     sourceProfile.shopId === "ikebukuro-vip"
-      ? vipProfileId(sourceProfile, imageIds[0])
+      ? vipProfileId(sourceProfile, imageIds[0], currentVipNameCounts.get(name) || 1)
       : profileId(sourceProfile);
 
   const previousProfile = existingById.get(id);

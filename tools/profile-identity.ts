@@ -54,9 +54,15 @@ export function vipWpId(canonicalUrl: string): string {
  * rule set:
  *
  *  1. If a baseline profile has the same primary image → reuse its ID.
- *  2. If exactly one baseline profile shares this name → reuse its ID.
+ *  2. If the baseline has exactly one profile with this name AND the
+ *     current source also has exactly one card with this name → unique-
+ *     name fallback, reuse the existing ID.
  *  3. Otherwise → generate a fresh deterministic ID from the canonical
  *     primary image URL.
+ *
+ * `currentNameCount` is the number of cards in the current source that
+ * share this normalised name.  This prevents a single-baseline entry
+ * from being reused for multiple current cards with the same name.
  *
  * `existingByName` must be built from the same baseline using
  * `buildExistingByName`.
@@ -64,6 +70,7 @@ export function vipWpId(canonicalUrl: string): string {
 export function resolveVipProfileId(
   name: string,
   primaryImageId: string,
+  currentNameCount: number,
   existingByName: Map<string, Set<string>>,
   existingById: Map<string, { image: string }>,
   canonicalUrl: string,
@@ -79,8 +86,8 @@ export function resolveVipProfileId(
     }
   }
 
-  // Priority 2: unique name → reuse existing ID
-  if (nameIds && nameIds.size === 1) {
+  // Priority 2: unique name both in baseline AND in current source
+  if (nameIds && nameIds.size === 1 && currentNameCount === 1) {
     return nameIds.values().next().value!;
   }
 
