@@ -199,6 +199,21 @@ test("shops not an array", () => {
   }, "shops must be an array");
 });
 
+test("duplicate shop ids", () => {
+  expectThrow(() => {
+    const snap = validSnapshot({
+      data: {
+        ...baseData(),
+        shops: [
+          { id: "shop-x", name: "First", shortName: "X", sourceUrl: "https://a.com", contact: { phone: "000", line: "", secondaryLine: "", lineQr: "", secondaryLineQr: "", area: "", hours: "" } },
+          { id: "shop-x", name: "Second", shortName: "Y", sourceUrl: "https://b.com", contact: { phone: "000", line: "", secondaryLine: "", lineQr: "", secondaryLineQr: "", area: "", hours: "" } },
+        ],
+      },
+    });
+    assertContentSnapshotV1(snap);
+  }, "shops has duplicate id: shop-x");
+});
+
 test("shop missing id", () => {
   expectThrow(() => {
     const snap = validSnapshot({

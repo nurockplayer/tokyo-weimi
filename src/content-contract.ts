@@ -136,6 +136,9 @@ export function assertContentSnapshotV1(value: unknown): asserts value is Conten
     if (!isString(shop.sourceUrl)) {
       throw new Error(`${prefix}.data.shops[${i}].sourceUrl must be a string`);
     }
+    if (shopIds.has(shop.id as string)) {
+      throw new Error(`${prefix}.data.shops has duplicate id: ${shop.id}`);
+    }
     shopIds.add(shop.id as string);
   }
 

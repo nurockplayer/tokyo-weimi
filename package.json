@@ -7,7 +7,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "vite build && tsx tools/postbuild.ts",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "tsx tools/check-site.ts && tsx --test tests/profile-identity.spec.ts",
+    "test": "tsx tools/check-site.ts && tsx --test tests/profile-identity.spec.ts && tsx tools/test-content-contract-failures.ts && tsx tools/check-content-contract.ts",
     "attendance:update": "tsx tools/update-today-attendance.ts",
     "typecheck": "tsc --noEmit",
     "content:check-contract": "tsx tools/check-content-contract.ts",
