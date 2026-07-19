@@ -44,7 +44,7 @@ for (const inheritedPath of ["__proto__", "toString"]) {
 const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
   scripts?: Record<string, string>;
 };
-assert(packageJson.scripts?.test === "tsx tools/check-site.ts", "package.json must expose pnpm test");
+assert(packageJson.scripts?.test?.startsWith("tsx tools/check-site.ts"), "package.json must expose pnpm test");
 assert(packageJson.scripts?.typecheck === "tsc --noEmit", "package.json must expose pnpm run typecheck");
 assert(
   packageJson.scripts?.build?.includes("tools/postbuild.ts"),
