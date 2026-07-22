@@ -74,6 +74,33 @@ export type SiteData = {
 
 export type ProfileCopy = Pick<Profile, "title" | "origin" | "tags" | "price" | "summary">;
 
+// === Content Contract Types (Content migration #78) ===
+
+/** Translation text for a single profile — mirrors the shape used in i18n.ts. */
+export type TranslatedProfileText = Pick<ProfileCopy, "title" | "tags" | "summary">;
+
+/** Mapping from language code to profile-id-keyed translations. */
+export type ProfileTranslations = Record<LanguageCode, Record<string, TranslatedProfileText>>;
+
+/** A self-contained snapshot of all content needed to render the site. */
+export type ContentSnapshotV1 = {
+  schemaVersion: 1;
+  version: string;
+  generatedAt: string;
+  data: SiteData;
+  imageMap: Record<string, string>;
+  profileTranslations: ProfileTranslations;
+};
+
+/** A lightweight manifest describing a snapshot file for integrity checks. */
+export type ContentManifestV1 = {
+  schemaVersion: 1;
+  version: string;
+  generatedAt: string;
+  snapshotPath: string;
+  sha256: string;
+};
+
 type SectionKey =
   | "todayKicker"
   | "todayTitle"
