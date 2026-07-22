@@ -55,3 +55,5 @@
 - `SHA-256(source_url)`：對 `source_url` 取 SHA-256 後的前 16 字元 hex digest
 
 此設計確保同一 profile 下相同 role 的相同 URL 永遠產生相同的 id，支援 idempotent upsert。
+
+**注意：`source_url` 不設全域 UNIQUE constraint。同一張圖片或影片的 URL 可以合法關聯至多個不同 profile**（例如多個 profile 使用同一張 canonical image）。`content_profile_media` 的 upsert key 為 {==deterministic primary key `id`==}，而非 `source_url`。

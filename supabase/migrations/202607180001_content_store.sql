@@ -71,23 +71,6 @@ CREATE TABLE IF NOT EXISTS content_profile_media (
     CONSTRAINT ck_media_role CHECK (role IN ('gallery', 'support', 'supplemental', 'video'))
 );
 
--- Named UNIQUE constraint with idempotent creation check.
--- pg_constraint is queried by conname + conrelid + contype to prevent
--- false matches from other schemas or tables with the same constraint name.
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint
-        WHERE conname  = 'content_profile_media_source_url_unique'
-          AND conrelid = 'public.content_profile_media'::regclass
-          AND contype  = 'u'
-    ) THEN
-        ALTER TABLE content_profile_media
-            ADD CONSTRAINT content_profile_media_source_url_unique UNIQUE (source_url);
-    END IF;
-END;
-$$;
-
 -- ============================================================
 -- content_attendance
 -- Daily attendance snapshot per profile per date.
