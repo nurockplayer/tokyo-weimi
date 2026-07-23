@@ -2,9 +2,10 @@ name: Update Attendance
 
 on:
   schedule:
-    # Run every 2 hours to capture updates from multiple shops.
-    # GitHub schedules are UTC. 15 past the hour is used to avoid peak traffic.
-    - cron: "15 */2 * * *"
+    # Run 4 times daily (every 6 hours) to capture cross-shop updates.
+    # UTC 03:15 / 09:15 / 15:15 / 21:15
+    # JST 12:15 / 18:15 / 00:15 / 06:15
+    - cron: "15 3,9,15,21 * * *"
   workflow_dispatch:
 
 permissions:
