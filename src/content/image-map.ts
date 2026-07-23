@@ -409,4 +409,5 @@ export const imageMap = {
   "2026-07-20260719-170-thumb": "https://vip6969.com/wp-content/uploads/2026/07/20260719_170.thumb.jpg",
   "2026-05-20260510-img-0966-thumb": "https://vip6969.com/wp-content/uploads/2026/05/20260510_IMG_0966.thumb.jpg",
   "2026-07-20260719-165-thumb": "https://vip6969.com/wp-content/uploads/2026/07/20260719_165.thumb.jpg",
+  "2026-07-img-6379": "https://tokyo-weimi.com/wp-content/uploads/2026/07/IMG_6379.jpeg"
 } satisfies Record<string, string>;
