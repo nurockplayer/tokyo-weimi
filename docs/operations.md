@@ -22,7 +22,7 @@ These notes are for maintainers. Do not copy this wording into visible website c
 
 - Updater script: `tools/update-today-attendance.ts`.
 - GitHub workflow: `.github/workflows/update-attendance.yml`.
-- The workflow runs every 2 hours through GitHub Actions.
+- The workflow runs four times daily, every six hours, at JST `00:15 / 06:15 / 12:15 / 18:15`.
 - GitHub-hosted runners are blocked by the source site when they use the default GitHub/Azure egress IP.
 - To avoid that block, the workflow joins the Tailscale tailnet and routes traffic through a configured exit node before running the updater.
 - Required GitHub repository secrets:
