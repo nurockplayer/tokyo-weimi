@@ -112,23 +112,42 @@ export interface SupabaseQueryResponse {
 }
 
 /**
- * Base part of the Supabase-like client.
- * Split from the fake-hooks type so CheckContentStore can
- * return a plain object that satisfies this without declaring
- * the hook property.
+ * Insert options mirroring PostgrestQueryBuilder.insert() options that
+ * the bridge actually passes — no `any`, no unused fields.
+ */
+export interface SupabaseInsertOpts {
+  count?: "exact" | "planned" | "estimated" | (string & {});
+  defaultToNull?: boolean;
+}
+
+/**
+ * Upsert options mirroring PostgrestQueryBuilder.upsert() options that
+ * the bridge actually passes — no `any`, no unused fields.
+ */
+export interface SupabaseUpsertOpts {
+  onConflict?: string;
+  ignoreDuplicates?: boolean;
+  count?: "exact" | "planned" | "estimated" | (string & {});
+  defaultToNull?: boolean;
+}
+
+/**
+ * Minimal Supabase-like client interface.
+ * Part of the typed boundary — both the real-client bridge and the
+ * fake test client satisfy this interface without unchecked casts.
  */
 export interface SupabaseClientLike {
   from(table: string): {
-    insert(rows: unknown[], opts?: { onConflict?: string; ignoreDuplicates?: boolean }): {
+    insert(rows: unknown[], opts?: SupabaseInsertOpts): {
       select(): Promise<SupabaseQueryResponse>;
     };
-    upsert(rows: unknown[], opts?: { onConflict?: string; ignoreDuplicates?: boolean }): {
+    upsert(rows: unknown[], opts?: SupabaseUpsertOpts): {
       select(): Promise<SupabaseQueryResponse>;
     };
     delete(): {
       eq(column: string, value: unknown): Promise<SupabaseQueryResponse>;
     };
-    select(columns?: string): Promise<SupabaseQueryResponse>;
+    select(columns?: string, opts?: { rangeFrom?: number; rangeTo?: number }): Promise<SupabaseQueryResponse>;
     update(values: Record<string, unknown>): {
       eq(column: string, value: unknown): Promise<SupabaseQueryResponse>;
     };
