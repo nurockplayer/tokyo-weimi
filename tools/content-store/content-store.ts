@@ -9,6 +9,7 @@ import type {
 } from "./types.ts";
 
 const CHUNK_SIZE = 200;
+const OVERRIDE_PAGE_SIZE = 1000;
 
 function* chunk<T>(arr: T[]): Generator<T[]> {
   for (let i = 0; i < arr.length; i += CHUNK_SIZE) {
@@ -31,6 +32,24 @@ function hasError(
   resp: { data: unknown; error: unknown },
 ): resp is { data: unknown; error: { message: string } } {
   return resp.error != null;
+}
+
+/** Materialize default values for optional media fields so heterogeneous
+ * batches do not silently coerce missing columns to null. */
+function materializeMediaRow(row: MediaRow): MediaRow {
+  return {
+    role: "gallery",
+    position: 0,
+    ...row,
+  };
+}
+
+/** Materialize default position for attendance rows. */
+function materializeAttendanceRow(row: AttendanceRow): AttendanceRow {
+  return {
+    position: 0,
+    ...row,
+  };
 }
 
 export class SupabaseContentStore implements ContentStore {
@@ -109,10 +128,14 @@ export class SupabaseContentStore implements ContentStore {
 
   async upsertProfiles(rows: ProfileRow[]): Promise<void> {
     return withError("upsertProfiles", async () => {
+      const now = new Date().toISOString();
       for (const batch of chunk(rows)) {
         const resp = await this.#client
           .from("content_profiles")
-          .upsert(batch, { onConflict: "shop_id,source_id", ignoreDuplicates: false })
+          .upsert(
+            batch.map((r) => ({ ...r, updated_at: now })),
+            { onConflict: "shop_id,source_id", ignoreDuplicates: false },
+          )
           .select();
         if (hasError(resp)) throw new Error(resp.error.message);
       }
@@ -140,7 +163,7 @@ export class SupabaseContentStore implements ContentStore {
       for (const batch of chunk(rows)) {
         const insResp = await this.#client
           .from("content_profile_media")
-          .insert(batch)
+          .insert(batch.map(materializeMediaRow))
           .select();
         if (hasError(insResp)) throw new Error(insResp.error.message);
       }
@@ -170,7 +193,7 @@ export class SupabaseContentStore implements ContentStore {
       for (const batch of chunk(rows)) {
         const insResp = await this.#client
           .from("content_attendance")
-          .insert(batch)
+          .insert(batch.map(materializeAttendanceRow))
           .select();
         if (hasError(insResp)) throw new Error(insResp.error.message);
       }
@@ -181,10 +204,14 @@ export class SupabaseContentStore implements ContentStore {
 
   async upsertTranslations(rows: TranslationRow[]): Promise<void> {
     return withError("upsertTranslations", async () => {
+      const now = new Date().toISOString();
       for (const batch of chunk(rows)) {
         const resp = await this.#client
           .from("content_profile_translations")
-          .upsert(batch, { onConflict: "profile_id,language", ignoreDuplicates: false })
+          .upsert(
+            batch.map((r) => ({ ...r, updated_at: now })),
+            { onConflict: "profile_id,language", ignoreDuplicates: false },
+          )
           .select();
         if (hasError(resp)) throw new Error(resp.error.message);
       }
@@ -195,11 +222,25 @@ export class SupabaseContentStore implements ContentStore {
 
   async loadOverrides(): Promise<ProfileOverrideRow[]> {
     return withError("loadOverrides", async () => {
-      const resp = await this.#client
-        .from("content_profile_overrides")
-        .select("*");
-      if (hasError(resp)) throw new Error(resp.error.message);
-      return (resp.data as ProfileOverrideRow[]) ?? [];
+      const all: ProfileOverrideRow[] = [];
+      const pageSize = OVERRIDE_PAGE_SIZE;
+      let start = 0;
+
+      while (true) {
+        const resp = await this.#client
+          .from("content_profile_overrides")
+          .select("*", { rangeFrom: start, rangeTo: start + pageSize - 1 });
+
+        if (hasError(resp)) throw new Error(resp.error.message);
+
+        const page = (resp.data as ProfileOverrideRow[]) ?? [];
+        all.push(...page);
+
+        if (page.length < pageSize) break;
+        start += pageSize;
+      }
+
+      return all;
     });
   }
 

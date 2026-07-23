@@ -4,7 +4,14 @@
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { SupabaseContentStore } from "./content-store.ts";
-import type { ContentStore, ContentStoreConfig, SupabaseClientLike, SupabaseQueryResponse } from "./types.ts";
+import type {
+  ContentStore,
+  ContentStoreConfig,
+  SupabaseInsertOpts,
+  SupabaseClientLike,
+  SupabaseQueryResponse,
+  SupabaseUpsertOpts,
+} from "./types.ts";
 
 const ENV_URL = "SUPABASE_URL";
 const ENV_KEY = "SUPABASE_SERVICE_ROLE_KEY";
@@ -56,47 +63,67 @@ export function createSupabaseContentStore(config: ContentStoreConfig): ContentS
 
 /**
  * Explicit typed bridge from the real SupabaseClient to SupabaseClientLike.
- * Every method await the Postgrest builder and re-shapes to { data, error }
- * so TypeScript can verify the boundary without an unchecked cast.
+ *
+ * Each method forward-delegates to the real Postgrest builder.  Insert/upsert
+ * options are split into SupabaseInsertOpts / SupabaseUpsertOpts so the
+ * callers are type-checked against the SupabaseClientLike interface, while
+ * the inner adapter maps them to the Postgrest API shape.
+ *
+ * `.select()` is actually chained onto the insert/upsert builder so the
+ * return value includes the inserted/upserted rows.
  */
 function toSupabaseClientLike(client: SupabaseClient): SupabaseClientLike {
   return {
     from(table: string) {
       const qb = client.from(table);
       return {
-        insert(rows: unknown[], opts?) {
+        insert(rows: unknown[], opts?: SupabaseInsertOpts) {
           return {
             select: async () => {
-              const r = await qb.insert(rows as Record<string, unknown>[], opts as never);
-              return wrapResult(r);
+              const builder = qb.insert(rows as Record<string, unknown>[], {
+                defaultToNull: opts?.defaultToNull,
+                count: opts?.count,
+              });
+              const result = await builder.select();
+              return wrapResult(result);
             },
           };
         },
-        upsert(rows: unknown[], opts?) {
+        upsert(rows: unknown[], opts?: SupabaseUpsertOpts) {
           return {
             select: async () => {
-              const r = await qb.upsert(rows as Record<string, unknown>[], opts as never);
-              return wrapResult(r);
+              const builder = qb.upsert(rows as Record<string, unknown>[], {
+                onConflict: opts?.onConflict,
+                ignoreDuplicates: opts?.ignoreDuplicates,
+                defaultToNull: opts?.defaultToNull,
+                count: opts?.count,
+              });
+              const result = await builder.select();
+              return wrapResult(result);
             },
           };
         },
         delete() {
           return {
             eq: async (column: string, value: unknown) => {
-              const r = await qb.delete().eq(column, value as string);
-              return wrapResult(r);
+              const result = await qb.delete().eq(column, value as string);
+              return wrapResult(result);
             },
           };
         },
-        select: async (columns?) => {
-          const r = await qb.select(columns);
-          return wrapResult(r);
+        select: async (columns?: string, opts?: { rangeFrom?: number; rangeTo?: number }) => {
+          let query = qb.select(columns ?? "*");
+          if (opts?.rangeFrom !== undefined && opts?.rangeTo !== undefined) {
+            query = query.range(opts.rangeFrom, opts.rangeTo);
+          }
+          const result = await query;
+          return wrapResult(result);
         },
         update(values) {
           return {
             eq: async (column: string, value: unknown) => {
-              const r = await qb.update(values as Record<string, unknown>).eq(column, value as string);
-              return wrapResult(r);
+              const result = await qb.update(values as Record<string, unknown>).eq(column, value as string);
+              return wrapResult(result);
             },
           };
         },
@@ -107,8 +134,8 @@ function toSupabaseClientLike(client: SupabaseClient): SupabaseClientLike {
         const sb = client.storage.from(bucket);
         return {
           upload: async (path, data, opts) => {
-            const r = await sb.upload(path, data, opts);
-            return wrapResult(r);
+            const result = await sb.upload(path, data, opts);
+            return wrapResult(result);
           },
         };
       },
