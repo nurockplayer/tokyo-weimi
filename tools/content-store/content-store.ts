@@ -121,6 +121,14 @@ export class SupabaseContentStore implements ContentStore {
 
   async replaceProfileMedia(profileId: string, rows: MediaRow[]): Promise<void> {
     return withError("replaceProfileMedia", async () => {
+      for (const row of rows) {
+        if (row.profile_id !== profileId) {
+          throw new Error(
+            `row profile_id "${row.profile_id}" does not match parameter "${profileId}"`,
+          );
+        }
+      }
+
       const delResp = await this.#client
         .from("content_profile_media")
         .delete()
@@ -143,6 +151,14 @@ export class SupabaseContentStore implements ContentStore {
 
   async replaceAttendance(date: string, rows: AttendanceRow[]): Promise<void> {
     return withError("replaceAttendance", async () => {
+      for (const row of rows) {
+        if (row.attendance_date !== date) {
+          throw new Error(
+            `row attendance_date "${row.attendance_date}" does not match parameter "${date}"`,
+          );
+        }
+      }
+
       const delResp = await this.#client
         .from("content_attendance")
         .delete()

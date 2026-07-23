@@ -311,6 +311,123 @@ console.log("ContentStore check\n");
   assert("last batch has 50 rows", lastBatch.length === 50, `got ${lastBatch.length}`);
 }
 
+// --- 6. Scope validation — replaceProfileMedia rejects mismatched rows ---
+{
+  console.log("\n6. replaceProfileMedia — rejects mismatched profile_id");
+
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log));
+
+  try {
+    await store.replaceProfileMedia("pid-1", [
+      { id: "m1", profile_id: "pid-2", source_url: "https://example.com/img.jpg", media_type: "image" },
+    ]);
+    assert("throws when profile_id does not match parameter", false, "no error thrown");
+  } catch (err) {
+    const msg = String(err);
+    assert(
+      "error message mentions mismatched profile_id",
+      msg.includes("profile_id"),
+      msg,
+    );
+    assert(
+      "error still contains operation name",
+      msg.includes("ContentStore.replaceProfileMedia"),
+      msg,
+    );
+  }
+
+  const anyClientCall = log.filter((e) => e.method !== "select");
+  assert("no client calls made (no delete/insert) for mismatch", anyClientCall.length === 0, JSON.stringify(log));
+}
+
+// --- 7. Scope validation — replaceAttendance rejects mismatched dates ---
+{
+  console.log("\n7. replaceAttendance — rejects mismatched attendance_date");
+
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log));
+
+  try {
+    await store.replaceAttendance("2026-07-18", [
+      { profile_id: "p1", attendance_date: "2026-07-19", shop_id: "s1" },
+    ]);
+    assert("throws when attendance_date does not match parameter", false, "no error thrown");
+  } catch (err) {
+    const msg = String(err);
+    assert(
+      "error message mentions mismatched attendance_date",
+      msg.includes("attendance_date"),
+      msg,
+    );
+    assert(
+      "error still contains operation name",
+      msg.includes("ContentStore.replaceAttendance"),
+      msg,
+    );
+  }
+
+  const anyClientCall = log.filter((e) => e.method !== "select");
+  assert("no client calls made (no delete/insert) for mismatch", anyClientCall.length === 0, JSON.stringify(log));
+}
+
+// --- 8. Scope validation — normal valid rows still pass ---
+{
+  console.log("\n8. Scope validation — valid rows still work");
+
+  const log: CallLogEntry[] = [];
+
+  {
+    const store = new SupabaseContentStore(fakeClient(log));
+    await store.replaceProfileMedia("pid-1", [
+      { id: "m1", profile_id: "pid-1", source_url: "https://example.com/img.jpg", media_type: "image" },
+      { id: "m2", profile_id: "pid-1", source_url: "https://example.com/img2.jpg", media_type: "image" },
+    ]);
+    const deletes = log.filter((e) => e.method === "delete.eq");
+    const inserts = log.filter((e) => e.method === "insert");
+    assert("valid media rows: delete called", deletes.length === 1, JSON.stringify(deletes));
+    assert("valid media rows: insert called", inserts.length >= 1, JSON.stringify(inserts));
+  }
+
+  {
+    const log2: CallLogEntry[] = [];
+    const store = new SupabaseContentStore(fakeClient(log2));
+    await store.replaceAttendance("2026-07-18", [
+      { profile_id: "p1", attendance_date: "2026-07-18", shop_id: "s1" },
+      { profile_id: "p2", attendance_date: "2026-07-18", shop_id: "s1" },
+    ]);
+    const deletes = log2.filter((e) => e.method === "delete.eq");
+    const inserts = log2.filter((e) => e.method === "insert");
+    assert("valid attendance rows: delete called", deletes.length === 1, JSON.stringify(deletes));
+    assert("valid attendance rows: insert called", inserts.length >= 1, JSON.stringify(inserts));
+  }
+}
+
+// --- 9. Empty rows still delete after scope validation ---
+{
+  console.log("\n9. Empty rows still delete after scope validation");
+
+  {
+    const log: CallLogEntry[] = [];
+    const store = new SupabaseContentStore(fakeClient(log));
+    await store.replaceProfileMedia("pid-1", []);
+    const deletes = log.filter((e) => e.method === "delete.eq");
+    const inserts = log.filter((e) => e.method === "insert");
+    assert("empty media rows: delete still called", deletes.length >= 1, JSON.stringify(deletes));
+    assert("empty media rows: no insert", inserts.length === 0, JSON.stringify(inserts));
+  }
+
+  {
+    const log: CallLogEntry[] = [];
+    const store = new SupabaseContentStore(fakeClient(log));
+    await store.replaceAttendance("2026-07-18", []);
+    const deletes = log.filter((e) => e.method === "delete.eq");
+    const inserts = log.filter((e) => e.method === "insert");
+    assert("empty attendance rows: delete still called", deletes.length >= 1, JSON.stringify(deletes));
+    assert("empty attendance rows: no insert", inserts.length === 0, JSON.stringify(inserts));
+  }
+}
+
 // ─── Summary ──────────────────────────────────────────────────
 
 console.log(`\n${passed} passed, ${failed} failed`);
