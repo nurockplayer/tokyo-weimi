@@ -11,6 +11,7 @@ import type {
   SupabaseClientLike,
   SupabaseQueryResponse,
   SupabaseUpsertOpts,
+  SelectOpts,
 } from "./types.ts";
 
 const ENV_URL = "SUPABASE_URL";
@@ -104,15 +105,32 @@ function toSupabaseClientLike(client: SupabaseClient): SupabaseClientLike {
           };
         },
         delete() {
+          const base = qb.delete();
           return {
             eq: async (column: string, value: unknown) => {
-              const result = await qb.delete().eq(column, value as string);
+              const result = await base.eq(column, value as string);
+              return wrapResult(result);
+            },
+            in: async (column: string, values: unknown[]) => {
+              const result = await base.in(column, values as string[]);
               return wrapResult(result);
             },
           };
         },
-        select: async (columns?: string, opts?: { rangeFrom?: number; rangeTo?: number }) => {
+        select: async (columns?: string, opts?: SelectOpts) => {
           let query = qb.select(columns ?? "*");
+          if (opts?.order) {
+            query = query.order(opts.order, { ascending: true });
+          }
+          if (opts?.limit) {
+            query = query.limit(opts.limit);
+          }
+          if (opts?.gt) {
+            query = query.gt("profile_id", opts.gt);
+          }
+          if (opts?.inFilter) {
+            query = query.in(opts.inFilter.column, opts.inFilter.values as string[]);
+          }
           if (opts?.rangeFrom !== undefined && opts?.rangeTo !== undefined) {
             query = query.range(opts.rangeFrom, opts.rangeTo);
           }

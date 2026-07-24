@@ -6,10 +6,11 @@ import type {
   ProfileRow,
   SupabaseClientLike,
   TranslationRow,
+  SelectOpts,
 } from "./types.ts";
 
 const CHUNK_SIZE = 200;
-const OVERRIDE_PAGE_SIZE = 1000;
+const PAGE_SIZE = 1000;
 
 function* chunk<T>(arr: T[]): Generator<T[]> {
   for (let i = 0; i < arr.length; i += CHUNK_SIZE) {
@@ -50,6 +51,27 @@ function materializeAttendanceRow(row: AttendanceRow): AttendanceRow {
     position: 0,
     ...row,
   };
+}
+
+/** Strip optional-first-run timestamps that callers may omit so
+ * PostgREST does not null them.  first_seen_at is never overwritten
+ * on existing rows; we remove it from the upsert payload so the DB
+ * keeps the original value via DEFAULT or on-conflict do-nothing. */
+function normalizeProfileRow(row: ProfileRow): Record<string, unknown> {
+  const out = { ...row, updated_at: new Date().toISOString() } as Record<string, unknown>;
+  // Remove optional fields when undefined so PostgREST uses the
+  // column default rather than inserting null.
+  if (out.first_seen_at === undefined) delete out.first_seen_at;
+  if (out.last_seen_at === undefined) delete out.last_seen_at;
+  if (out.source_updated_at === undefined) delete out.source_updated_at;
+  return out;
+}
+
+function normalizeTranslationRow(row: TranslationRow): Record<string, unknown> {
+  const out = { ...row, updated_at: new Date().toISOString() } as Record<string, unknown>;
+  if (out.title === undefined) out.title = null;
+  if (out.summary === undefined) out.summary = null;
+  return out;
 }
 
 export class SupabaseContentStore implements ContentStore {
@@ -128,12 +150,11 @@ export class SupabaseContentStore implements ContentStore {
 
   async upsertProfiles(rows: ProfileRow[]): Promise<void> {
     return withError("upsertProfiles", async () => {
-      const now = new Date().toISOString();
       for (const batch of chunk(rows)) {
         const resp = await this.#client
           .from("content_profiles")
           .upsert(
-            batch.map((r) => ({ ...r, updated_at: now })),
+            batch.map(normalizeProfileRow),
             { onConflict: "shop_id,source_id", ignoreDuplicates: false },
           )
           .select();
@@ -182,6 +203,37 @@ export class SupabaseContentStore implements ContentStore {
         }
       }
 
+      // Validate shop_id invariant: batch-fetch profile → shop_id mapping
+      if (rows.length > 0) {
+        const profileIds = [...new Set(rows.map((r) => r.profile_id))];
+        for (const batch of chunk(profileIds)) {
+          const mapResp = await this.#client
+            .from("content_profiles")
+            .select("id,shop_id", { inFilter: { column: "id", values: batch } });
+
+          if (hasError(mapResp)) throw new Error(mapResp.error.message);
+
+          const profileShops = (mapResp.data as Array<{ id: string; shop_id: string }>) ?? [];
+          if (profileShops.length !== batch.length) {
+            const found = new Set(profileShops.map((p) => p.id));
+            const missing = batch.filter((id) => !found.has(id));
+            throw new Error(
+              `profiles not found: ${missing.join(", ")}`,
+            );
+          }
+
+          const shopById = new Map(profileShops.map((p) => [p.id, p.shop_id]));
+          for (const row of rows) {
+            const expectedShop = shopById.get(row.profile_id);
+            if (expectedShop !== row.shop_id) {
+              throw new Error(
+                `attendance row shop_id "${row.shop_id}" does not match profile "${row.profile_id}" shop "${expectedShop}"`,
+              );
+            }
+          }
+        }
+      }
+
       const delResp = await this.#client
         .from("content_attendance")
         .delete()
@@ -204,12 +256,11 @@ export class SupabaseContentStore implements ContentStore {
 
   async upsertTranslations(rows: TranslationRow[]): Promise<void> {
     return withError("upsertTranslations", async () => {
-      const now = new Date().toISOString();
       for (const batch of chunk(rows)) {
         const resp = await this.#client
           .from("content_profile_translations")
           .upsert(
-            batch.map((r) => ({ ...r, updated_at: now })),
+            batch.map(normalizeTranslationRow),
             { onConflict: "profile_id,language", ignoreDuplicates: false },
           )
           .select();
@@ -223,21 +274,30 @@ export class SupabaseContentStore implements ContentStore {
   async loadOverrides(): Promise<ProfileOverrideRow[]> {
     return withError("loadOverrides", async () => {
       const all: ProfileOverrideRow[] = [];
-      const pageSize = OVERRIDE_PAGE_SIZE;
-      let start = 0;
+      let cursor: string | undefined;
 
       while (true) {
+        const selectOpts: SelectOpts = {
+          order: "profile_id",
+          limit: PAGE_SIZE,
+        };
+        if (cursor) {
+          selectOpts.gt = cursor;
+        }
+
         const resp = await this.#client
           .from("content_profile_overrides")
-          .select("*", { rangeFrom: start, rangeTo: start + pageSize - 1 });
+          .select("*", selectOpts);
 
         if (hasError(resp)) throw new Error(resp.error.message);
 
         const page = (resp.data as ProfileOverrideRow[]) ?? [];
-        all.push(...page);
+        if (page.length === 0) break;
 
-        if (page.length < pageSize) break;
-        start += pageSize;
+        all.push(...page);
+        if (page.length < PAGE_SIZE) break;
+
+        cursor = page[page.length - 1]!.profile_id;
       }
 
       return all;
