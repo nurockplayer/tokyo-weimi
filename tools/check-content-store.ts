@@ -642,7 +642,7 @@ console.log("ContentStore check\n");
 
   const upsertCall = log.find((e) => e.method === "upsert");
   const upsertRows = upsertCall!.args[0] as Record<string, unknown>[];
-  assert("first row preserves first_seen_at", upsertRows[0]?.first_seen_at != null, JSON.stringify(upsertRows[0]));
+  assert("first row has first_seen_at stripped (upsert payload)", !("first_seen_at" in upsertRows[0]!), JSON.stringify(upsertRows[0]));
   assert("first row preserves last_seen_at", upsertRows[0]?.last_seen_at != null, JSON.stringify(upsertRows[0]));
   assert("second row omits first_seen_at (key not present)", !("first_seen_at" in upsertRows[1]!), JSON.stringify(upsertRows[1]));
   assert("second row omits last_seen_at (key not present)", !("last_seen_at" in upsertRows[1]!), JSON.stringify(upsertRows[1]));
@@ -790,6 +790,43 @@ console.log("ContentStore check\n");
   const upsertCall = log.find((e) => e.method === "upsert")!;
   const opts = upsertCall.args[1] as Record<string, unknown>;
   assert("upsert options include defaultToNull: false", opts?.defaultToNull === false, JSON.stringify(opts));
+}
+
+// --- 22. Keyset pagination — server returns fewer than PAGE_SIZE per request ---
+{
+  console.log("\n22. Keyset pagination — small server page cap");
+
+  // Simulate server that caps at 500 rows even though PAGE_SIZE=1000.
+  // With 2501 total rows, that means: 500, 1000, 1500, 2000, 2500, then empty.
+  // The fake returns at most the limit, so we build the result accordingly.
+  const LIMIT = 500;
+  const allRows = Array.from({ length: 2501 }, (_, i) => ({
+    profile_id: `p${String(i).padStart(4, "0")}`,
+    updated_at: new Date().toISOString(),
+    name: `name${i}`,
+  }));
+
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log, { allRows }));
+
+  const result = await store.loadOverrides();
+
+  const selectCalls = log.filter((e) => e.method === "select");
+  assert("makes 4 selects (3 non-empty + 1 empty probe)", selectCalls.length === 4, `got ${selectCalls.length}`);
+
+  // Verify cursor advances each time
+  const selectWithCursor = selectCalls.filter((c) => (c.args[1] as SelectOpts)?.gt != null);
+  assert("cursor advances on subsequent pages", selectWithCursor.length >= 2, `got ${selectWithCursor.length}`);
+
+  assert("returns all 2501 rows", result.length === 2501, `got ${result.length}`);
+
+  const ids = new Set(result.map((r) => r.profile_id));
+  assert("no duplicate profile_ids", ids.size === result.length, `got duplicates`);
+  assert("profile_id order is ascending", result.every((r, i) => i === 0 || r.profile_id > result[i - 1]!.profile_id), "not sorted");
+
+  // Verify last select call has a cursor but returned empty
+  const lastSelect = selectCalls[selectCalls.length - 1]!;
+  assert("final select has a cursor (probes past last row)", (lastSelect.args[1] as SelectOpts)?.gt != null, JSON.stringify(lastSelect.args[1]));
 }
 
 // ─── Summary ──────────────────────────────────────────────────

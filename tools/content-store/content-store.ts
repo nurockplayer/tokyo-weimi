@@ -54,14 +54,14 @@ function materializeAttendanceRow(row: AttendanceRow): AttendanceRow {
 }
 
 /** Strip optional-first-run timestamps that callers may omit so
- * PostgREST does not null them.  first_seen_at is never overwritten
- * on existing rows; we remove it from the upsert payload so the DB
- * keeps the original value via DEFAULT or on-conflict do-nothing. */
+ * PostgREST does not null them.  first_seen_at is always stripped
+ * from the upsert payload — new rows get the DB default, existing
+ * rows retain their original value on conflict. */
 function normalizeProfileRow(row: ProfileRow): Record<string, unknown> {
   const out = { ...row, updated_at: new Date().toISOString() } as Record<string, unknown>;
-  // Remove optional fields when undefined so PostgREST uses the
-  // column default rather than inserting null.
-  if (out.first_seen_at === undefined) delete out.first_seen_at;
+  // Remove first_seen_at unconditionally: never overwrite on conflict,
+  // new rows get the DB default (now()).
+  delete out.first_seen_at;
   if (out.last_seen_at === undefined) delete out.last_seen_at;
   if (out.source_updated_at === undefined) delete out.source_updated_at;
   return out;
@@ -302,8 +302,6 @@ export class SupabaseContentStore implements ContentStore {
         if (page.length === 0) break;
 
         all.push(...page);
-        if (page.length < PAGE_SIZE) break;
-
         cursor = page[page.length - 1]!.profile_id;
       }
 
