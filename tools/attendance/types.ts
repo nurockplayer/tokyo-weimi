@@ -42,4 +42,5 @@ export type RefreshResult = {
   imageMap: Record<string, string>;
   profileTranslations: ProfileTranslations;
   localImageMap: Record<string, string>;
+  jstDate: string;
 };
