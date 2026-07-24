@@ -39,12 +39,23 @@ export function computeMediaId(profileId: string, role: string, sourceUrl: strin
   return hash.digest("hex");
 }
 
-function extractSourceId(profileId: string): string {
-  // Profile IDs following "{shopId}-girl-{wpId}" contain a stable source
-  // identifier in the wpId portion.
-  const match = profileId.match(/^[^-]+-girl-(.+)$/);
-  if (match) return match[1]!;
-  // Fallback: profile id is the only stable identifier we have.
+/**
+ * Known shop-specific prefixes that can be reliably stripped.
+ * Only IDs matching `{prefix}{rest}` with a known prefix are extracted.
+ * All other IDs (hash-based, legacy, named, unknown format) are kept intact.
+ */
+const SHOP_SOURCE_PREFIXES: Record<string, string> = {
+  "tokyo-weimi": "tokyo-weimi-girl-",
+  "hikari888": "hikari888-girl-",
+};
+
+function extractSourceId(profileId: string, shopId: string): string {
+  const prefix = SHOP_SOURCE_PREFIXES[shopId];
+  if (prefix && profileId.startsWith(prefix)) {
+    return profileId.slice(prefix.length);
+  }
+  // ikebukuro-vip IDs are hash-based; legacy girl-* and named IDs have no
+  // reliably extractable source identifier — keep the full profile ID.
   return profileId;
 }
 
@@ -96,7 +107,7 @@ export function mapRefreshResultToRows(result: RefreshResult): MappingResult {
     profiles.push({
       id: profile.id,
       shop_id: profile.shopId,
-      source_id: extractSourceId(profile.id),
+      source_id: extractSourceId(profile.id, profile.shopId),
       name: profile.name,
       image: profile.image,
       date: profile.date,
@@ -201,21 +212,18 @@ export function mapRefreshResultToRows(result: RefreshResult): MappingResult {
       const text = langEntries[profile.id];
       if (!text) continue;
 
-      // Skip zh-Hant entries without actual content.
-      if (
-        language === "zh-Hant" &&
-        !text.title &&
-        !text.summary &&
-        (!text.tags || text.tags.length === 0)
-      ) {
-        continue;
-      }
+      // Only create a row when at least one field has actual content.
+      const hasContent =
+        (text.title && text.title.length > 0) ||
+        (text.summary && text.summary.length > 0) ||
+        (text.tags && text.tags.length > 0);
+      if (!hasContent) continue;
 
       translations.push({
         profile_id: profile.id,
         language,
-        title: text.title ?? null,
-        summary: text.summary ?? null,
+        title: text.title || null,
+        summary: text.summary || null,
         tags: text.tags ?? [],
         source_hash: sourceHashByProfileId.get(profile.id) ?? sourceHash,
       });
