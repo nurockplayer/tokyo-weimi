@@ -1,10 +1,26 @@
 import { refreshAttendanceContent } from "./attendance/refresh.ts";
 import type { RefreshResult } from "./attendance/types.ts";
 import { writeLegacyContent } from "./attendance/write-legacy-content.ts";
+import { createSupabaseContentStore, readContentStoreConfig } from "./content-store/supabase-client.ts";
+import { persistRefreshResult } from "./content-store/persist-refresh-result.ts";
 
 try {
   const result: RefreshResult = await refreshAttendanceContent();
   await writeLegacyContent(result);
+
+  if (process.env.CONTENT_STORE_ENABLED === "true") {
+    const store = createSupabaseContentStore(readContentStoreConfig());
+    const runId = await store.startRun({ sourceDate: result.jstDate });
+    try {
+      await persistRefreshResult(store, result);
+      await store.completeRun(runId, {
+        profileCount: result.siteData.profiles.length,
+      });
+    } catch (error) {
+      await store.failRun(runId, error);
+      throw error;
+    }
+  }
 
   console.log(
     JSON.stringify(

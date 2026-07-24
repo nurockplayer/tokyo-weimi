@@ -1169,5 +1169,5 @@ export async function refreshAttendanceContent(): Promise<RefreshResult> {
 
   await translateProfiles(siteData.profiles, profileTranslations);
 
-  return { profiles, siteData, imageMap, profileTranslations, localImageMap };
+  return { profiles, siteData, imageMap, profileTranslations, localImageMap, jstDate };
 }
