@@ -3,6 +3,7 @@ import path from "node:path";
 
 import type { Contact, LanguageCode, Profile, ProfileCopy, Shop, SiteData, TranslatedProfileText } from "../../src/types.ts";
 import { nameKey, buildExistingByName, vipProfileIdFromUrl, vipWpId, resolveVipProfileId } from "../profile-identity.ts";
+import { computeSourceHash } from "../content-store/mappers.ts";
 import type {
   DeepSeekChatCompletionResponse,
   RefreshResult,
@@ -1045,6 +1046,7 @@ const splitProfileMedia = (
 export async function refreshAttendanceContent(): Promise<RefreshResult> {
   const siteData = readJson<SiteData>("src/content/site-data.json");
   const baselineSiteData = siteData;
+  const baselineProfiles = new Map(baselineSiteData.profiles.map((p) => [p.id, { ...p }]));
   const imageMap = readJson<Record<string, string>>("src/content/image-map.json");
   const localImageMap = readJson<Record<string, string>>("src/content/local-image-map.json");
   const profileTranslations = readProfileTranslations();
@@ -1159,10 +1161,34 @@ export async function refreshAttendanceContent(): Promise<RefreshResult> {
   siteData.profiles = [...profiles, ...preservedProfiles];
   siteData.heroImages = profiles.slice(0, 4).map((profile) => profile.image);
 
+  // Invalidate stale translations when source content changed.
+  // Compute baseline source hashes from the original site-data.json,
+  // then compare each current profile's hash.  A mismatch (or a profile
+  // absent from baseline) means any pre-existing translation for this
+  // profile is stale and must be removed before translateProfiles() runs.
+  // If translation is not configured or fails, stale entries stay absent
+  // — they are never re-written with the new hash.
+  const baselineHashes = new Map<string, string>();
+  siteData.profiles.forEach((p) => {
+    const baseline = baselineProfiles.get(p.id);
+    if (baseline) {
+      baselineHashes.set(p.id, computeSourceHash(baseline));
+    }
+  });
+
   for (const profile of siteData.profiles) {
-    for (const language of translatableLanguages) {
-      if (profileTranslations[language][profile.id]?.summary === profile.summary) {
-        delete profileTranslations[language][profile.id];
+    const baselineHash = baselineHashes.get(profile.id);
+    if (baselineHash === undefined) {
+      // No baseline — any pre-loaded translation for this ID is untrusted.
+      for (const lang of translatableLanguages) {
+        delete profileTranslations[lang][profile.id];
+      }
+      continue;
+    }
+    const currentHash = computeSourceHash(profile);
+    if (baselineHash !== currentHash) {
+      for (const lang of translatableLanguages) {
+        delete profileTranslations[lang][profile.id];
       }
     }
   }
