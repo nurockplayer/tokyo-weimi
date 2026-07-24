@@ -155,7 +155,7 @@ export class SupabaseContentStore implements ContentStore {
           .from("content_profiles")
           .upsert(
             batch.map(normalizeProfileRow),
-            { onConflict: "shop_id,source_id", ignoreDuplicates: false },
+            { onConflict: "shop_id,source_id", ignoreDuplicates: false, defaultToNull: false },
           )
           .select();
         if (hasError(resp)) throw new Error(resp.error.message);
@@ -204,8 +204,11 @@ export class SupabaseContentStore implements ContentStore {
       }
 
       // Validate shop_id invariant: batch-fetch profile → shop_id mapping
+      // for ALL unique profile IDs first, then validate every row.
       if (rows.length > 0) {
         const profileIds = [...new Set(rows.map((r) => r.profile_id))];
+        const shopById = new Map<string, string>();
+
         for (const batch of chunk(profileIds)) {
           const mapResp = await this.#client
             .from("content_profiles")
@@ -214,6 +217,10 @@ export class SupabaseContentStore implements ContentStore {
           if (hasError(mapResp)) throw new Error(mapResp.error.message);
 
           const profileShops = (mapResp.data as Array<{ id: string; shop_id: string }>) ?? [];
+          for (const ps of profileShops) {
+            shopById.set(ps.id, ps.shop_id);
+          }
+
           if (profileShops.length !== batch.length) {
             const found = new Set(profileShops.map((p) => p.id));
             const missing = batch.filter((id) => !found.has(id));
@@ -221,15 +228,15 @@ export class SupabaseContentStore implements ContentStore {
               `profiles not found: ${missing.join(", ")}`,
             );
           }
+        }
 
-          const shopById = new Map(profileShops.map((p) => [p.id, p.shop_id]));
-          for (const row of rows) {
-            const expectedShop = shopById.get(row.profile_id);
-            if (expectedShop !== row.shop_id) {
-              throw new Error(
-                `attendance row shop_id "${row.shop_id}" does not match profile "${row.profile_id}" shop "${expectedShop}"`,
-              );
-            }
+        // Validate every row against the accumulated map
+        for (const row of rows) {
+          const expectedShop = shopById.get(row.profile_id);
+          if (expectedShop !== row.shop_id) {
+            throw new Error(
+              `attendance row shop_id "${row.shop_id}" does not match profile "${row.profile_id}" shop "${expectedShop}"`,
+            );
           }
         }
       }
