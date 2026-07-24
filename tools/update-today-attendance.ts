@@ -10,7 +10,10 @@ try {
 
   if (process.env.CONTENT_STORE_ENABLED === "true") {
     const store = createSupabaseContentStore(readContentStoreConfig());
-    const runId = await store.startRun({ sourceDate: result.jstDate });
+    const runId = await store.startRun({
+      sourceDate: result.jstDate,
+      metadata: { mode: "legacy-dual-write" },
+    });
     try {
       await persistRefreshResult(store, result);
       await store.completeRun(runId, {

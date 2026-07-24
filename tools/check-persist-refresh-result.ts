@@ -309,6 +309,98 @@ function checkNoTodayProfiles(): void {
   checkEqual("no attendance rows", attendance.length, 0);
 }
 
+// ── Check 9: source_id extraction variants ──────────────────────────
+
+function checkSourceIdExtraction(): void {
+  console.log("\n[source_id extraction]");
+  const result = buildTestResult();
+  result.siteData.profiles = [
+    // tokyo-weimi: known prefix → strip
+    { id: "tokyo-weimi-girl-27029", shopId: "tokyo-weimi", name: "A", title: "t", date: "d", image: "", gallery: [], origin: "o", age: "20", height: "160", weight: "50", cup: "C", price: "p", summary: "s", tags: [], isToday: false, lastSeen: "2026-07-24" },
+    // tokyo-weimi: legacy girl- prefix → keep full
+    { id: "girl-26580", shopId: "tokyo-weimi", name: "B", title: "t", date: "d", image: "", gallery: [], origin: "o", age: "20", height: "160", weight: "50", cup: "C", price: "p", summary: "s", tags: [], isToday: false, lastSeen: "2026-07-24" },
+    // tokyo-weimi: named ID → keep full
+    { id: "yuna", shopId: "tokyo-weimi", name: "C", title: "t", date: "d", image: "", gallery: [], origin: "o", age: "20", height: "160", weight: "50", cup: "C", price: "p", summary: "s", tags: [], isToday: false, lastSeen: "2026-07-24" },
+    // hikari888: known prefix → strip
+    { id: "hikari888-girl-990", shopId: "hikari888", name: "D", title: "t", date: "d", image: "", gallery: [], origin: "o", age: "20", height: "160", weight: "50", cup: "C", price: "p", summary: "s", tags: [], isToday: false, lastSeen: "2026-07-24" },
+    // ikebukuro-vip: hash-based → keep full
+    { id: "ikebukuro-vip-girl-cd9c0fe6f9a4", shopId: "ikebukuro-vip", name: "E", title: "t", date: "d", image: "", gallery: [], origin: "o", age: "20", height: "160", weight: "50", cup: "C", price: "p", summary: "s", tags: [], isToday: false, lastSeen: "2026-07-24" },
+    // ikebukuro-vip: with vip- sub-prefix → keep full
+    { id: "ikebukuro-vip-girl-vip-e4bdb3e6", shopId: "ikebukuro-vip", name: "F", title: "t", date: "d", image: "", gallery: [], origin: "o", age: "20", height: "160", weight: "50", cup: "C", price: "p", summary: "s", tags: [], isToday: false, lastSeen: "2026-07-24" },
+    // Unknown shop prefix → keep full
+    { id: "unknown-shop-girl-123", shopId: "unknown-shop", name: "G", title: "t", date: "d", image: "", gallery: [], origin: "o", age: "20", height: "160", weight: "50", cup: "C", price: "p", summary: "s", tags: [], isToday: false, lastSeen: "2026-07-24" },
+  ];
+  // Stub imageMap so mapper does not throw for empty images
+  result.imageMap = {};
+  const { profiles } = mapRefreshResultToRows(result);
+  const byId = new Map(profiles.map((p) => [p.id, p.source_id]));
+
+  checkEqual("tokyo-weimi-girl-27029 → 27029", byId.get("tokyo-weimi-girl-27029")!, "27029");
+  checkEqual("girl-26580 → keep full", byId.get("girl-26580")!, "girl-26580");
+  checkEqual("yuna → keep full", byId.get("yuna")!, "yuna");
+  checkEqual("hikari888-girl-990 → 990", byId.get("hikari888-girl-990")!, "990");
+  checkEqual("ikebukuro-vip hash → keep full", byId.get("ikebukuro-vip-girl-cd9c0fe6f9a4")!, "ikebukuro-vip-girl-cd9c0fe6f9a4");
+  checkEqual("ikebukuro-vip vip- → keep full", byId.get("ikebukuro-vip-girl-vip-e4bdb3e6")!, "ikebukuro-vip-girl-vip-e4bdb3e6");
+  checkEqual("unknown shop → keep full", byId.get("unknown-shop-girl-123")!, "unknown-shop-girl-123");
+}
+
+// ── Check 10: Empty translations filtered for all languages ─────────-
+
+function checkEmptyTranslationFiltering(): void {
+  console.log("\n[Empty translation filtering]");
+  const result = buildTestResult();
+
+  // Add a zh-Hans entry that has content (partial) and empty entries for other languages
+  result.profileTranslations = {
+    "zh-Hant": { "yuna": { title: "", tags: [], summary: "" } },       // empty → filtered
+    "zh-Hans": { "yuna": { title: "有內容", tags: [], summary: "" } }, // partial: only title
+    ja: { "yuna": { title: "", tags: [], summary: "" } },              // empty → filtered
+    ko: {},                                                              // language bucket empty
+    en: { "yuna": { title: "", tags: [], summary: "" } },               // all empty → filtered
+  };
+
+  const { translations } = mapRefreshResultToRows(result);
+  // Only zh-Hans entry with title="有內容" should survive
+  const filtered = translations.filter((t) => t.profile_id === "yuna");
+  checkEqual("only zh-Hans survives", filtered.length, 1);
+  checkEqual("zh-Hans has title", filtered[0]!.title, "有內容");
+  checkEqual("zh-Hans language", filtered[0]!.language, "zh-Hans");
+
+  // Verify source_hash is populated
+  check("zh-Hans has non-empty source_hash", typeof filtered[0]!.source_hash === "string" && filtered[0]!.source_hash.length === 64);
+}
+
+// ── Check 11: Partial translation entries still written ─────────────
+
+function checkPartialTranslationContent(): void {
+  console.log("\n[Partial translation content]");
+  const result = buildTestResult();
+  result.profileTranslations = {
+    "zh-Hant": {},
+    "zh-Hans": { "yuna": { title: "標題", tags: ["a"], summary: "" } },  // empty summary OK
+    ja: { "yuna": { title: "", tags: [], summary: "概要" } },            // only summary
+    ko: {},
+    en: { "yuna": { title: "Title", tags: [], summary: "" } },           // only title
+  };
+
+  const { translations } = mapRefreshResultToRows(result);
+  const yunaTranslations = translations.filter((t) => t.profile_id === "yuna");
+  checkEqual("3 languages partial", yunaTranslations.length, 3);
+
+  const zhHans = yunaTranslations.find((t) => t.language === "zh-Hans")!;
+  checkEqual("zh-Hans title", zhHans.title, "標題");
+  checkEqual("zh-Hans tags", JSON.stringify(zhHans.tags), '["a"]');
+  checkEqual("zh-Hans summary", zhHans.summary, null);
+
+  const jaTrans = yunaTranslations.find((t) => t.language === "ja")!;
+  checkEqual("ja summary", jaTrans.summary, "概要");
+  checkEqual("ja title", jaTrans.title, null);
+
+  const enTrans = yunaTranslations.find((t) => t.language === "en")!;
+  checkEqual("en title", enTrans.title, "Title");
+  checkEqual("en summary", enTrans.summary, null);
+}
+
 // ── Main ─────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -319,6 +411,9 @@ async function main(): Promise<void> {
   checkMissingImageUrl();
   checkHashDeterminism();
   checkNoTodayProfiles();
+  checkSourceIdExtraction();
+  checkEmptyTranslationFiltering();
+  checkPartialTranslationContent();
   await checkPersistenceOrder();
   await checkFailureRethrow();
 
