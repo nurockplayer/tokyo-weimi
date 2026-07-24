@@ -112,6 +112,23 @@ export interface SupabaseQueryResponse {
 }
 
 /**
+ * Options for the select builder, including pagination and filtering
+ * parameters needed by loadOverrides and replaceAttendance invariants.
+ */
+export interface SelectOpts {
+  rangeFrom?: number;
+  rangeTo?: number;
+  /** ORDER BY column (ascending). */
+  order?: string;
+  /** LIMIT after filters. */
+  limit?: number;
+  /** WHERE column > value (keyset cursor for pagination). */
+  gt?: string;
+  /** WHERE column IN (values). */
+  inFilter?: { column: string; values: unknown[] };
+}
+
+/**
  * Insert options mirroring PostgrestQueryBuilder.insert() options that
  * the bridge actually passes — no `any`, no unused fields.
  */
@@ -146,8 +163,9 @@ export interface SupabaseClientLike {
     };
     delete(): {
       eq(column: string, value: unknown): Promise<SupabaseQueryResponse>;
+      in(column: string, values: unknown[]): Promise<SupabaseQueryResponse>;
     };
-    select(columns?: string, opts?: { rangeFrom?: number; rangeTo?: number }): Promise<SupabaseQueryResponse>;
+    select(columns?: string, opts?: SelectOpts): Promise<SupabaseQueryResponse>;
     update(values: Record<string, unknown>): {
       eq(column: string, value: unknown): Promise<SupabaseQueryResponse>;
     };

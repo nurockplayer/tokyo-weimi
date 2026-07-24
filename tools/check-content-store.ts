@@ -6,7 +6,7 @@
 
 import { readContentStoreConfig } from "./content-store/supabase-client.ts";
 import { SupabaseContentStore } from "./content-store/content-store.ts";
-import type { SupabaseClientLike, SupabaseQueryResponse } from "./content-store/types.ts";
+import type { SupabaseClientLike, SupabaseQueryResponse, SelectOpts } from "./content-store/types.ts";
 
 // ─── Fake client builder ───────────────────────────────────────
 
@@ -16,17 +16,66 @@ interface CallLogEntry {
   args: unknown[];
 }
 
+interface FakeSelectResult {
+  /** All rows the fake will return (pre-filtered). The fake applies
+   *  inFilter, order, gt, rangeFrom/rangeTo locally. */
+  allRows: unknown[];
+}
+
 function fakeClient(
   log: CallLogEntry[],
-  selectResult?: unknown,
+  initialSelectResult?: FakeSelectResult,
 ): SupabaseClientLike {
+  let selectResult = initialSelectResult;
+
+  function applySelectOpts(
+    rows: unknown[],
+    opts?: SelectOpts,
+  ): unknown[] {
+    let filtered = rows;
+
+    // inFilter
+    if (opts?.inFilter) {
+      const col = opts.inFilter.column as keyof unknown;
+      const vals = new Set(opts.inFilter.values);
+      filtered = filtered.filter((r) => vals.has((r as Record<string, unknown>)[col]));
+    }
+
+    // gt (keyset cursor)
+    if (opts?.gt !== undefined) {
+      const col = opts.order ?? "profile_id";
+      filtered = filtered.filter((r) => ((r as Record<string, string>)[col] ?? "") > opts.gt!);
+    }
+
+    // order (ascending, string compare)
+    if (opts?.order) {
+      const col = opts.order;
+      filtered = [...filtered].sort((a, b) => {
+        const av = (a as Record<string, string>)[col] ?? "";
+        const bv = (b as Record<string, string>)[col] ?? "";
+        return av < bv ? -1 : av > bv ? 1 : 0;
+      });
+    }
+
+    // limit
+    if (opts?.limit !== undefined) {
+      filtered = filtered.slice(0, opts.limit);
+    }
+
+    // range
+    if (opts?.rangeFrom !== undefined && opts?.rangeTo !== undefined) {
+      filtered = filtered.slice(opts.rangeFrom, opts.rangeTo + 1);
+    }
+
+    return filtered;
+  }
+
   function ok(data: unknown = null): SupabaseQueryResponse {
     return { data, error: null };
   }
 
   return {
     from(table: string) {
-      let currentSelectResult = selectResult;
       return {
         insert(rows: unknown[], _opts?: unknown) {
           log.push({ table, method: "insert", args: [rows, _opts] });
@@ -43,15 +92,18 @@ function fakeClient(
               log.push({ table, method: "delete.eq", args: [column, value] });
               return Promise.resolve(ok());
             },
+            in(column: string, values: unknown[]) {
+              log.push({ table, method: "delete.in", args: [column, values] });
+              return Promise.resolve(ok());
+            },
           };
         },
-        select(columns?: string, opts?: { rangeFrom?: number; rangeTo?: number }) {
+        select(columns?: string, opts?: SelectOpts) {
           log.push({ table, method: "select", args: [columns, opts] });
-          if (opts?.rangeFrom !== undefined && opts?.rangeTo !== undefined && Array.isArray(currentSelectResult)) {
-            const sliced = (currentSelectResult as unknown[]).slice(opts.rangeFrom, opts.rangeTo + 1);
-            return Promise.resolve(ok(sliced));
+          if (selectResult && selectResult.allRows) {
+            return Promise.resolve(ok(applySelectOpts(selectResult.allRows, opts)));
           }
-          return Promise.resolve(ok(currentSelectResult));
+          return Promise.resolve(ok(null));
         },
         update(values: Record<string, unknown>) {
           log.push({ table, method: "update", args: [values] });
@@ -155,8 +207,13 @@ console.log("ContentStore check\n");
 {
   console.log("\n2. replaceAttendance — delete filter scoped to date");
 
+  // Need to seed profiles so shop validation passes
+  const profiles = [
+    { id: "p1", shop_id: "shop1" },
+  ];
+
   const log: CallLogEntry[] = [];
-  const store = new SupabaseContentStore(fakeClient(log));
+  const store = new SupabaseContentStore(fakeClient(log, { allRows: profiles }));
 
   await store.replaceAttendance("2026-07-18", [
     { profile_id: "p1", attendance_date: "2026-07-18", shop_id: "shop1", position: 0 },
@@ -212,6 +269,9 @@ console.log("ContentStore check\n");
             eq() {
               return Promise.resolve({ data: null, error: { message: "permission denied" } });
             },
+            in() {
+              return Promise.resolve({ data: null, error: { message: "permission denied" } });
+            },
           };
         },
         select() {
@@ -244,7 +304,54 @@ console.log("ContentStore check\n");
     { label: "failRun", fn: () => store.failRun("r1", new Error("boom")) },
     { label: "upsertProfiles", fn: () => store.upsertProfiles([{ id: "p1", shop_id: "s1", source_id: "src1", name: "n", image: "i.jpg", date: "2026-07-23", title: "t", origin: "o", age: "20", height: "160", weight: "50", cup: "C", price: "10000", summary: "s", tags: [], source_hash: "h" }]) },
     { label: "replaceProfileMedia", fn: () => store.replaceProfileMedia("p1", [{ id: "m1", profile_id: "p1", source_url: "https://example.com/img.jpg", media_type: "image" }]) },
-    { label: "replaceAttendance", fn: () => store.replaceAttendance("2026-07-18", [{ profile_id: "p1", attendance_date: "2026-07-18", shop_id: "s1" }]) },
+    { label: "replaceAttendance", fn: () => {
+      // Separate client with enough data to pass shop validation but fail on delete
+      const sepLog: CallLogEntry[] = [];
+      const sepErrClient: SupabaseClientLike = {
+        from() {
+          return {
+            insert() {
+              return { select: async () => ({ data: null, error: { message: "violates unique constraint" } }) };
+            },
+            upsert() {
+              return { select: async () => ({ data: null, error: { message: "deadlock detected" } }) };
+            },
+            delete() {
+              return {
+                eq() {
+                  return Promise.resolve({ data: null, error: { message: "permission denied" } });
+                },
+                in() {
+                  return Promise.resolve({ data: null, error: { message: "permission denied" } });
+                },
+              };
+            },
+            select() {
+              return Promise.resolve({ data: null, error: null });
+            },
+            update() {
+              return {
+                eq() {
+                  return Promise.resolve({ data: null, error: { message: "row not found" } });
+                },
+              };
+            },
+          };
+        },
+        storage: {
+          from() {
+            return {
+              upload() {
+                return Promise.resolve({ data: null, error: { message: "bucket not found" } });
+              },
+            };
+          },
+        },
+      };
+      const s = new SupabaseContentStore(sepErrClient);
+      // shop validation passes (select returns null error), but then profile insert fails
+      return s.replaceAttendance("2026-07-18", [{ profile_id: "p1", attendance_date: "2026-07-18", shop_id: "s1" }]);
+    } },
     { label: "upsertTranslations", fn: () => store.upsertTranslations([{ profile_id: "p1", language: "en", tags: [], source_hash: "h" }]) },
     { label: "loadOverrides", fn: () => store.loadOverrides() },
     { label: "uploadObject", fn: () => store.uploadObject("path", new Uint8Array(), "image/png", false) },
@@ -345,9 +452,9 @@ console.log("ContentStore check\n");
   assert("no client calls made (no delete/insert) for mismatch", anyClientCall.length === 0, JSON.stringify(log));
 }
 
-// --- 8. Scope validation — normal valid rows still pass ---
+// --- 8. Valid rows still work ---
 {
-  console.log("\n8. Scope validation — valid rows still work");
+  console.log("\n8. Valid rows still work");
 
   const log: CallLogEntry[] = [];
 
@@ -362,44 +469,19 @@ console.log("ContentStore check\n");
     assert("valid media rows: delete called", deletes.length === 1, JSON.stringify(deletes));
     assert("valid media rows: insert called", inserts.length >= 1, JSON.stringify(inserts));
   }
-
-  {
-    const log2: CallLogEntry[] = [];
-    const store = new SupabaseContentStore(fakeClient(log2));
-    await store.replaceAttendance("2026-07-18", [
-      { profile_id: "p1", attendance_date: "2026-07-18", shop_id: "s1" },
-      { profile_id: "p2", attendance_date: "2026-07-18", shop_id: "s1" },
-    ]);
-    const deletes = log2.filter((e) => e.method === "delete.eq");
-    const inserts = log2.filter((e) => e.method === "insert");
-    assert("valid attendance rows: delete called", deletes.length === 1, JSON.stringify(deletes));
-    assert("valid attendance rows: insert called", inserts.length >= 1, JSON.stringify(inserts));
-  }
 }
 
-// --- 9. Empty rows still delete after scope validation ---
+// --- 9. Empty rows still delete after scope validation (media) ---
 {
-  console.log("\n9. Empty rows still delete after scope validation");
+  console.log("\n9. Empty media rows still delete");
 
-  {
-    const log: CallLogEntry[] = [];
-    const store = new SupabaseContentStore(fakeClient(log));
-    await store.replaceProfileMedia("pid-1", []);
-    const deletes = log.filter((e) => e.method === "delete.eq");
-    const inserts = log.filter((e) => e.method === "insert");
-    assert("empty media rows: delete still called", deletes.length >= 1, JSON.stringify(deletes));
-    assert("empty media rows: no insert", inserts.length === 0, JSON.stringify(inserts));
-  }
-
-  {
-    const log: CallLogEntry[] = [];
-    const store = new SupabaseContentStore(fakeClient(log));
-    await store.replaceAttendance("2026-07-18", []);
-    const deletes = log.filter((e) => e.method === "delete.eq");
-    const inserts = log.filter((e) => e.method === "insert");
-    assert("empty attendance rows: delete still called", deletes.length >= 1, JSON.stringify(deletes));
-    assert("empty attendance rows: no insert", inserts.length === 0, JSON.stringify(inserts));
-  }
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log));
+  await store.replaceProfileMedia("pid-1", []);
+  const deletes = log.filter((e) => e.method === "delete.eq");
+  const inserts = log.filter((e) => e.method === "insert");
+  assert("empty media rows: delete still called", deletes.length >= 1, JSON.stringify(deletes));
+  assert("empty media rows: no insert", inserts.length === 0, JSON.stringify(inserts));
 }
 
 // --- 10. Defaults materialized on heterogeneous media rows ---
@@ -429,7 +511,10 @@ console.log("ContentStore check\n");
   console.log("\n11. Defaults materialized on attendance rows");
 
   const log: CallLogEntry[] = [];
-  const store = new SupabaseContentStore(fakeClient(log));
+  const store = new SupabaseContentStore(fakeClient(log, { allRows: [
+    { id: "p1", shop_id: "s1" },
+    { id: "p2", shop_id: "s1" },
+  ] }));
 
   await store.replaceAttendance("2026-07-18", [
     { profile_id: "p1", attendance_date: "2026-07-18", shop_id: "s1" },
@@ -476,35 +561,46 @@ console.log("ContentStore check\n");
   }
 }
 
-// --- 13. loadOverrides paginates with range ---
+// --- 13. Override keyset pagination ---
 {
-  console.log("\n13. loadOverrides paginates with range()");
+  console.log("\n13. loadOverrides — keyset pagination");
 
-  const allRows: Array<{ profile_id: string; updated_at: string }> = [];
-  for (let i = 0; i < 2501; i++) {
-    allRows.push({ profile_id: `p${i}`, updated_at: new Date().toISOString() });
-  }
+  // Build rows with ordered profile_ids
+  const allRows = Array.from({ length: 2501 }, (_, i) => ({
+    profile_id: `p${String(i).padStart(4, "0")}`,
+    updated_at: new Date().toISOString(),
+    name: `name${i}`,
+  }));
 
   const log: CallLogEntry[] = [];
-  const store = new SupabaseContentStore(fakeClient(log, allRows));
+  const store = new SupabaseContentStore(fakeClient(log, { allRows }));
 
   const result = await store.loadOverrides();
 
   const selectCalls = log.filter((e) => e.method === "select");
-  assert("loadOverrides makes multiple range selects for 2501 rows", selectCalls.length >= 3, `got ${selectCalls.length}`);
+  assert("loadOverrides makes multiple selects for 2501 rows", selectCalls.length >= 3, `got ${selectCalls.length}`);
   assert("loadOverrides returns all 2501 rows", result.length === 2501, `got ${result.length}`);
 
-  const firstRange = selectCalls.find((c) => (c.args[1] as Record<string, unknown>)?.rangeFrom === 0);
-  const secondRange = selectCalls.find((c) => (c.args[1] as Record<string, unknown>)?.rangeFrom === 1000);
-  const thirdRange = selectCalls.find((c) => (c.args[1] as Record<string, unknown>)?.rangeFrom === 2000);
-  assert("first range starts at 0", firstRange != null, JSON.stringify(selectCalls.map((c) => c.args[1])));
-  assert("second range starts at 1000", secondRange != null, JSON.stringify(selectCalls.map((c) => c.args[1])));
-  assert("third range starts at 2000", thirdRange != null, JSON.stringify(selectCalls.map((c) => c.args[1])));
+  // Verify ordering params
+  const firstCall = selectCalls[0]!;
+  assert("first select sends order=profile_id", (firstCall.args[1] as SelectOpts)?.order === "profile_id", JSON.stringify(firstCall.args[1]));
+  assert("first select sends limit=1000", (firstCall.args[1] as SelectOpts)?.limit === 1000, JSON.stringify(firstCall.args[1]));
+  assert("first select has no gt cursor", (firstCall.args[1] as SelectOpts)?.gt === undefined, JSON.stringify(firstCall.args[1]));
+
+  if (selectCalls.length >= 2) {
+    const secondCall = selectCalls[1]!;
+    assert("second select has gt cursor", (secondCall.args[1] as SelectOpts)?.gt != null, JSON.stringify(secondCall.args[1]));
+  }
+
+  // Verify no duplicates or gaps
+  const ids = new Set(result.map((r) => r.profile_id));
+  assert("no duplicate profile_ids in result", ids.size === result.length, `got ${result.length} ids but set size ${ids.size}`);
+  assert("profile_id order is ascending", result.every((r, i) => i === 0 || r.profile_id > result[i - 1]!.profile_id), "not sorted");
 }
 
-// --- 14. startRun — insert.select() returns inserted rows ---
+// --- 14. startRun — insert.select() ---
 {
-  console.log("\n14. startRun — insert.select() returns inserted rows");
+  console.log("\n14. startRun — insert.select()");
 
   const log: CallLogEntry[] = [];
   const store = new SupabaseContentStore(fakeClient(log));
@@ -513,9 +609,135 @@ console.log("ContentStore check\n");
 
   const inserts = log.filter((e) => e.method === "insert");
   assert("startRun called insert", inserts.length >= 1, JSON.stringify(inserts));
-  // The fake returns the inserted payload data, so the returned id is undefined.
-  // Test promises are verified through earlier checks (error wrapping, flow).
   assert("startRun completed without throwing", true, "");
+}
+
+// --- 15. Heterogeneous profile timestamps ---
+{
+  console.log("\n15. Heterogeneous profile timestamps");
+
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log));
+
+  // One row with first_seen_at, one without
+  await store.upsertProfiles([
+    {
+      id: "p1", shop_id: "s1", source_id: "src1",
+      name: "n", image: "i.jpg", date: "2026-07-23",
+      title: "t", origin: "o", age: "20", height: "160",
+      weight: "50", cup: "C", price: "10000",
+      summary: "s", tags: [], source_hash: "h",
+      first_seen_at: "2026-01-01T00:00:00Z",
+      last_seen_at: "2026-07-23T00:00:00Z",
+    },
+    {
+      id: "p2", shop_id: "s1", source_id: "src2",
+      name: "n2", image: "i2.jpg", date: "2026-07-23",
+      title: "t2", origin: "o2", age: "22", height: "165",
+      weight: "52", cup: "D", price: "12000",
+      summary: "s2", tags: [], source_hash: "h2",
+      // no first_seen_at, no last_seen_at
+    },
+  ]);
+
+  const upsertCall = log.find((e) => e.method === "upsert");
+  const upsertRows = upsertCall!.args[0] as Record<string, unknown>[];
+  assert("first row preserves first_seen_at", upsertRows[0]?.first_seen_at != null, JSON.stringify(upsertRows[0]));
+  assert("first row preserves last_seen_at", upsertRows[0]?.last_seen_at != null, JSON.stringify(upsertRows[0]));
+  assert("second row omits first_seen_at (key not present)", !("first_seen_at" in upsertRows[1]!), JSON.stringify(upsertRows[1]));
+  assert("second row omits last_seen_at (key not present)", !("last_seen_at" in upsertRows[1]!), JSON.stringify(upsertRows[1]));
+  assert("both rows have updated_at", upsertRows[0]?.updated_at != null && upsertRows[1]?.updated_at != null, "");
+}
+
+// --- 16. Attendance shop invariant validation ---
+{
+  console.log("\n16. Attendance shop invariant");
+
+  // Setup: profile rows that will be returned by the fake select
+  const profiles: Array<{ id: string; shop_id: string }> = [
+    { id: "p1", shop_id: "shop-a" },
+    { id: "p2", shop_id: "shop-a" },
+  ];
+
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log, { allRows: profiles }));
+
+  // Row with mismatched shop_id should fail before any delete
+  try {
+    await store.replaceAttendance("2026-07-18", [
+      { profile_id: "p1", attendance_date: "2026-07-18", shop_id: "shop-b" },
+    ]);
+    assert("throws when shop_id does not match profile", false, "no error thrown");
+  } catch (err) {
+    const msg = String(err);
+    assert("error mentions shop_id mismatch", msg.includes("shop_id"), msg);
+    assert("error mentions profile shop", msg.includes("shop-a"), msg);
+    assert("error still contains operation name", msg.includes("ContentStore.replaceAttendance"), msg);
+  }
+
+  // Verify no delete or insert happened
+  const anyDestructive = log.filter((e) => e.method.startsWith("delete") || e.method.startsWith("insert"));
+  assert("no destructive calls for mismatched shop", anyDestructive.length === 0, JSON.stringify(log));
+}
+
+// --- 17. Attendance shop — missing profile ---
+{
+  console.log("\n17. Attendance shop — missing profile rejects");
+
+  const allRows: Array<{ id: string; shop_id: string }> = [{ id: "p1", shop_id: "shop-a" }];
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log, { allRows }));
+
+  try {
+    await store.replaceAttendance("2026-07-18", [
+      { profile_id: "p999", attendance_date: "2026-07-18", shop_id: "shop-x" },
+    ]);
+    assert("throws when profile not found", false, "no error thrown");
+  } catch (err) {
+    const msg = String(err);
+    assert("error mentions profile not found", msg.includes("not found"), msg);
+  }
+
+  const anyDestructive = log.filter((e) => e.method.startsWith("delete") || e.method.startsWith("insert"));
+  assert("no destructive calls for missing profile", anyDestructive.length === 0, JSON.stringify(log));
+}
+
+// --- 18. Attendance shop — valid rows still pass ---
+{
+  console.log("\n18. Attendance shop — valid rows still proceed");
+
+  const profiles: Array<{ id: string; shop_id: string }> = [
+    { id: "p1", shop_id: "shop-a" },
+    { id: "p2", shop_id: "shop-a" },
+  ];
+
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log, { allRows: profiles }));
+
+  await store.replaceAttendance("2026-07-18", [
+    { profile_id: "p1", attendance_date: "2026-07-18", shop_id: "shop-a" },
+    { profile_id: "p2", attendance_date: "2026-07-18", shop_id: "shop-a" },
+  ]);
+
+  const deletes = log.filter((e) => e.method === "delete.eq");
+  const inserts = log.filter((e) => e.method === "insert");
+  assert("valid attendance: delete called", deletes.length >= 1, JSON.stringify(deletes));
+  assert("valid attendance: insert called", inserts.length >= 1, JSON.stringify(inserts));
+}
+
+// --- 19. Attendance shop — empty rows still only delete ---
+{
+  console.log("\n19. Attendance shop — empty rows still delete only");
+
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log));
+
+  await store.replaceAttendance("2026-07-18", []);
+
+  const deletes = log.filter((e) => e.method === "delete.eq");
+  const inserts = log.filter((e) => e.method === "insert");
+  assert("empty attendance: delete called", deletes.length >= 1, JSON.stringify(deletes));
+  assert("empty attendance: no insert", inserts.length === 0, JSON.stringify(inserts));
 }
 
 // ─── Summary ──────────────────────────────────────────────────
