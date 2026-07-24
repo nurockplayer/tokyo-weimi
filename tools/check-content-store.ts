@@ -740,6 +740,58 @@ console.log("ContentStore check\n");
   assert("empty attendance: no insert", inserts.length === 0, JSON.stringify(inserts));
 }
 
+// --- 20. Attendance >200 unique profiles across batches ---
+{
+  console.log("\n20. Attendance — 201 unique profiles across multiple chunks");
+
+  // Build 201 distinct profile IDs
+  const profiles: Array<{ id: string; shop_id: string }> = [];
+  for (let i = 0; i < 201; i++) {
+    profiles.push({ id: `p${i}`, shop_id: "shop-a" });
+  }
+
+  const rows: Array<{ profile_id: string; attendance_date: string; shop_id: string }> = [];
+  for (let i = 0; i < 201; i++) {
+    rows.push({ profile_id: `p${i}`, attendance_date: "2026-07-18", shop_id: "shop-a" });
+  }
+
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log, { allRows: profiles }));
+
+  await store.replaceAttendance("2026-07-18", rows);
+
+  // Verify chunked selects for profile lookup
+  const profileSelects = log.filter((e) => e.table === "content_profiles" && e.method === "select");
+  assert("profile lookup makes at least 2 chunked selects (200+200 per chunk)", profileSelects.length >= 2, `got ${profileSelects.length}`);
+
+  // Verify delete + insert called
+  const deletes = log.filter((e) => e.method === "delete.eq");
+  const inserts = log.filter((e) => e.method === "insert");
+  assert("201 valid attendance: delete called", deletes.length >= 1, JSON.stringify(deletes));
+  assert("201 valid attendance: insert called", inserts.length >= 1, JSON.stringify(inserts));
+}
+
+// --- 21. Profile upsert sends defaultToNull: false ---
+{
+  console.log("\n21. Profile upsert sends defaultToNull: false");
+
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log));
+
+  await store.upsertProfiles([{
+    id: "p1", shop_id: "s1", source_id: "src1",
+    name: "n", image: "i.jpg", date: "2026-07-23",
+    title: "t", origin: "o", age: "20", height: "160",
+    weight: "50", cup: "C", price: "10000",
+    summary: "s", tags: [], source_hash: "h",
+    first_seen_at: "2026-01-01T00:00:00Z",
+  }]);
+
+  const upsertCall = log.find((e) => e.method === "upsert")!;
+  const opts = upsertCall.args[1] as Record<string, unknown>;
+  assert("upsert options include defaultToNull: false", opts?.defaultToNull === false, JSON.stringify(opts));
+}
+
 // ─── Summary ──────────────────────────────────────────────────
 
 console.log(`\n${passed} passed, ${failed} failed`);
