@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import type { ContentStore, MediaRow, ProfileRow, TranslationRow, AttendanceRow } from "./content-store/types.ts";
 import type { RefreshResult } from "./attendance/types.ts";
 import type { Profile, ProfileTranslations, TranslatedProfileText } from "../src/types.ts";
-import { mapRefreshResultToRows, computeSourceHash } from "./content-store/mappers.ts";
+import { mapRefreshResultToRows, computeSourceHash, invalidateStaleTranslations } from "./content-store/mappers.ts";
 import { persistRefreshResult } from "./content-store/persist-refresh-result.ts";
 
 // ── In-memory fake ContentStore ──────────────────────────────────────
@@ -402,70 +402,18 @@ function checkPartialTranslationContent(): void {
   checkEqual("en summary", enTrans.summary, null);
 }
 
-// ── Check 12: Translation source-hash provenance — unchanged hash preserves ─
-
-function cloneProfile(p: Partial<Profile>): Profile {
-  return {
-    id: p.id ?? "",
-    shopId: p.shopId ?? "tokyo-weimi",
-    name: p.name ?? "",
-    title: p.title ?? "",
-    date: p.date ?? "",
-    image: p.image ?? "",
-    gallery: p.gallery ?? [],
-    origin: p.origin ?? "",
-    age: p.age ?? "",
-    height: p.height ?? "",
-    weight: p.weight ?? "",
-    cup: p.cup ?? "",
-    tags: p.tags ?? [],
-    price: p.price ?? "",
-    summary: p.summary ?? "",
-    isToday: p.isToday,
-    lastSeen: p.lastSeen,
-  };
-}
-
-/** Replicate the provenance logic from refreshAttendanceContent. */
-function applyProvenance(
-  currentProfiles: Profile[],
-  baselineProfiles: Profile[],
-  translations: ProfileTranslations,
-): void {
-  const translatableLanguages = ["zh-Hans", "ja", "ko", "en"] as const;
-  const baselineMap = new Map(baselineProfiles.map((p) => [p.id, cloneProfile(p)]));
-  const baselineHashes = new Map<string, string>();
-  baselineMap.forEach((p) => baselineHashes.set(p.id, computeSourceHash(p)));
-
-  for (const profile of currentProfiles) {
-    const baselineHash = baselineHashes.get(profile.id);
-    if (baselineHash === undefined) {
-      for (const lang of translatableLanguages) {
-        delete translations[lang][profile.id];
-      }
-      continue;
-    }
-    const currentHash = computeSourceHash(profile);
-    if (baselineHash !== currentHash) {
-      for (const lang of translatableLanguages) {
-        delete translations[lang][profile.id];
-      }
-    }
-  }
-}
+// ── Check 12: Translation source-hash provenance via production helper ─
 
 function checkTranslationProvenance(): void {
   console.log("\n[Translation provenance]");
 
-  const base: Profile = cloneProfile({
-    id: "test-girl",
-    title: "日本人・推薦女孩",
-    tags: ["日本人"],
-    summary: "可愛活潑的女孩",
-    name: "測試",
+  const baseline: Profile = {
+    id: "test-girl", shopId: "tokyo-weimi", name: "測試",
+    title: "日本人・推薦女孩", date: "", image: "", gallery: [],
     origin: "東京", age: "22", height: "160", weight: "50", cup: "C-cup",
-    price: "60 分鐘 20,000",
-  });
+    tags: ["日本人"], price: "60 分鐘 20,000",
+    summary: "可愛活潑的女孩", isToday: false, lastSeen: "2026-07-24",
+  };
 
   const headerTranslation: TranslatedProfileText = {
     title: "日本・推荐女孩",
@@ -473,59 +421,60 @@ function checkTranslationProvenance(): void {
     summary: "可爱活泼的女孩",
   };
 
+  // -- disabled: no invalidation when flag is off --
+  const transDisabled: ProfileTranslations = {
+    "zh-Hant": {}, "zh-Hans": { "test-girl": { ...headerTranslation } }, ja: {}, ko: {}, en: {},
+  };
+  const changed = { ...baseline, title: "New Title" };
+  invalidateStaleTranslations([changed], [baseline], transDisabled, false);
+  check("disabled → zh-Hans preserved", transDisabled["zh-Hans"]["test-girl"]!.title === "日本・推荐女孩");
+
   // -- unchanged hash preserves --
-  const currentUnchanged = cloneProfile(base);
   const transPreserve: ProfileTranslations = {
     "zh-Hant": {}, "zh-Hans": { "test-girl": { ...headerTranslation } }, ja: {}, ko: {}, en: {},
   };
-  applyProvenance([currentUnchanged], [cloneProfile(base)], transPreserve);
+  invalidateStaleTranslations([baseline], [baseline], transPreserve, true);
   check("unchanged → zh-Hans preserved", transPreserve["zh-Hans"]["test-girl"]!.title === "日本・推荐女孩");
 
   // -- title changed → invalidated --
-  const currentTitleChanged = cloneProfile(base);
-  currentTitleChanged.title = "日本人・新人推薦";
   const transTitle: ProfileTranslations = {
     "zh-Hant": {}, "zh-Hans": { "test-girl": { ...headerTranslation } }, ja: {}, ko: {}, en: {},
   };
-  applyProvenance([currentTitleChanged], [cloneProfile(base)], transTitle);
+  const currentTitleChanged: Profile = { ...baseline, title: "日本人・新人推薦" };
+  invalidateStaleTranslations([currentTitleChanged], [baseline], transTitle, true);
   check("title changed → zh-Hans deleted", transTitle["zh-Hans"]["test-girl"] === undefined);
   check("title changed → ja empty", Object.keys(transTitle.ja).length === 0);
 
-  // -- summary changed → invalidated all languages --
-  const currentSummaryChanged = cloneProfile(base);
-  currentSummaryChanged.summary = "全新的介紹文案";
+  // -- summary changed → invalidated --
   const transSumm: ProfileTranslations = {
     "zh-Hant": {}, "zh-Hans": { "test-girl": { ...headerTranslation } }, ja: {}, ko: {}, en: {},
   };
-  applyProvenance([currentSummaryChanged], [cloneProfile(base)], transSumm);
+  invalidateStaleTranslations([{ ...baseline, summary: "全新的介紹文案" }], [baseline], transSumm, true);
   check("summary changed → zh-Hans deleted", transSumm["zh-Hans"]["test-girl"] === undefined);
 
   // -- tags changed → invalidated --
-  const currentTagsChanged = cloneProfile(base);
-  currentTagsChanged.tags = ["中國", "新人"];
   const transTags: ProfileTranslations = {
     "zh-Hant": {}, "zh-Hans": { "test-girl": { ...headerTranslation } }, ja: {}, ko: {}, en: {},
   };
-  applyProvenance([currentTagsChanged], [cloneProfile(base)], transTags);
+  invalidateStaleTranslations([{ ...baseline, tags: ["中國", "新人"] }], [baseline], transTags, true);
   check("tags changed → zh-Hans deleted", transTags["zh-Hans"]["test-girl"] === undefined);
 
-  // -- price changed → IN hash (price is in CONTENT_FIELDS per #82) → invalidated --
-  const currentPriceChanged = cloneProfile(base);
-  currentPriceChanged.price = "80 分鐘 30,000";
+  // -- price changed (in CONTENT_FIELDS) → invalidated --
   const transPrice: ProfileTranslations = {
     "zh-Hant": {}, "zh-Hans": { "test-girl": { ...headerTranslation } }, ja: {}, ko: {}, en: {},
   };
-  applyProvenance([currentPriceChanged], [cloneProfile(base)], transPrice);
+  invalidateStaleTranslations([{ ...baseline, price: "80 分鐘 30,000" }], [baseline], transPrice, true);
   check("price changed (included) → zh-Hans deleted", transPrice["zh-Hans"]["test-girl"] === undefined);
 
   // -- new profile (no baseline) → pre-loaded translations removed --
   const transNew: ProfileTranslations = {
     "zh-Hant": {}, "zh-Hans": { "new-girl": { ...headerTranslation } }, ja: {}, ko: {}, en: {},
   };
-  applyProvenance(
-    [cloneProfile({ ...base, id: "new-girl" })],
-    [cloneProfile(base)],
+  invalidateStaleTranslations(
+    [{ ...baseline, id: "new-girl" }],
+    [baseline],
     transNew,
+    true,
   );
   check("new profile → pre-loaded zh-Hans deleted", transNew["zh-Hans"]["new-girl"] === undefined);
 }
@@ -534,29 +483,26 @@ function checkTranslationProvenance(): void {
 
 function checkStaleTranslationNotRestored(): void {
   console.log("\n[Stale translation not restored]");
-  const base: Profile = cloneProfile({
-    id: "stale-test",
-    title: "Original Title",
-    tags: ["日本人"],
-    summary: "Original summary",
-    name: "測試",
+  const baseline: Profile = {
+    id: "stale-test", shopId: "tokyo-weimi", name: "測試",
+    title: "Original Title", date: "", image: "", gallery: [],
     origin: "東京", age: "22", height: "160", weight: "50", cup: "C-cup",
-    price: "p",
-  });
+    tags: ["日本人"], price: "p", summary: "Original summary",
+    isToday: false, lastSeen: "2026-07-24",
+  };
 
   const headerTranslation: TranslatedProfileText = {
     title: "原有翻译", tags: ["原有"], summary: "原有摘要",
   };
 
-  const changed = cloneProfile(base);
-  changed.title = "New Title";
+  const changed: Profile = { ...baseline, title: "New Title" };
 
   const translations: ProfileTranslations = {
     "zh-Hant": {}, "zh-Hans": { "stale-test": { ...headerTranslation } }, ja: {}, ko: {}, en: {},
   };
 
   // provenance removes it (hash mismatch)
-  applyProvenance([changed], [cloneProfile(base)], translations);
+  invalidateStaleTranslations([changed], [baseline], translations, true);
   check("stale removed by provenance", translations["zh-Hans"]["stale-test"] === undefined);
 
   // Simulate translateProfiles being skipped (no API key or failure):
@@ -564,8 +510,6 @@ function checkStaleTranslationNotRestored(): void {
   const result = buildTestResult();
   result.profileTranslations = JSON.parse(JSON.stringify(translations)) as ProfileTranslations;
   result.siteData.profiles = [changed];
-
-  // Stub imageMap for the mapper
   result.imageMap = {};
 
   const { translations: rows } = mapRefreshResultToRows(result);
@@ -577,18 +521,15 @@ function checkStaleTranslationNotRestored(): void {
 
 function checkNewTranslationGetsCurrentHash(): void {
   console.log("\n[New translation gets current source_hash]");
-  const base: Profile = cloneProfile({
-    id: "hash-girl",
-    title: "Old Title",
-    tags: ["舊"],
-    summary: "Old summary",
-    name: "測試",
+  const baseline: Profile = {
+    id: "hash-girl", shopId: "tokyo-weimi", name: "測試",
+    title: "Old Title", date: "", image: "", gallery: [],
     origin: "東京", age: "22", height: "160", weight: "50", cup: "C-cup",
-    price: "p",
-  });
+    tags: ["舊"], price: "p", summary: "Old summary",
+    isToday: false, lastSeen: "2026-07-24",
+  };
 
-  const changed = cloneProfile(base);
-  changed.title = "New Title";
+  const changed: Profile = { ...baseline, title: "New Title" };
 
   // After provenance removes stale entries, translateProfiles would
   // generate fresh translations. Simulate what happens:
@@ -598,7 +539,6 @@ function checkNewTranslationGetsCurrentHash(): void {
     ja: {}, ko: {}, en: {},
   };
 
-  // Build a RefreshResult as it would look after provenance + translateProfiles
   const result = buildTestResult();
   result.profileTranslations = translations;
   result.siteData.profiles = [changed];

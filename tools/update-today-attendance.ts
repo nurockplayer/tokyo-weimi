@@ -5,10 +5,13 @@ import { createSupabaseContentStore, readContentStoreConfig } from "./content-st
 import { persistRefreshResult } from "./content-store/persist-refresh-result.ts";
 
 try {
-  const result: RefreshResult = await refreshAttendanceContent();
+  const contentStoreEnabled = process.env.CONTENT_STORE_ENABLED === "true";
+  const result: RefreshResult = await refreshAttendanceContent({
+    invalidateStaleTranslations: contentStoreEnabled,
+  });
   await writeLegacyContent(result);
 
-  if (process.env.CONTENT_STORE_ENABLED === "true") {
+  if (contentStoreEnabled) {
     const store = createSupabaseContentStore(readContentStoreConfig());
     const runId = await store.startRun({
       sourceDate: result.jstDate,

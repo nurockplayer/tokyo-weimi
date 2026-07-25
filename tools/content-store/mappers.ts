@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import type { Profile } from "../../src/types.ts";
+import type { LanguageCode, Profile } from "../../src/types.ts";
+import type { ProfileTranslations } from "../../src/types.ts";
 import type { RefreshResult } from "../attendance/types.ts";
 import type { AttendanceRow, MediaRow, ProfileRow, TranslationRow } from "./types.ts";
 
@@ -57,6 +58,47 @@ function extractSourceId(profileId: string, shopId: string): string {
   // ikebukuro-vip IDs are hash-based; legacy girl-* and named IDs have no
   // reliably extractable source identifier — keep the full profile ID.
   return profileId;
+}
+
+const TRANSLATABLE_LANGUAGES: LanguageCode[] = ["zh-Hans", "ja", "ko", "en"];
+
+/**
+ * Invalidate stale translation entries for profiles whose source content
+ * has changed.  Compares each current profile's source hash against its
+ * baseline; mismatches (or profiles absent from baseline) trigger deletion
+ * of all translatable-language entries.  Unchanged profiles are untouched.
+ *
+ * This is a pure mutation helper — it modifies `profileTranslations` in
+ * place and returns nothing.
+ *
+ * When called with `invalidate: false` this function is a no-op, preserving
+ * the original behaviour.
+ */
+export function invalidateStaleTranslations(
+  currentProfiles: readonly Profile[],
+  baselineProfiles: readonly Profile[],
+  profileTranslations: ProfileTranslations,
+  invalidate: boolean,
+): void {
+  if (!invalidate) return;
+
+  const baselineMap = new Map(baselineProfiles.map((p) => [p.id, p]));
+
+  for (const profile of currentProfiles) {
+    const baseline = baselineMap.get(profile.id);
+    if (baseline === undefined) {
+      // No baseline — any pre-loaded translation for this ID is untrusted.
+      for (const lang of TRANSLATABLE_LANGUAGES) {
+        delete profileTranslations[lang][profile.id];
+      }
+      continue;
+    }
+    if (computeSourceHash(baseline) !== computeSourceHash(profile)) {
+      for (const lang of TRANSLATABLE_LANGUAGES) {
+        delete profileTranslations[lang][profile.id];
+      }
+    }
+  }
 }
 
 function resolveImageUrl(imageId: string, imageMap: Record<string, string>): string {
