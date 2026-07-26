@@ -261,17 +261,58 @@ export class SupabaseContentStore implements ContentStore {
 
   // --- Translations ---
 
-  async upsertTranslations(rows: TranslationRow[]): Promise<void> {
-    return withError("upsertTranslations", async () => {
-      for (const batch of chunk(rows)) {
-        const resp = await this.#client
+  async replaceTranslations(profileIds: string[], rows: TranslationRow[]): Promise<void> {
+    return withError("replaceTranslations", async () => {
+      // Validation: all checks before any client call.
+      const seenProfiles = new Set<string>();
+      for (const pid of profileIds) {
+        if (seenProfiles.has(pid)) {
+          throw new Error(`duplicate profile_id in profileIds: "${pid}"`);
+        }
+        seenProfiles.add(pid);
+      }
+
+      if (profileIds.length === 0 && rows.length > 0) {
+        throw new Error("profileIds is empty but rows are non-empty");
+      }
+
+      const seenPairs = new Set<string>();
+      for (const row of rows) {
+        if (!seenProfiles.has(row.profile_id)) {
+          throw new Error(
+            `row profile_id "${row.profile_id}" is not in the profile scope`,
+          );
+        }
+        const pair = `${row.profile_id}\0${row.language}`;
+        if (seenPairs.has(pair)) {
+          throw new Error(
+            `duplicate (profile_id, language): ("${row.profile_id}", "${row.language}")`,
+          );
+        }
+        seenPairs.add(pair);
+      }
+
+      // No-op when both scope and rows are empty.
+      if (profileIds.length === 0 && rows.length === 0) return;
+
+      // Delete all in-scope translations.
+      for (const batch of chunk(profileIds)) {
+        const delResp = await this.#client
           .from("content_profile_translations")
-          .upsert(
-            batch.map(normalizeTranslationRow),
-            { onConflict: "profile_id,language", ignoreDuplicates: false },
-          )
+          .delete()
+          .in("profile_id", batch);
+        if (hasError(delResp)) throw new Error(delResp.error.message);
+      }
+
+      // Insert replacement rows, if any.
+      if (rows.length === 0) return;
+
+      for (const batch of chunk(rows)) {
+        const insResp = await this.#client
+          .from("content_profile_translations")
+          .insert(batch.map(normalizeTranslationRow))
           .select();
-        if (hasError(resp)) throw new Error(resp.error.message);
+        if (hasError(insResp)) throw new Error(insResp.error.message);
       }
     });
   }

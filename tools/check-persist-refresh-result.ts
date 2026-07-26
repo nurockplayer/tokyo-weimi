@@ -60,8 +60,9 @@ class FakeContentStore implements ContentStore {
       this.data.attendance.push(...rows);
     });
   }
-  async upsertTranslations(rows: TranslationRow[]): Promise<void> {
-    return this.#record("upsertTranslations", [{ count: rows.length }], async () => {
+  async replaceTranslations(profileIds: string[], rows: TranslationRow[]): Promise<void> {
+    return this.#record("replaceTranslations", [{ profileIds }, { count: rows.length }], async () => {
+      this.data.translations = this.data.translations.filter((r) => !profileIds.includes(r.profile_id));
       this.data.translations.push(...rows);
     });
   }
@@ -259,15 +260,20 @@ async function checkPersistenceOrder(): Promise<void> {
   const profIdx = methods.indexOf("upsertProfiles");
   const mediaIdxs = methods.map((m, i) => (m === "replaceProfileMedia" ? i : -1)).filter((i) => i >= 0);
   const attIdx = methods.indexOf("replaceAttendance");
-  const transIdx = methods.indexOf("upsertTranslations");
+  const transIdx = methods.indexOf("replaceTranslations");
 
   check("upsertProfiles called", profIdx >= 0);
   check("replaceProfileMedia ×2", mediaIdxs.length === 2);
   check("replaceAttendance called", attIdx >= 0);
-  check("upsertTranslations called", transIdx >= 0);
+  check("replaceTranslations called", transIdx >= 0);
   check("profiles before media", profIdx < mediaIdxs[0]!);
   check("media before attendance", mediaIdxs.every((i) => i < attIdx));
   check("attendance before translations", attIdx < transIdx);
+
+  // Verify profileIds order matches mapping.profiles order
+  const replaceTransCall = store.calls.find((c) => c.method === "replaceTranslations");
+  const profileIdsArg = replaceTransCall!.args[0] as Record<string, string[]>;
+  checkEqual("replaceTranslations profileIds order matches profiles", JSON.stringify(profileIdsArg.profileIds), '["yuna","noa"]');
 
   const lifecycleCalls = methods.filter((m) => ["startRun", "completeRun", "failRun"].includes(m));
   checkEqual("no run lifecycle calls", lifecycleCalls.length, 0);
@@ -555,6 +561,53 @@ function checkNewTranslationGetsCurrentHash(): void {
   checkEqual("new zh-Hans title", zhHansRow.title, "新標題");
 }
 
+async function checkTranslationReplacement(): Promise<void> {
+  console.log("\n[Translation replacement — Issue #120]");
+
+  const store = new FakeContentStore();
+
+  // Seed fake store with pre-existing translations
+  const preExisting: Array<{ profile_id: string; language: string; title?: string | null; tags: string[]; source_hash: string }> = [
+    { profile_id: "yuna", language: "zh-Hans", title: "旧译", tags: ["旧"], source_hash: "old" },
+    { profile_id: "yuna", language: "en", title: "old en", tags: [], source_hash: "old" },
+    { profile_id: "yuna", language: "ja", title: "残すべきでない", tags: [], source_hash: "old" },
+    { profile_id: "noa", language: "zh-Hans", title: "诺亚旧译", tags: ["旧"], source_hash: "old-noa" },
+  ];
+  for (const t of preExisting) {
+    store.data.translations.push(t as unknown as TranslationRow);
+  }
+
+  // Build a result and persist it — only yuna in profiles (noa is out-of-scope)
+  const result = buildTestResult();
+  result.siteData.profiles = result.siteData.profiles.filter((p) => p.id === "yuna");
+  result.profileTranslations = {
+    "zh-Hant": {},
+    "zh-Hans": { "yuna": { title: "新译", tags: ["新"], summary: "新摘要" } },
+    ja: {}, ko: {}, en: { "yuna": { title: "new en", tags: [], summary: "" } },
+  };
+
+  await persistRefreshResult(store, result);
+
+  const remaining = store.data.translations;
+
+  const yunaZhHans = remaining.find((t) => t.profile_id === "yuna" && t.language === "zh-Hans");
+  check("yuna zh-Hans replaced (not old)", yunaZhHans?.title !== "旧译");
+
+  const yunaJa = remaining.find((t) => t.profile_id === "yuna" && t.language === "ja");
+  check("yuna ja removed (empty)", yunaJa === undefined);
+
+  const yunaEn = remaining.find((t) => t.profile_id === "yuna" && t.language === "en");
+  check("yuna en survives", yunaEn?.title === "new en");
+
+  const noaZhHans = remaining.find((t) => t.profile_id === "noa" && t.language === "zh-Hans");
+  check("noa zh-Hans untouched", noaZhHans?.title === "诺亚旧译");
+
+  const replaceCalls = store.calls.filter((c) => c.method === "replaceTranslations");
+  checkEqual("replaceTranslations called exactly once", replaceCalls.length, 1);
+  const upsertCalls = store.calls.filter((c) => c.method === "upsertTranslations");
+  checkEqual("upsertTranslations never called", upsertCalls.length, 0);
+}
+
 async function main(): Promise<void> {
   console.log("=== content:check-persist ===\n");
   checkDeterministicMapping();
@@ -571,6 +624,7 @@ async function main(): Promise<void> {
   checkNewTranslationGetsCurrentHash();
   await checkPersistenceOrder();
   await checkFailureRethrow();
+  await checkTranslationReplacement();
 
   console.log(`\n--- Results: ${passed} passed, ${failed} failed ---`);
   if (failed > 0) process.exit(1);

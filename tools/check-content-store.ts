@@ -352,7 +352,7 @@ console.log("ContentStore check\n");
       // shop validation passes (select returns null error), but then profile insert fails
       return s.replaceAttendance("2026-07-18", [{ profile_id: "p1", attendance_date: "2026-07-18", shop_id: "s1" }]);
     } },
-    { label: "upsertTranslations", fn: () => store.upsertTranslations([{ profile_id: "p1", language: "en", tags: [], source_hash: "h" }]) },
+    { label: "replaceTranslations", fn: () => store.replaceTranslations(["p1"], [{ profile_id: "p1", language: "en", tags: [], source_hash: "h" }]) },
     { label: "loadOverrides", fn: () => store.loadOverrides() },
     { label: "uploadObject", fn: () => store.uploadObject("path", new Uint8Array(), "image/png", false) },
   ];
@@ -528,9 +528,9 @@ console.log("ContentStore check\n");
   assert("second row preserves explicit position=5", insertedRows[1]?.position === 5, JSON.stringify(insertedRows[1]));
 }
 
-// --- 12. updated_at advanced on profile and translation upsert ---
+// --- 12. updated_at advanced on profile upsert ---
 {
-  console.log("\n12. updated_at advanced on profile / translation upsert");
+  console.log("\n12. updated_at advanced on profile upsert");
 
   {
     const log: CallLogEntry[] = [];
@@ -546,18 +546,6 @@ console.log("ContentStore check\n");
 
     const upsertRows = (log.find((e) => e.method === "upsert")?.args[0] as Record<string, unknown>[]);
     assert("upsertProfiles rows include updated_at", upsertRows?.[0]?.updated_at != null, JSON.stringify(upsertRows?.[0]));
-  }
-
-  {
-    const log: CallLogEntry[] = [];
-    const store = new SupabaseContentStore(fakeClient(log));
-
-    await store.upsertTranslations([{
-      profile_id: "p1", language: "en", tags: [], source_hash: "h",
-    }]);
-
-    const upsertRows = (log.find((e) => e.method === "upsert")?.args[0] as Record<string, unknown>[]);
-    assert("upsertTranslations rows include updated_at", upsertRows?.[0]?.updated_at != null, JSON.stringify(upsertRows?.[0]));
   }
 }
 
@@ -827,6 +815,226 @@ console.log("ContentStore check\n");
   // Verify last select call has a cursor but returned empty
   const lastSelect = selectCalls[selectCalls.length - 1]!;
   assert("final select has a cursor (probes past last row)", (lastSelect.args[1] as SelectOpts)?.gt != null, JSON.stringify(lastSelect.args[1]));
+}
+
+// --- 23. replaceTranslations — validation before client call ---
+{
+  console.log("\n23. replaceTranslations — validation rejects duplicates and out-of-scope");
+
+  // duplicate profile_id
+  {
+    const log: CallLogEntry[] = [];
+    const store = new SupabaseContentStore(fakeClient(log));
+    try {
+      await store.replaceTranslations(["p1", "p1"], []);
+      assert("duplicate profileIds throws", false, "no error");
+    } catch (err) {
+      const msg = String(err);
+      assert("duplicate profileIds caught", msg.includes("duplicate profile_id"), msg);
+      assert("operation context preserved", msg.includes("ContentStore.replaceTranslations"), msg);
+    }
+    const dest = log.filter((e) => e.method === "delete.in");
+    assert("no client call after duplicate profileIds", dest.length === 0, JSON.stringify(log));
+  }
+
+  // out-of-scope profile_id in rows
+  {
+    const log: CallLogEntry[] = [];
+    const store = new SupabaseContentStore(fakeClient(log));
+    try {
+      await store.replaceTranslations(["p1"], [{ profile_id: "p2", language: "en", tags: [], source_hash: "h" }]);
+      assert("out-of-scope row throws", false, "no error");
+    } catch (err) {
+      const msg = String(err);
+      assert("out-of-scope row caught", msg.includes("not in the profile scope"), msg);
+    }
+    const del = log.filter((e) => e.method === "delete.in");
+    assert("no client call after out-of-scope row", del.length === 0, JSON.stringify(log));
+  }
+
+  // duplicate (profile_id, language)
+  {
+    const log: CallLogEntry[] = [];
+    const store = new SupabaseContentStore(fakeClient(log));
+    try {
+      await store.replaceTranslations(["p1"], [
+        { profile_id: "p1", language: "en", tags: [], source_hash: "h" },
+        { profile_id: "p1", language: "en", tags: [], source_hash: "h" },
+      ]);
+      assert("duplicate pair throws", false, "no error");
+    } catch (err) {
+      const msg = String(err);
+      assert("duplicate pair caught", msg.includes("duplicate (profile_id, language)"), msg);
+    }
+    const del = log.filter((e) => e.method === "delete.in");
+    assert("no client call after duplicate pair", del.length === 0, JSON.stringify(log));
+  }
+
+  // empty profileIds + non-empty rows
+  {
+    const log: CallLogEntry[] = [];
+    const store = new SupabaseContentStore(fakeClient(log));
+    try {
+      await store.replaceTranslations([], [{ profile_id: "p1", language: "en", tags: [], source_hash: "h" }]);
+      assert("empty scope + non-empty rows throws", false, "no error");
+    } catch (err) {
+      const msg = String(err);
+      assert("empty scope error caught", msg.includes("profileIds is empty but rows are non-empty"), msg);
+    }
+    const del = log.filter((e) => e.method === "delete.in");
+    assert("no client call after empty scope", del.length === 0, JSON.stringify(log));
+  }
+}
+
+// --- 24. replaceTranslations — valid scoped replacement ---
+{
+  console.log("\n24. replaceTranslations — valid scoped replacement");
+
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log));
+
+  await store.replaceTranslations(
+    ["p1", "p2"],
+    [
+      { profile_id: "p1", language: "zh-Hans", title: "你好", tags: ["a"], summary: "s", source_hash: "h1" },
+      { profile_id: "p2", language: "en", tags: [], source_hash: "h2" },
+    ],
+  );
+
+  const deletes = log.filter((e) => e.method === "delete.in");
+  const inserts = log.filter((e) => e.method === "insert");
+
+  assert("delete called for scope", deletes.length >= 1, JSON.stringify(deletes));
+  assert("insert called for rows", inserts.length >= 1, JSON.stringify(inserts));
+
+  // Verify delete targets content_profile_translations with profile_ids
+  const delCall = deletes[0]!;
+  assert("delete on content_profile_translations", delCall.table === "content_profile_translations", delCall.table);
+  const delArgs = delCall.args;
+  assert("delete.in filter column is profile_id", delArgs[0] === "profile_id", JSON.stringify(delArgs));
+  const delValues = delArgs[1] as string[];
+  assert("delete.in values contain both p1 and p2", delValues.includes("p1") && delValues.includes("p2"), JSON.stringify(delValues));
+
+  // Verify insert has normalized rows (updated_at added)
+  const insertRows = inserts[0]!.args[0] as Record<string, unknown>[];
+  assert("insert rows have updated_at", insertRows[0]?.updated_at != null, JSON.stringify(insertRows[0]));
+  // p2 has no explicit title/summary → normalizeTranslationRow nullifies them
+  const rowWithDefaults = insertRows.find((r) => r.profile_id === "p2")!;
+  assert("row without title gets null", rowWithDefaults.title === null, JSON.stringify(rowWithDefaults));
+  assert("row without summary gets null", rowWithDefaults.summary === null, JSON.stringify(rowWithDefaults));
+}
+
+// --- 25. replaceTranslations — empty rows still delete scope ---
+{
+  console.log("\n25. replaceTranslations — empty rows still delete");
+
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log));
+
+  await store.replaceTranslations(["p1", "p2"], []);
+
+  const deletes = log.filter((e) => e.method === "delete.in");
+  const inserts = log.filter((e) => e.method === "insert");
+
+  assert("delete still called for scope", deletes.length >= 1, JSON.stringify(deletes));
+  assert("no insert when rows empty", inserts.length === 0, JSON.stringify(inserts));
+}
+
+// --- 26. replaceTranslations — empty scope + empty rows is no-op ---
+{
+  console.log("\n26. replaceTranslations — empty scope no-op");
+
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log));
+
+  await store.replaceTranslations([], []);
+
+  const deletes = log.filter((e) => e.method === "delete.in");
+  const inserts = log.filter((e) => e.method === "insert");
+
+  assert("no delete for empty scope", deletes.length === 0, JSON.stringify(deletes));
+  assert("no insert for empty rows", inserts.length === 0, JSON.stringify(inserts));
+}
+
+// --- 27. replaceTranslations — delete chunking >200 profileIds ---
+{
+  console.log("\n27. replaceTranslations — delete chunking >200");
+
+  const largeScope = Array.from({ length: 450 }, (_, i) => `p${i}`);
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log));
+
+  await store.replaceTranslations(largeScope, []);
+
+  const deletes = log.filter((e) => e.method === "delete.in");
+  assert("3 delete.in calls for 450 profileIds", deletes.length === 3, `got ${deletes.length}`);
+
+  const firstBatch = deletes[0]!.args[1] as unknown[];
+  const lastBatch = deletes[2]!.args[1] as unknown[];
+  assert("first delete batch has 200", firstBatch.length === 200, `got ${firstBatch.length}`);
+  assert("last delete batch has 50", lastBatch.length === 50, `got ${lastBatch.length}`);
+}
+
+// --- 28. replaceTranslations — insert chunking >200 rows ---
+{
+  console.log("\n28. replaceTranslations — insert chunking >200");
+
+  const log: CallLogEntry[] = [];
+  const store = new SupabaseContentStore(fakeClient(log));
+
+  const rows: import("./content-store/types.ts").TranslationRow[] = [];
+  for (let i = 0; i < 450; i++) {
+    rows.push({ profile_id: `p${i}`, language: "en", tags: [], source_hash: `h${i}` });
+  }
+  const scope = rows.map((r) => r.profile_id);
+
+  await store.replaceTranslations(scope, rows);
+
+  const inserts = log.filter((e) => e.method === "insert");
+  assert("3 insert calls for 450 rows", inserts.length === 3, `got ${inserts.length}`);
+
+  const firstBatch = inserts[0]!.args[0] as unknown[];
+  const lastBatch = inserts[2]!.args[0] as unknown[];
+  assert("first insert batch has 200", firstBatch.length === 200, `got ${firstBatch.length}`);
+  assert("last insert batch has 50", lastBatch.length === 50, `got ${lastBatch.length}`);
+}
+
+// --- 29. replaceTranslations — delete failure blocks insert ---
+{
+  console.log("\n29. replaceTranslations — delete failure blocks insert");
+
+  const errClient: SupabaseClientLike = {
+    from() {
+      return {
+        insert() {
+          return { select: async () => ({ data: null, error: { message: "should not be reached" } }) };
+        },
+        delete() {
+          return {
+            in() {
+              return Promise.resolve({ data: null, error: { message: "delete failed" } });
+            },
+            eq() {
+              return Promise.resolve({ data: null, error: null });
+            },
+          };
+        },
+        select() { return Promise.resolve({ data: null, error: null }); },
+        update() { return { eq() { return Promise.resolve({ data: null, error: null }); } }; },
+        upsert() { return { select() { return Promise.resolve({ data: null, error: null }); } }; },
+      };
+    },
+    storage: { from() { return { upload() { return Promise.resolve({ data: null, error: null }); } }; } },
+  };
+
+  const store = new SupabaseContentStore(errClient);
+  try {
+    await store.replaceTranslations(["p1"], [{ profile_id: "p1", language: "en", tags: [], source_hash: "h" }]);
+    assert("delete failure throws", false, "no error");
+  } catch (err) {
+    const msg = String(err);
+    assert("delete failure caught", msg.includes("ContentStore.replaceTranslations"), msg);
+  }
 }
 
 // ─── Summary ──────────────────────────────────────────────────
