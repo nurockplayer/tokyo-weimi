@@ -101,8 +101,22 @@ export interface ContentStore {
   replaceTranslations(profileIds: string[], rows: TranslationRow[]): Promise<void>;
 
   loadOverrides(): Promise<ProfileOverrideRow[]>;
+
+  /** Read all rows needed to build a snapshot for the given attendance date. */
+  loadSnapshotSource(attendanceDate: string): Promise<SnapshotSource>;
+
   uploadObject(path: string, bytes: Uint8Array, contentType: string, upsert: boolean): Promise<void>;
 }
+
+// --- Snapshot source types ---
+
+export type SnapshotSource = {
+  profiles: ProfileRow[];
+  media: MediaRow[];
+  attendance: AttendanceRow[];
+  translations: TranslationRow[];
+  overrides: ProfileOverrideRow[];
+};
 
 // --- Minimal Supabase client interface (injectable for tests) ---
 
@@ -118,12 +132,14 @@ export interface SupabaseQueryResponse {
 export interface SelectOpts {
   rangeFrom?: number;
   rangeTo?: number;
-  /** ORDER BY column (ascending). */
-  order?: string;
+  /** Single column or multiple columns for ORDER BY (ascending). */
+  order?: string | string[];
   /** LIMIT after filters. */
   limit?: number;
-  /** WHERE column > value (keyset cursor for pagination). */
-  gt?: string;
+  /** Typed keyset cursor: WHERE {column} > {value}. */
+  gt?: { column: string; value: unknown };
+  /** WHERE column = value. */
+  eq?: { column: string; value: unknown };
   /** WHERE column IN (values). */
   inFilter?: { column: string; values: unknown[] };
 }

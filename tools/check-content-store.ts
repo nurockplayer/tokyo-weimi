@@ -43,17 +43,29 @@ function fakeClient(
 
     // gt (keyset cursor)
     if (opts?.gt !== undefined) {
-      const col = opts.order ?? "profile_id";
-      filtered = filtered.filter((r) => ((r as Record<string, string>)[col] ?? "") > opts.gt!);
+      const col = opts.gt.column ?? "profile_id";
+      const gtVal = opts.gt.value as string;
+      filtered = filtered.filter((r) => ((r as Record<string, string>)[col] ?? "") > gtVal);
+    }
+
+    // eq
+    if (opts?.eq !== undefined) {
+      const col = opts.eq.column;
+      const eqVal = opts.eq.value;
+      filtered = filtered.filter((r) => (r as Record<string, unknown>)[col] === eqVal);
     }
 
     // order (ascending, string compare)
     if (opts?.order) {
-      const col = opts.order;
+      const cols = Array.isArray(opts.order) ? opts.order : [opts.order];
       filtered = [...filtered].sort((a, b) => {
-        const av = (a as Record<string, string>)[col] ?? "";
-        const bv = (b as Record<string, string>)[col] ?? "";
-        return av < bv ? -1 : av > bv ? 1 : 0;
+        for (const col of cols) {
+          const av = (a as Record<string, string>)[col] ?? "";
+          const bv = (b as Record<string, string>)[col] ?? "";
+          if (av < bv) return -1;
+          if (av > bv) return 1;
+        }
+        return 0;
       });
     }
 

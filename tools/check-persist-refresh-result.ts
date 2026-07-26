@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { ContentStore, MediaRow, ProfileRow, TranslationRow, AttendanceRow } from "./content-store/types.ts";
+import type { ContentStore, MediaRow, ProfileRow, TranslationRow, AttendanceRow, SnapshotSource } from "./content-store/types.ts";
 import type { RefreshResult } from "./attendance/types.ts";
 import type { Profile, ProfileTranslations, TranslatedProfileText } from "../src/types.ts";
 import { mapRefreshResultToRows, computeSourceHash, invalidateStaleTranslations } from "./content-store/mappers.ts";
@@ -70,6 +70,13 @@ class FakeContentStore implements ContentStore {
   async loadOverrides(): Promise<never[]> {
     return [];
   }
+
+  async loadSnapshotSource(_attendanceDate: string): Promise<SnapshotSource> {
+    return this.#record("loadSnapshotSource", [_attendanceDate], async () => {
+      throw new Error("not implemented in fake");
+    });
+  }
+
   async uploadObject(): Promise<void> {
     return this.#record("uploadObject", [], async () => {});
   }

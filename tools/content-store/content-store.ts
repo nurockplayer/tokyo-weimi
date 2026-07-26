@@ -4,6 +4,7 @@ import type {
   MediaRow,
   ProfileOverrideRow,
   ProfileRow,
+  SnapshotSource,
   SupabaseClientLike,
   TranslationRow,
   SelectOpts,
@@ -330,7 +331,7 @@ export class SupabaseContentStore implements ContentStore {
           limit: PAGE_SIZE,
         };
         if (cursor) {
-          selectOpts.gt = cursor;
+          selectOpts.gt = { column: "profile_id", value: cursor };
         }
 
         const resp = await this.#client
@@ -348,6 +349,110 @@ export class SupabaseContentStore implements ContentStore {
 
       return all;
     });
+  }
+
+  // --- Snapshot source ---
+
+  async loadSnapshotSource(attendanceDate: string): Promise<SnapshotSource> {
+    return withError("loadSnapshotSource", async () => {
+      const profiles = await this.#paginate<ProfileRow>(
+        "content_profiles",
+        { order: "id", limit: PAGE_SIZE },
+        "id",
+      );
+
+      const media = await this.#paginate<MediaRow>(
+        "content_profile_media",
+        { order: "id", limit: PAGE_SIZE },
+        "id",
+      );
+
+      // Attendance filtered by date — keyset on profile_id
+      const attendance = await this.#paginate<AttendanceRow>(
+        "content_attendance",
+        {
+          order: "profile_id",
+          limit: PAGE_SIZE,
+          eq: { column: "attendance_date", value: attendanceDate },
+        },
+        "profile_id",
+      );
+
+      // Translations need composite sort — use range pagination
+      const translations = await this.#paginateWithRange<TranslationRow>(
+        "content_profile_translations",
+        { order: ["profile_id", "language"], limit: PAGE_SIZE },
+      );
+
+      const overrides = await this.#paginate<ProfileOverrideRow>(
+        "content_profile_overrides",
+        { order: "profile_id", limit: PAGE_SIZE },
+        "profile_id",
+      );
+
+      return { profiles, media, attendance, translations, overrides };
+    });
+  }
+
+  /**
+   * Keyset pagination for single-column ordered queries.
+   * Stops only on an empty page — does NOT rely on page.length < requestedLimit.
+   */
+  async #paginate<T>(
+    table: string,
+    baseOpts: SelectOpts,
+    cursorKey: string,
+  ): Promise<T[]> {
+    const all: T[] = [];
+    let cursor: string | undefined;
+
+    while (true) {
+      const opts: SelectOpts = { ...baseOpts };
+      if (cursor) {
+        opts.gt = { column: cursorKey, value: cursor };
+      }
+
+      const resp = await this.#client.from(table).select("*", opts);
+      if (hasError(resp)) throw new Error(resp.error.message);
+
+      const page = (resp.data as T[]) ?? [];
+      if (page.length === 0) break;
+
+      all.push(...page);
+      cursor = String((page[page.length - 1] as Record<string, unknown>)[cursorKey]);
+    }
+
+    return all;
+  }
+
+  /**
+   * Range-based pagination for composite-ordered queries (e.g. multi-column
+   * ORDER BY where keyset pagination with a simple gt is insufficient).
+   * Stops only on an empty page.
+   */
+  async #paginateWithRange<T>(
+    table: string,
+    baseOpts: SelectOpts,
+  ): Promise<T[]> {
+    const all: T[] = [];
+    let page = 0;
+
+    while (true) {
+      const rangeFrom = page * (baseOpts.limit ?? PAGE_SIZE);
+      const rangeTo = rangeFrom + (baseOpts.limit ?? PAGE_SIZE) - 1;
+      const opts: SelectOpts = { ...baseOpts, rangeFrom, rangeTo };
+
+      const resp = await this.#client.from(table).select("*", opts);
+      if (hasError(resp)) throw new Error(resp.error.message);
+
+      const data = (resp.data as T[]) ?? [];
+      if (data.length === 0) break;
+
+      all.push(...data);
+      page++;
+    }
+
+    return all;
   }
 
   // --- Storage ---

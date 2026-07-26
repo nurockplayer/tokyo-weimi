@@ -14,6 +14,7 @@
     "content:check-contract": "tsx tools/check-content-contract.ts",
     "content:check-contract-failures": "tsx tools/test-content-contract-failures.ts",
     "content:check-persist": "tsx tools/check-persist-refresh-result.ts",
+    "content:check-publisher": "tsx tools/check-content-publisher.ts",
     "test:e2e": "playwright test"
   },
   "devDependencies": {

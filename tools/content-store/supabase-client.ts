@@ -120,13 +120,19 @@ function toSupabaseClientLike(client: SupabaseClient): SupabaseClientLike {
         select: async (columns?: string, opts?: SelectOpts) => {
           let query = qb.select(columns ?? "*");
           if (opts?.order) {
-            query = query.order(opts.order, { ascending: true });
+            const orders = Array.isArray(opts.order) ? opts.order : [opts.order];
+            for (const col of orders) {
+              query = query.order(col, { ascending: true });
+            }
           }
           if (opts?.limit) {
             query = query.limit(opts.limit);
           }
           if (opts?.gt) {
-            query = query.gt("profile_id", opts.gt);
+            query = query.gt(opts.gt.column, opts.gt.value as string);
+          }
+          if (opts?.eq) {
+            query = query.eq(opts.eq.column, opts.eq.value as string);
           }
           if (opts?.inFilter) {
             query = query.in(opts.inFilter.column, opts.inFilter.values as string[]);
