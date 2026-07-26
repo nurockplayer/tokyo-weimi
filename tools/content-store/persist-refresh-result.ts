@@ -30,6 +30,9 @@ export async function persistRefreshResult(
   // 3. Replace attendance for today's date.
   await store.replaceAttendance(mapping.attendance[0]?.attendance_date ?? result.jstDate, mapping.attendance);
 
-  // 4. Upsert translations.
-  await store.upsertTranslations(mapping.translations);
+  // 4. Replace translations (single call, covers empty-removal).
+  await store.replaceTranslations(
+    mapping.profiles.map((profile) => profile.id),
+    mapping.translations,
+  );
 }

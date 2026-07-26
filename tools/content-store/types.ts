@@ -98,7 +98,7 @@ export interface ContentStore {
   upsertProfiles(rows: ProfileRow[]): Promise<void>;
   replaceProfileMedia(profileId: string, rows: MediaRow[]): Promise<void>;
   replaceAttendance(date: string, rows: AttendanceRow[]): Promise<void>;
-  upsertTranslations(rows: TranslationRow[]): Promise<void>;
+  replaceTranslations(profileIds: string[], rows: TranslationRow[]): Promise<void>;
 
   loadOverrides(): Promise<ProfileOverrideRow[]>;
   uploadObject(path: string, bytes: Uint8Array, contentType: string, upsert: boolean): Promise<void>;
