@@ -26,6 +26,7 @@ if (!existsSync(BIOME_CONFIG)) {
 }
 
 const tmpDir = mkdtempSync(join(tmpdir(), "biome-lint-check-"));
+let assertionFailed = false;
 try {
   const fixturePath = join(tmpDir, "bad-fixture.ts");
 
@@ -84,9 +85,14 @@ try {
 
   if (failures > 0) {
     console.error(`\n${failures} check(s) failed`);
-    process.exit(1);
+    assertionFailed = true;
+  } else {
+    console.log("\nAll lint config checks passed");
   }
-  console.log("\nAll lint config checks passed");
 } finally {
   rmSync(tmpDir, { recursive: true, force: true });
+}
+
+if (assertionFailed) {
+  process.exit(1);
 }
