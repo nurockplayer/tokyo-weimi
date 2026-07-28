@@ -426,5 +426,11 @@ export const imageMap = {
   "2026-07-photo-2026-07-26-16-44-37": "https://hikari888.com/wp-content/uploads/2026/07/photo_2026-07-26-16.44.37.jpeg",
   "2026-07-photo-2026-07-26-16-44-38": "https://hikari888.com/wp-content/uploads/2026/07/photo_2026-07-26-16.44.38.jpeg",
   "2026-07-photo-2026-07-26-16-44-35": "https://hikari888.com/wp-content/uploads/2026/07/photo_2026-07-26-16.44.35.jpeg",
-  "2026-07-photo-2026-07-26-16-44-31": "https://hikari888.com/wp-content/uploads/2026/07/photo_2026-07-26-16.44.31.jpeg"
+  "2026-07-photo-2026-07-26-16-44-31": "https://hikari888.com/wp-content/uploads/2026/07/photo_2026-07-26-16.44.31.jpeg",
+  "2026-07-img-6408": "https://tokyo-weimi.com/wp-content/uploads/2026/07/IMG_6408.jpeg",
+  "2026-07-img-6406": "https://tokyo-weimi.com/wp-content/uploads/2026/07/IMG_6406.jpeg",
+  "2026-07-img-6407": "https://tokyo-weimi.com/wp-content/uploads/2026/07/IMG_6407.jpeg",
+  "2026-07-img-6405": "https://tokyo-weimi.com/wp-content/uploads/2026/07/IMG_6405.jpeg",
+  "2026-07-20260727-53-thumb": "https://vip6969.com/wp-content/uploads/2026/07/20260727_53.thumb.jpg",
+  "2026-07-20260726-491c9f87a955f6b5b680bbdb291a7f52-thumb": "https://vip6969.com/wp-content/uploads/2026/07/20260726_491c9f87a955f6b5b680bbdb291a7f52.thumb.jpg"
 } satisfies Record<string, string>;
