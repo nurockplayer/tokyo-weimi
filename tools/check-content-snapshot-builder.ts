@@ -607,6 +607,63 @@ test("duplicate attendance for same profile throws", () => {
   }, "Duplicate attendance");
 });
 
+test("attendance shop_id mismatching profile shop_id throws", () => {
+  const source = makeSource({
+    profiles: [makeProfileRow("p1", { shop_id: BASE_SHOP_ID })],
+    media: [makeMediaRow("m1", "p1")],
+    attendance: [
+      makeAttendanceRow("p1", { shop_id: "different-shop" }),
+    ],
+  });
+
+  expectThrow(() => {
+    buildContentSnapshot({ source, baseline: defaultBaseline(), baselineImageMap: defaultBaselineImageMap, generatedAt: GENERATED_AT });
+  }, "expected shop-a");
+});
+
+test("attendance shop mismatch error message includes both shop ids", () => {
+  const source = makeSource({
+    profiles: [makeProfileRow("p1", { shop_id: "shop-a" })],
+    media: [makeMediaRow("m1", "p1")],
+    attendance: [
+      makeAttendanceRow("p1", { shop_id: "other-shop" }),
+    ],
+  });
+
+  try {
+    buildContentSnapshot({ source, baseline: defaultBaseline(), baselineImageMap: defaultBaselineImageMap, generatedAt: GENERATED_AT });
+    throw new Error("expected an error but none was thrown");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!msg.includes("profile p1")) {
+      throw new Error(`expected message to include profile id, got "${msg}"`);
+    }
+    if (!msg.includes("other-shop")) {
+      throw new Error(`expected message to include attendance shop id, got "${msg}"`);
+    }
+    if (!msg.includes("shop-a")) {
+      throw new Error(`expected message to include profile shop id, got "${msg}"`);
+    }
+  }
+});
+
+test("attendance with matching shop_id passes", () => {
+  const p1 = makeProfileRow("p1", { shop_id: BASE_SHOP_ID });
+  const m1 = makeMediaRow("m1", "p1");
+
+  const source = makeSource({
+    profiles: [p1],
+    media: [m1],
+    attendance: [
+      makeAttendanceRow("p1", { shop_id: BASE_SHOP_ID }),
+    ],
+  });
+
+  const snap = buildContentSnapshot({ source, baseline: defaultBaseline(), baselineImageMap: defaultBaselineImageMap, generatedAt: GENERATED_AT });
+  strictEqual(snap.data.profiles[0]!.id, "p1", "matching shop_id should pass");
+  strictEqual(snap.data.profiles[0]!.isToday, true);
+});
+
 test("override references unknown profile throws", () => {
   const source = makeSource({
     profiles: [makeProfileRow("p1")],

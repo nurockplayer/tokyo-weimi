@@ -49,11 +49,13 @@ function validateInputs(
 
   // Profile ids must be unique
   const profileIds = new Set<string>();
+  const profileShopMap = new Map<string, string>();
   for (const p of source.profiles) {
     if (profileIds.has(p.id)) {
       throw new ValidationError(`Duplicate profile id: ${p.id}`);
     }
     profileIds.add(p.id);
+    profileShopMap.set(p.id, p.shop_id);
     if (!shopIds.has(p.shop_id)) {
       throw new ValidationError(
         `Profile ${p.id} references unknown shop: ${p.shop_id}`,
@@ -75,7 +77,8 @@ function validateInputs(
     }
   }
 
-  // Attendance: profile_id must exist, no duplicate per profile
+  // Attendance: profile_id must exist, no duplicate per profile,
+  // and shop_id must match the referenced profile's shop_id
   const attendanceProfiles = new Set<string>();
   for (const a of source.attendance) {
     if (!profileIds.has(a.profile_id)) {
@@ -86,6 +89,12 @@ function validateInputs(
     if (attendanceProfiles.has(a.profile_id)) {
       throw new ValidationError(
         `Duplicate attendance for profile: ${a.profile_id}`,
+      );
+    }
+    const profileShopId = profileShopMap.get(a.profile_id);
+    if (profileShopId !== undefined && a.shop_id !== profileShopId) {
+      throw new ValidationError(
+        `Attendance for profile ${a.profile_id} has shop ${a.shop_id}, expected ${profileShopId}`,
       );
     }
     attendanceProfiles.add(a.profile_id);
