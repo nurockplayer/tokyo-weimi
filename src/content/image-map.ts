@@ -457,5 +457,9 @@ export const imageMap = {
   "2025-07-img-4516": "https://tokyo-weimi.com/wp-content/uploads/2025/07/IMG_4516.jpeg",
   "2025-07-img-4514": "https://tokyo-weimi.com/wp-content/uploads/2025/07/IMG_4514.jpeg",
   "2025-07-img-4521": "https://tokyo-weimi.com/wp-content/uploads/2025/07/IMG_4521.jpeg",
-  "2026-07-20260731-76-thumb": "https://vip6969.com/wp-content/uploads/2026/07/20260731_76.thumb.jpg"
+  "2026-07-20260731-76-thumb": "https://vip6969.com/wp-content/uploads/2026/07/20260731_76.thumb.jpg",
+  "2026-08-20260801-a05401895f619a21256a5ba38aaf44f6-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260801_a05401895f619a21256a5ba38aaf44f6.thumb.jpg",
+  "2026-05-20260506-img-0856-thumb": "https://vip6969.com/wp-content/uploads/2026/05/20260506_IMG_0856.thumb.jpg",
+  "2026-08-20260801-128-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260801_128.thumb.jpg",
+  "2026-06-20260629-9705ffdc-6321-4759-9daa-cf754f621ff5-thumb": "https://vip6969.com/wp-content/uploads/2026/06/20260629_9705FFDC-6321-4759-9DAA-CF754F621FF5.thumb.jpg"
 } satisfies Record<string, string>;
