@@ -1364,6 +1364,30 @@
       "lastSeen": "2026-08-01"
     },
     {
+      "id": "ikebukuro-vip-girl-851e6cd82ed4",
+      "shopId": "ikebukuro-vip",
+      "name": "妞妞",
+      "title": "日本人・→人氣回归→服務一绝",
+      "date": "2026-08-01",
+      "origin": "池袋",
+      "age": "未公開",
+      "height": "未公開",
+      "weight": "未公開",
+      "cup": "未公開",
+      "tags": [
+        "日本人",
+        "推薦"
+      ],
+      "price": "60 分鐘 12,000 / 14,000 / 16,000 / 18,000",
+      "summary": "妞妞→人氣回归→服務一绝",
+      "image": "2026-08-20260801-128-thumb",
+      "gallery": [
+        "2026-08-20260801-128-thumb"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-08-01"
+    },
+    {
       "id": "ikebukuro-vip-girl-5053d6e4e64f",
       "shopId": "ikebukuro-vip",
       "name": "小如意",
@@ -1476,7 +1500,7 @@
       "gallery": [
         "2026-07-20260729-18-thumb"
       ],
-      "isToday": true,
+      "isToday": false,
       "lastSeen": "2026-08-01"
     },
     {
