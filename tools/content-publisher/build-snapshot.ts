@@ -467,12 +467,15 @@ export function buildContentSnapshot(input: {
   if (Number.isNaN(parsed)) {
     throw new ValidationError(`Invalid generatedAt: "${generatedAt}" is not parseable`);
   }
-  // A timestamp with a time component must carry an explicit timezone so
-  // Date.parse does not interpret it in the process-local timezone, which
-  // would make the hash/version environment-dependent.
-  if (/\d{2}:\d{2}/.test(generatedAt) && !/(?:Z|[+-]\d{2}:?\d{2})$/.test(generatedAt)) {
+  // Only a pure date (YYYY-MM-DD, parsed as UTC) or a timestamp carrying an
+  // explicit timezone (trailing Z or ±HH:MM offset) is accepted; anything
+  // else would be interpreted by Date.parse in the process-local timezone,
+  // making the hash/version environment-dependent.
+  const pureDate = /^\d{4}-\d{2}-\d{2}$/.test(generatedAt);
+  const hasExplicitTimezone = /(?:Z|[+-]\d{2}:\d{2})$/.test(generatedAt);
+  if (!pureDate && !hasExplicitTimezone) {
     throw new ValidationError(
-      `Invalid generatedAt: "${generatedAt}" must include an explicit timezone (trailing "Z" or a UTC offset like "+09:00")`,
+      `Invalid generatedAt: "${generatedAt}" must be a YYYY-MM-DD date or include an explicit timezone (trailing "Z" or a UTC offset like "+09:00")`,
     );
   }
   const normalizedGeneratedAt = new Date(parsed).toISOString();

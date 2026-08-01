@@ -989,9 +989,26 @@ test("timezone-less datetime generatedAt is rejected", () => {
     media: [makeMediaRow("m1", "p1")],
   });
 
-  expectThrow(() => {
-    buildContentSnapshot({ source, baseline: defaultBaseline(), baselineImageMap: defaultBaselineImageMap, generatedAt: "2026-07-27T12:00:00" });
-  }, "explicit timezone");
+  const timezoneLessValues = [
+    "2026-07-27T12:00:00",
+    "2026-07-27 12:00",
+    "2026-07-27 1:00",
+  ];
+  for (const value of timezoneLessValues) {
+    expectThrow(() => {
+      buildContentSnapshot({ source, baseline: defaultBaseline(), baselineImageMap: defaultBaselineImageMap, generatedAt: value });
+    }, "explicit timezone");
+  }
+});
+
+test("pure date generatedAt is accepted and normalized to UTC midnight", () => {
+  const source = makeSource({
+    profiles: [makeProfileRow("p1")],
+    media: [makeMediaRow("m1", "p1")],
+  });
+
+  const snap = buildContentSnapshot({ source, baseline: defaultBaseline(), baselineImageMap: defaultBaselineImageMap, generatedAt: "2026-07-27" });
+  strictEqual(snap.generatedAt, "2026-07-27T00:00:00.000Z", "pure date normalizes to UTC midnight");
 });
 
 test("Z datetime generatedAt is accepted", () => {
