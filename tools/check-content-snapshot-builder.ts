@@ -983,6 +983,54 @@ test("invalid generatedAt throws", () => {
   }, "not parseable");
 });
 
+test("timezone-less datetime generatedAt is rejected", () => {
+  const source = makeSource({
+    profiles: [makeProfileRow("p1")],
+    media: [makeMediaRow("m1", "p1")],
+  });
+
+  expectThrow(() => {
+    buildContentSnapshot({ source, baseline: defaultBaseline(), baselineImageMap: defaultBaselineImageMap, generatedAt: "2026-07-27T12:00:00" });
+  }, "explicit timezone");
+});
+
+test("Z datetime generatedAt is accepted", () => {
+  const source = makeSource({
+    profiles: [makeProfileRow("p1")],
+    media: [makeMediaRow("m1", "p1")],
+  });
+
+  const snap = buildContentSnapshot({ source, baseline: defaultBaseline(), baselineImageMap: defaultBaselineImageMap, generatedAt: "2026-07-27T12:00:00Z" });
+  strictEqual(snap.generatedAt, "2026-07-27T12:00:00.000Z", "Z input normalizes to UTC ISO");
+});
+
+test("explicit offset datetime generatedAt is accepted and normalized to UTC ISO", () => {
+  const source = makeSource({
+    profiles: [makeProfileRow("p1")],
+    media: [makeMediaRow("m1", "p1")],
+  });
+
+  // +09:00 -> UTC: 12:00 local = 03:00 UTC
+  const snap = buildContentSnapshot({ source, baseline: defaultBaseline(), baselineImageMap: defaultBaselineImageMap, generatedAt: "2026-07-27T12:00:00+09:00" });
+  strictEqual(snap.generatedAt, "2026-07-27T03:00:00.000Z", "explicit offset normalizes to correct UTC ISO");
+});
+
+test("Z and explicit offset representing the same instant produce identical output", () => {
+  const source = makeSource({
+    profiles: [makeProfileRow("p1")],
+    media: [makeMediaRow("m1", "p1")],
+  });
+  const baseline = defaultBaseline();
+
+  // 2026-07-27T03:00:00Z == 2026-07-27T12:00:00+09:00 (same instant)
+  const snapZ = buildContentSnapshot({ source, baseline, baselineImageMap: defaultBaselineImageMap, generatedAt: "2026-07-27T03:00:00Z" });
+  const snapOffset = buildContentSnapshot({ source, baseline, baselineImageMap: defaultBaselineImageMap, generatedAt: "2026-07-27T12:00:00+09:00" });
+
+  strictEqual(snapZ.generatedAt, snapOffset.generatedAt, "normalized generatedAt identical");
+  strictEqual(JSON.stringify(snapZ), JSON.stringify(snapOffset), "snapshot bytes identical");
+  strictEqual(snapZ.version, snapOffset.version, "version identical");
+});
+
 test("version format and content hash correctness", () => {
   const p1 = makeProfileRow("p1");
   const m1 = makeMediaRow("m1", "p1");
