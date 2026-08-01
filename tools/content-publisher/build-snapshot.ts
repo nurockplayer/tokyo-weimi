@@ -337,9 +337,14 @@ function sortProfiles(
     .sort((a, b) => {
       const la = a.lastSeen;
       const lb = b.lastSeen;
-      if (la && lb) return lb.localeCompare(la);
-      if (la) return -1;
-      if (lb) return 1;
+      if (la && lb) {
+        const byLastSeen = lb.localeCompare(la);
+        if (byLastSeen !== 0) return byLastSeen;
+      } else if (la) {
+        return -1;
+      } else if (lb) {
+        return 1;
+      }
       return a.id.localeCompare(b.id);
     })
     .map((p) => ({ ...p, isToday: false }));

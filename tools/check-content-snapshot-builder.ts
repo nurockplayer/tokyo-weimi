@@ -382,6 +382,48 @@ test("non-today profiles sorted by lastSeen desc then id", () => {
   strictEqual(ids[3], "p-d", "no lastSeen, id sort: p-c before p-d");
 });
 
+test("equal lastSeen ties break by profile id regardless of input order", () => {
+  // Two non-today profiles with identical last_seen_at
+  const sharedLastSeen = "2026-07-27T10:00:00Z";
+  const pA = makeProfileRow("p-b", { last_seen_at: sharedLastSeen });
+  const pB = makeProfileRow("p-a", { last_seen_at: sharedLastSeen });
+  const mA = makeMediaRow("m-b", "p-b");
+  const mB = makeMediaRow("m-a", "p-a");
+
+  const baseline = defaultBaseline();
+
+  // Input order A: p-b first, then p-a
+  const source1: SnapshotSource = {
+    profiles: [pA, pB],
+    media: [mA, mB],
+    attendance: [],
+    translations: [],
+    overrides: [],
+  };
+  const snap1 = buildContentSnapshot({ source: source1, baseline, baselineImageMap: defaultBaselineImageMap, generatedAt: GENERATED_AT });
+
+  // Input order B: p-a first, then p-b (reversed)
+  const source2: SnapshotSource = {
+    profiles: [pB, pA],
+    media: [mB, mA],
+    attendance: [],
+    translations: [],
+    overrides: [],
+  };
+  const snap2 = buildContentSnapshot({ source: source2, baseline, baselineImageMap: defaultBaselineImageMap, generatedAt: GENERATED_AT });
+
+  // Both outputs sorted by id ascending (p-a before p-b)
+  const ids1 = snap1.data.profiles.map((p) => p.id);
+  const ids2 = snap2.data.profiles.map((p) => p.id);
+  deepStrictEqual(ids1, ["p-a", "p-b"], "equal lastSeen breaks by id ascending");
+  deepStrictEqual(ids2, ["p-a", "p-b"], "reversed input order produces same id order");
+
+  // Identical snapshot, JSON.stringify bytes, and version
+  deepStrictEqual(snap1, snap2, "snapshots must be identical");
+  strictEqual(JSON.stringify(snap1), JSON.stringify(snap2), "JSON.stringify bytes must be identical");
+  strictEqual(snap1.version, snap2.version, "version must be identical");
+});
+
 test("today and non-today profiles are separated in output", () => {
   const pToday = makeProfileRow("p-today");
   const pNon = makeProfileRow("p-non");
