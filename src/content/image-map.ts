@@ -462,17 +462,15 @@ export const imageMap = {
   "2026-05-20260506-img-0856-thumb": "https://vip6969.com/wp-content/uploads/2026/05/20260506_IMG_0856.thumb.jpg",
   "2026-08-20260801-128-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260801_128.thumb.jpg",
   "2026-06-20260629-9705ffdc-6321-4759-9daa-cf754f621ff5-thumb": "https://vip6969.com/wp-content/uploads/2026/06/20260629_9705FFDC-6321-4759-9DAA-CF754F621FF5.thumb.jpg",
-  "2026-08-img-6443": "https://tokyo-weimi.com/wp-content/uploads/2026/08/IMG_6443.jpeg",
-  "2026-08-img-6444": "https://tokyo-weimi.com/wp-content/uploads/2026/08/IMG_6444.jpeg",
-  "2026-08-img-6445": "https://tokyo-weimi.com/wp-content/uploads/2026/08/IMG_6445.jpeg",
   "2026-08-img-6437": "https://tokyo-weimi.com/wp-content/uploads/2026/08/IMG_6437.jpeg",
   "2026-08-img-6435": "https://tokyo-weimi.com/wp-content/uploads/2026/08/IMG_6435.jpeg",
   "2026-08-img-6434": "https://tokyo-weimi.com/wp-content/uploads/2026/08/IMG_6434.jpeg",
+  "2026-08-img-6448": "https://tokyo-weimi.com/wp-content/uploads/2026/08/IMG_6448.jpeg",
+  "2026-08-img-6445": "https://tokyo-weimi.com/wp-content/uploads/2026/08/IMG_6445.jpeg",
+  "2026-08-img-6446": "https://tokyo-weimi.com/wp-content/uploads/2026/08/IMG_6446.jpeg",
   "2026-08-img-6441": "https://tokyo-weimi.com/wp-content/uploads/2026/08/IMG_6441.jpeg",
   "2026-08-img-6440": "https://tokyo-weimi.com/wp-content/uploads/2026/08/IMG_6440.jpeg",
+  "2026-08-20260806-img-2848-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260806_IMG_2848.thumb.jpg",
   "2026-08-20260804-97242e77dcf064940841f4a71567be46-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260804_97242e77dcf064940841f4a71567be46.thumb.jpg",
-  "2026-08-20260804-2947c39f9c7c203274ba526c797c86a7-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260804_2947c39f9c7c203274ba526c797c86a7.thumb.jpg",
-  "2026-08-20260802-db21fa9f6affad8e96b3ac364f89baa2-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260802_db21fa9f6affad8e96b3ac364f89baa2.thumb.jpg",
-  "2026-05-20260527-img-1680-thumb": "https://vip6969.com/wp-content/uploads/2026/05/20260527_IMG_1680.thumb.jpg",
-  "2026-08-20260805-299-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260805_299.thumb.jpg"
+  "2026-08-20260804-2947c39f9c7c203274ba526c797c86a7-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260804_2947c39f9c7c203274ba526c797c86a7.thumb.jpg"
 } satisfies Record<string, string>;
