@@ -498,5 +498,11 @@ export const imageMap = {
   "2026-08-img-6454": "https://tokyo-weimi.com/wp-content/uploads/2026/08/IMG_6454.jpeg",
   "2026-07-img-6470": "https://tokyo-weimi.com/wp-content/uploads/2026/07/IMG_6470.jpeg",
   "2026-08-20260810-aedb2e4456d045aef9bc3b11aca3736c-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260810_aedb2e4456d045aef9bc3b11aca3736c.thumb.jpg",
-  "2026-08-20260801-a422e2a98cf2b006e0b34e573cda6c0f-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260801_a422e2a98cf2b006e0b34e573cda6c0f.thumb.jpg"
+  "2026-08-20260801-a422e2a98cf2b006e0b34e573cda6c0f-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260801_a422e2a98cf2b006e0b34e573cda6c0f.thumb.jpg",
+  "2026-08-img-6475": "https://tokyo-weimi.com/wp-content/uploads/2026/08/IMG_6475.jpeg",
+  "2026-07-img-6303": "https://tokyo-weimi.com/wp-content/uploads/2026/07/IMG_6303.jpeg",
+  "2026-07-img-6302": "https://tokyo-weimi.com/wp-content/uploads/2026/07/IMG_6302.jpeg",
+  "2026-08-20260812-196-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260812_196.thumb.jpg",
+  "2026-08-20260812-454d4c60663fa1b9d7bab4382a22dbe0-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260812_454d4c60663fa1b9d7bab4382a22dbe0.thumb.jpg",
+  "2026-08-20260812-img-3220-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260812_IMG_3220.thumb.jpg"
 } satisfies Record<string, string>;
