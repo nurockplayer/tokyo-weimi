@@ -9,44 +9,70 @@
     "hours": "每日更新，建議提前預約"
   },
   "heroImages": [
-    "2026-08-img-6528",
+    "2026-09-img-6566",
+    "2026-07-img-6303",
     "2026-04-img-5888",
-    "2026-05-img-6091-3",
-    "2026-05-img-6087"
+    "2026-08-img-6491"
   ],
   "profiles": [
     {
-      "id": "tokyo-weimi-girl-27204",
+      "id": "tokyo-weimi-girl-27230",
       "shopId": "tokyo-weimi",
-      "name": "梨香",
-      "title": "日本人・日系女神・欢迎进店海选",
-      "date": "2026-08-25",
+      "name": "甜美少女",
+      "title": "日本人・桃・新人欢迎进店海选",
+      "date": "2026-09-06",
       "origin": "東京",
       "age": "20",
-      "height": "158",
+      "height": "162",
+      "weight": "45kg",
+      "cup": "D",
+      "tags": [
+        "日本人",
+        "新人",
+        "女友感"
+      ],
+      "price": "60 分鐘 20,000 / 80 分鐘 30,000 / 120 分鐘 40,000",
+      "summary": "甜美少女。新人出勤。身材匀称完美。三点粉嫩。性格溫柔。",
+      "image": "2026-09-img-6566",
+      "gallery": [
+        "2026-09-img-6566",
+        "2026-09-img-6567",
+        "2026-09-img-6565"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "tokyo-weimi-girl-26970",
+      "shopId": "tokyo-weimi",
+      "name": "美弥",
+      "title": "日本人・日系甜妹・欢迎进店海选",
+      "date": "2026-09-05",
+      "origin": "東京",
+      "age": "20",
+      "height": "167",
       "weight": "47kg",
-      "cup": "F",
+      "cup": "E",
       "tags": [
         "日本人",
         "提供房間"
       ],
       "price": "60 分鐘 20,000 / 80 分鐘 30,000 / 120 分鐘 40,000",
-      "summary": "提供房間加1000。身材比例非常好。顏值超高。本人比照片还漂亮皮膚乾淨白嫩。三点粉嫩。",
-      "image": "2026-08-img-6528",
+      "summary": "池袋提供房間➕1000。長項甜美。服務用心周到。身材苗条。",
+      "image": "2026-07-img-6303",
       "gallery": [
-        "2026-08-img-6528",
-        "2026-08-img-6527",
-        "2026-08-img-6530-1"
+        "2026-07-img-6303",
+        "2026-07-img-6302"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "nozomi",
       "shopId": "tokyo-weimi",
       "name": "希",
       "title": "日本人・人氣女孩",
-      "date": "2026-08-22",
+      "date": "2026-09-03",
       "origin": "東京",
       "age": "21",
       "height": "166",
@@ -69,97 +95,14 @@
         "2026-04-img-5927"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "nanami",
-      "shopId": "tokyo-weimi",
-      "name": "七海",
-      "title": "新人・18歲甜美少女",
-      "date": "2026-08-22",
-      "origin": "東京",
-      "age": "18",
-      "height": "162",
-      "weight": "46kg",
-      "cup": "E",
-      "tags": [
-        "日本人",
-        "新人",
-        "甜美"
-      ],
-      "price": "60 分鐘 20,000 / 80 分鐘 30,000 / 120 分鐘 40,000",
-      "summary": "18歲新人甜美系，年輕漂亮、性格好，適合先確認當日出勤。",
-      "image": "2026-05-img-6091-3",
-      "gallery": [
-        "2026-05-img-6091-3",
-        "2026-05-img-6052",
-        "2026-05-img-6053",
-        "2026-04-img-5830"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "noa",
-      "shopId": "tokyo-weimi",
-      "name": "乃亞",
-      "title": "日本人・甜美系潮女",
-      "date": "2026-08-24",
-      "origin": "東京",
-      "age": "20",
-      "height": "166",
-      "weight": "48kg",
-      "cup": "E",
-      "tags": [
-        "日本人",
-        "甜美",
-        "限定"
-      ],
-      "price": "60 分鐘 20,000 / 80 分鐘 30,000 / 120 分鐘 40,000",
-      "summary": "甜美潮流感，近期出勤資訊已更新，適合先詢問 25 號前後短期檔期。",
-      "image": "2026-05-img-6087",
-      "gallery": [
-        "2026-05-img-6087",
-        "2026-05-img-6088",
-        "2026-05-img-6086-2",
-        "2026-04-img-6006"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "tokyo-weimi-girl-26839",
-      "shopId": "tokyo-weimi",
-      "name": "菜奈出勤。欢迎进店海选。",
-      "title": "極品推薦.日本人・菜奈欢迎进店海选",
-      "date": "2026-08-24",
-      "origin": "東京",
-      "age": "22",
-      "height": "171",
-      "weight": "46kg",
-      "cup": "E",
-      "tags": [
-        "日本人",
-        "推薦",
-        "提供房間"
-      ],
-      "price": "60 分鐘 25,000 / 80 分鐘 35,000 / 120 分鐘 50,000",
-      "summary": "提供房間加1000。模特身材。長腿女神。皮膚白嫩。身材匀称。服務用心周到。态度好。喜歡的兄弟快來預約吧。",
-      "image": "2026-08-img-6522",
-      "gallery": [
-        "2026-08-img-6522",
-        "2026-08-img-6523",
-        "2026-08-img-6524"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-27165",
       "shopId": "tokyo-weimi",
       "name": "奈子",
       "title": "日本人・大奶靓妹・欢迎进店海选",
-      "date": "2026-08-22",
+      "date": "2026-09-01",
       "origin": "東京",
       "age": "23",
       "height": "163",
@@ -177,7 +120,7 @@
         "2026-08-img-6490"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-26909",
@@ -206,7 +149,7 @@
         "2026-05-img-5980"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-26992",
@@ -230,14 +173,14 @@
         "2026-05-img-6029"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-27075",
       "shopId": "tokyo-weimi",
       "name": "瑠唯",
       "title": "日本人・新人面试",
-      "date": "2026-08-22",
+      "date": "2026-09-03",
       "origin": "東京",
       "age": "18",
       "height": "153",
@@ -249,21 +192,23 @@
       ],
       "price": "60 分鐘 23,000 / 80 分鐘 35,000 / 120 分鐘 46,000",
       "summary": "日本人・新人面试",
-      "image": "2026-07-img-6422",
+      "image": "2026-07-img-6558",
       "gallery": [
+        "2026-07-img-6558",
+        "2026-07-img-6559",
+        "2026-07-img-6557",
         "2026-07-img-6422",
-        "2026-07-img-6423",
         "2026-07-img-6485"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-23098",
       "shopId": "tokyo-weimi",
       "name": "迷",
       "title": "日本人.極品邻家小妹・欢迎进店海选",
-      "date": "2026-08-23",
+      "date": "2026-09-06",
       "origin": "東京",
       "age": "21",
       "height": "164",
@@ -290,37 +235,7 @@
         "2024-04-img-0281-1"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "girl-26580",
-      "shopId": "tokyo-weimi",
-      "name": "美纪",
-      "title": "推薦・日本人",
-      "date": "2026-08-24",
-      "origin": "東京",
-      "age": "20",
-      "height": "157",
-      "weight": "46kg",
-      "cup": "E",
-      "tags": [
-        "日本人",
-        "推薦"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "年輕漂亮.非常水嫩 .初下海.不玩后悔一辈子。快來預約吧。。。",
-      "image": "2026-02-img-5691",
-      "gallery": [
-        "2026-02-img-5691",
-        "2026-02-img-5692",
-        "2026-04-img-5905",
-        "2026-03-img-5781",
-        "2026-03-img-5803",
-        "2025-03-img-3781",
-        "2026-04-img-5894"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "kaede",
@@ -352,7 +267,7 @@
         "2025-02-img-3698"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "mayu",
@@ -391,14 +306,14 @@
         "https://tokyo-weimi.com/wp-content/uploads/2025/02/8MEenRD-amZOBN9R5KxgsNHUlijWI1wFzUzsTRv2nfs.mov"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "koko",
       "shopId": "tokyo-weimi",
       "name": "可可",
       "title": "中國・限時極品",
-      "date": "2026-08-08",
+      "date": "2026-08-31",
       "origin": "中國",
       "age": "21",
       "height": "170",
@@ -411,13 +326,15 @@
       ],
       "price": "60 分鐘 16,000 / 80 分鐘 24,000 / 120 分鐘 32,000 / 包夜 48,000",
       "summary": "中國極品美女，身材完美、個性熱情，適合先確認短期檔期是否仍可預約。",
-      "image": "2024-12-img-3021",
+      "image": "2026-05-img-6546",
       "gallery": [
-        "2024-12-img-3021",
-        "2024-12-img-3020-2"
+        "2026-05-img-6546",
+        "2026-05-img-6547",
+        "2026-05-img-6548",
+        "2026-05-img-6545"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-26391",
@@ -440,7 +357,7 @@
         "2026-03-img-5788"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-24810",
@@ -470,7 +387,7 @@
         "2025-07-img-4578"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-23377",
@@ -494,7 +411,7 @@
         "2025-02-img-3453"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-20959",
@@ -517,7 +434,7 @@
         "2022-08-e9d42c5b-696b-43af-87f5-2e3e09d1ad2f"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-21231",
@@ -547,7 +464,7 @@
         "2024-09-d43fed86c01a9a4cba77e2a07d1ff3f6"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-20541",
@@ -575,7 +492,7 @@
         "2024-08-img-1779"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-19825",
@@ -605,7 +522,7 @@
         "2024-07-img-1346"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-20205",
@@ -633,7 +550,7 @@
         "2024-07-img-2713"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-22729",
@@ -662,7 +579,7 @@
         "2024-11-img-2612"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-18874",
@@ -693,7 +610,7 @@
         "2024-05-img-0674"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-21756",
@@ -721,7 +638,7 @@
         "2024-10-img-2448"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "tokyo-weimi-girl-13085",
@@ -755,14 +672,14 @@
         "2023-04-c0b60151-053c-45fe-ab89-cf9bfb668d49"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "hikari888-girl-1158",
       "shopId": "hikari888",
       "name": "奶霸 胸大腰细臀圆 極品身材不要错过",
       "title": "日本人・巨乳奶大腰细臀圆",
-      "date": "2026-08-27",
+      "date": "2026-09-06",
       "origin": "新大久保",
       "age": "24",
       "height": "156",
@@ -783,14 +700,107 @@
         "2026-08-mmexport1787729509941"
       ],
       "isToday": true,
-      "lastSeen": "2026-08-27"
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1135",
+      "shopId": "hikari888",
+      "name": "璐璐 服務控 声音甜美",
+      "title": "日本人・妩媚美女",
+      "date": "2026-09-06",
+      "origin": "新大久保",
+      "age": "23",
+      "height": "159",
+      "weight": "49kg",
+      "cup": "D-cup",
+      "tags": [
+        "日本人"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "服務控，声音甜美，很妩媚的小美女",
+      "image": "2026-06-photo-2026-06-09-20-48-58",
+      "gallery": [
+        "2026-06-photo-2026-06-09-20-48-58"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1112",
+      "shopId": "hikari888",
+      "name": "奶娘 巨乳的诱惑",
+      "title": "日本人・巨乳的诱惑",
+      "date": "2026-09-06",
+      "origin": "新大久保",
+      "age": "23",
+      "height": "158",
+      "weight": "48kg",
+      "cup": "E-cup",
+      "tags": [
+        "日本人"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "把你的脸埋在我的两颗大白兔之间可以吗？",
+      "image": "2026-07-photo-2026-07-26-16-44-37",
+      "gallery": [
+        "2026-07-photo-2026-07-26-16-44-37",
+        "2026-07-photo-2026-07-26-16-44-38"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1144",
+      "shopId": "hikari888",
+      "name": "丸静",
+      "title": "中國・口活绝活吸附感绝佳",
+      "date": "2026-09-06",
+      "origin": "中國",
+      "age": "28",
+      "height": "159",
+      "weight": "47kg",
+      "cup": "C-cup",
+      "tags": [
+        "中國"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "反差女生，表面上高冷，床上就是个淫娃，好好玩",
+      "image": "2026-08-mmexport1786949202656",
+      "gallery": [
+        "2026-08-mmexport1786949202656"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1141",
+      "shopId": "hikari888",
+      "name": "艳妮",
+      "title": "中國・婀娜多姿服務特棒",
+      "date": "2026-09-06",
+      "origin": "中國",
+      "age": "27",
+      "height": "158",
+      "weight": "46kg",
+      "cup": "D-cup",
+      "tags": [
+        "中國"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "轻少妇，顏值身材很好，服務特别棒，科班出身，懂的都懂，别错过哦",
+      "image": "2026-08-mmexport1786949199613",
+      "gallery": [
+        "2026-08-mmexport1786949199613"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
     },
     {
       "id": "hikari888-girl-1154",
       "shopId": "hikari888",
       "name": "小小喵 服務一级棒",
       "title": "日本人・电臀摇摆",
-      "date": "2026-08-27",
+      "date": "2026-09-06",
       "origin": "新大久保",
       "age": "25",
       "height": "160",
@@ -806,6 +816,869 @@
         "2026-07-photo-2026-07-05-16-56-31-1"
       ],
       "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1016",
+      "shopId": "hikari888",
+      "name": "あきら",
+      "title": "中國・鲜嫩制服诱惑",
+      "date": "2026-09-06",
+      "origin": "中國",
+      "age": "22",
+      "height": "160",
+      "weight": "48kg",
+      "cup": "C-cup",
+      "tags": [
+        "中國"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "鲜嫩制服诱惑",
+      "image": "2025-10-6c6d5ed5666ced9f86f83396bbfcba90",
+      "gallery": [
+        "2025-10-6c6d5ed5666ced9f86f83396bbfcba90",
+        "2025-10-0117a74c8499c84df787becb4d8d447d",
+        "2025-10-66abd298e6a662117ba3498d5b9c7b6e"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1063",
+      "shopId": "hikari888",
+      "name": "曼妮",
+      "title": "日本人・新人来日",
+      "date": "2026-09-06",
+      "origin": "新大久保",
+      "age": "22",
+      "height": "156",
+      "weight": "kg",
+      "cup": "E-cup",
+      "tags": [
+        "日本人",
+        "新人"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "神似年輕版关之琳，千里送B的美女来日，想要尝鲜的哥哥们谁能夺得第一炮",
+      "image": "2026-07-photo-2026-07-05-16-56-32",
+      "gallery": [
+        "2026-07-photo-2026-07-05-16-56-32"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1074",
+      "shopId": "hikari888",
+      "name": "喵喵",
+      "title": "日本人・❤️邻家小妹❤️",
+      "date": "2026-09-06",
+      "origin": "新大久保",
+      "age": "23",
+      "height": "158",
+      "weight": "49kg",
+      "cup": "C-cup",
+      "tags": [
+        "日本人",
+        "女友感"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "美麗可爱的邻家小妹妹 很溫柔，很听话，很配合，要溫柔呵护怜惜哦",
+      "image": "2026-07-photo-2026-07-10-16-46-17",
+      "gallery": [
+        "2026-07-photo-2026-07-10-16-46-17"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-992",
+      "shopId": "hikari888",
+      "name": "灵灵",
+      "title": "中國・00后小妹",
+      "date": "2026-09-06",
+      "origin": "中國",
+      "age": "23",
+      "height": "157",
+      "weight": "45kg",
+      "cup": "D-cup",
+      "tags": [
+        "中國"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "00后小妹",
+      "image": "2025-12-photo-2026-02-11-18-11-43",
+      "gallery": [
+        "2025-12-photo-2026-02-11-18-11-43",
+        "2025-12-photo-2026-02-11-18-11-45"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-990",
+      "shopId": "hikari888",
+      "name": "さゆり",
+      "title": "日本人・男人导师",
+      "date": "2026-09-06",
+      "origin": "泰国",
+      "age": "24",
+      "height": "158",
+      "weight": "50kg",
+      "cup": "G-cup",
+      "tags": [
+        "日本人"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "男人导师",
+      "image": "2025-10-400b172ec6de6181dc1bda465ba60c39",
+      "gallery": [
+        "2025-10-400b172ec6de6181dc1bda465ba60c39",
+        "2025-10-f0dae20b8893bebbf3896e3a3dc44271",
+        "2025-10-bab83d5089c8ce7ac523ba7624361ce4"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1019",
+      "shopId": "hikari888",
+      "name": "娜灵",
+      "title": "中國・長腿蜜桃",
+      "date": "2026-09-06",
+      "origin": "中國",
+      "age": "23",
+      "height": "157",
+      "weight": "42kg",
+      "cup": "Ｃ-cup",
+      "tags": [
+        "中國",
+        "高挑"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "長腿蜜桃",
+      "image": "2025-12-14e49bc04b3042620f99083e111c70c4",
+      "gallery": [
+        "2025-12-14e49bc04b3042620f99083e111c70c4",
+        "2025-12-efdfb32c85b39e808d09484cb0ce4e4e"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-997",
+      "shopId": "hikari888",
+      "name": "阿笙",
+      "title": "中國・00后小妹",
+      "date": "2026-09-06",
+      "origin": "中國",
+      "age": "23",
+      "height": "156",
+      "weight": "43kg",
+      "cup": "D-cup",
+      "tags": [
+        "中國"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "00后小妹",
+      "image": "2025-12-photo-2026-02-11-18-12-58",
+      "gallery": [
+        "2025-12-photo-2026-02-11-18-12-58",
+        "2025-12-photo-2026-02-11-18-13-03"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1055",
+      "shopId": "hikari888",
+      "name": "免免",
+      "title": "日本人・極品小妞服務棒棒",
+      "date": "2026-09-06",
+      "origin": "新大久保",
+      "age": "23",
+      "height": "158",
+      "weight": "45kg",
+      "cup": "D-cup",
+      "tags": [
+        "日本人",
+        "推薦"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "很有活力的小妞妞 蜜臀美乳 身材棒棒",
+      "image": "2026-07-photo-2026-07-05-16-56-31",
+      "gallery": [
+        "2026-07-photo-2026-07-05-16-56-31",
+        "2026-07-photo-2026-07-05-16-56-29",
+        "2026-07-photo-2026-07-05-16-56-30"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-981",
+      "shopId": "hikari888",
+      "name": "春恵",
+      "title": "中國・嫩妹兼职",
+      "date": "2026-09-06",
+      "origin": "中國",
+      "age": "23",
+      "height": "158",
+      "weight": "44kg",
+      "cup": "C-cup",
+      "tags": [
+        "中國"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "嫩妹兼职",
+      "image": "2025-11-6338e8c2cc072e9e3204a5bb536ecceb",
+      "gallery": [
+        "2025-11-6338e8c2cc072e9e3204a5bb536ecceb",
+        "2025-11-6e758dbd01961a34c57aa9ba5bd3a6e5"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1087",
+      "shopId": "hikari888",
+      "name": "宁宁",
+      "title": "日本人・❤️新人推薦❤️",
+      "date": "2026-09-06",
+      "origin": "新大久保",
+      "age": "24",
+      "height": "160",
+      "weight": "45kg",
+      "cup": "D-cup",
+      "tags": [
+        "日本人",
+        "新人",
+        "推薦"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "很听话，任人摆布，请对她一定要溫柔点哦",
+      "image": "2026-07-photo-2026-07-15-14-04-58-1",
+      "gallery": [
+        "2026-07-photo-2026-07-15-14-04-58-1"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1083",
+      "shopId": "hikari888",
+      "name": "琳琳",
+      "title": "日本人・❤️新人推薦❤️",
+      "date": "2026-09-06",
+      "origin": "新大久保",
+      "age": "23",
+      "height": "158",
+      "weight": "47kg",
+      "cup": "D-cup",
+      "tags": [
+        "日本人",
+        "新人",
+        "推薦"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "来新人了，很清纯的一个小妹妹，请怜惜",
+      "image": "2026-07-photo-2026-07-15-14-04-57",
+      "gallery": [
+        "2026-07-photo-2026-07-15-14-04-57"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1018",
+      "shopId": "hikari888",
+      "name": "花花",
+      "title": "中國・前凸后翘",
+      "date": "2026-09-06",
+      "origin": "中國",
+      "age": "24",
+      "height": "163",
+      "weight": "45kg",
+      "cup": "D-cup",
+      "tags": [
+        "中國"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "前凸后翘",
+      "image": "2025-12-photo-2026-02-11-18-12-53",
+      "gallery": [
+        "2025-12-photo-2026-02-11-18-12-53",
+        "2025-12-photo-2026-02-11-18-12-43"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-929",
+      "shopId": "hikari888",
+      "name": "まい",
+      "title": "日本人・风骚少妇",
+      "date": "2026-09-06",
+      "origin": "泰国",
+      "age": "21",
+      "height": "153",
+      "weight": "49kg",
+      "cup": "d-cup",
+      "tags": [
+        "日本人"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "风骚少妇",
+      "image": "2025-10-3d832eb8925aa9c14c1430db1a42a3dd-1",
+      "gallery": [
+        "2025-10-3d832eb8925aa9c14c1430db1a42a3dd-1",
+        "2025-10-c816082fc902ed037c15531002fcc271-1",
+        "2025-10-1ebf4947eae93835c5d81a9bf89427b3"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1073",
+      "shopId": "hikari888",
+      "name": "なおこ",
+      "title": "中國・清纯美术生",
+      "date": "2026-09-06",
+      "origin": "中國",
+      "age": "25",
+      "height": "163",
+      "weight": "45kg",
+      "cup": "C-cup",
+      "tags": [
+        "中國",
+        "女友感"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "溫柔属于乖乖女類型 活泼可爱·",
+      "image": "2025-10-photo-2026-02-06-14-36-27",
+      "gallery": [
+        "2025-10-photo-2026-02-06-14-36-27",
+        "2025-10-photo-2026-02-06-14-36-24"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1020",
+      "shopId": "hikari888",
+      "name": "纱子",
+      "title": "日本人・新人入店",
+      "date": "2026-09-06",
+      "origin": "马来西亞人",
+      "age": "21",
+      "height": "157",
+      "weight": "42kg",
+      "cup": "C-cup",
+      "tags": [
+        "日本人",
+        "新人"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "新人入店",
+      "image": "2025-12-71827338a60797f7ab07c15db4fe2a21",
+      "gallery": [
+        "2025-12-71827338a60797f7ab07c15db4fe2a21",
+        "2025-12-88a40930f8897a78cfa179755f481237"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-967",
+      "shopId": "hikari888",
+      "name": "裕香",
+      "title": "中國・00后粉色美少女",
+      "date": "2026-09-06",
+      "origin": "中國",
+      "age": "23",
+      "height": "160",
+      "weight": "49kg",
+      "cup": "C-cup",
+      "tags": [
+        "中國"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "00后粉色美少女",
+      "image": "2025-11-9fdb4e0dfad9e73f00ab1c4877972cd6",
+      "gallery": [
+        "2025-11-9fdb4e0dfad9e73f00ab1c4877972cd6",
+        "2025-11-69d2e006d7d2933e9e5e6619d5f82b17"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1013",
+      "shopId": "hikari888",
+      "name": "りんちゃん",
+      "title": "日本人・溫柔御姐",
+      "date": "2026-09-06",
+      "origin": "日本",
+      "age": "20",
+      "height": "156",
+      "weight": "38kg",
+      "cup": "D-cup",
+      "tags": [
+        "日本人",
+        "女友感"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "溫柔御姐",
+      "image": "2025-10-505a84f1a6292da963d2d2c9feb5048c",
+      "gallery": [
+        "2025-10-505a84f1a6292da963d2d2c9feb5048c",
+        "2025-10-902472d5816fde8f91137f7df035d08a"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1011",
+      "shopId": "hikari888",
+      "name": "惠惠",
+      "title": "日本人・轻少妇风",
+      "date": "2026-09-06",
+      "origin": "新大久保",
+      "age": "24",
+      "height": "155",
+      "weight": "46kg",
+      "cup": "D-cup",
+      "tags": [
+        "日本人"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "/div>",
+      "image": "2026-06-photo-2026-06-09-20-49-00",
+      "gallery": [
+        "2026-06-photo-2026-06-09-20-49-00"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-1005",
+      "shopId": "hikari888",
+      "name": "小丫",
+      "title": "日本人・小萝莉",
+      "date": "2026-09-06",
+      "origin": "新大久保",
+      "age": "22",
+      "height": "153",
+      "weight": "46kg",
+      "cup": "C-cup",
+      "tags": [
+        "日本人"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "/div>",
+      "image": "2026-06-photo-2026-06-09-20-48-59-1",
+      "gallery": [
+        "2026-06-photo-2026-06-09-20-48-59-1"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-991",
+      "shopId": "hikari888",
+      "name": "加奈恵",
+      "title": "中國・大長腿",
+      "date": "2026-09-06",
+      "origin": "中國",
+      "age": "22",
+      "height": "156",
+      "weight": "42kg",
+      "cup": "C-cup",
+      "tags": [
+        "中國",
+        "高挑"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "大長腿",
+      "image": "2025-11-af3fdf46262a7fcd888f2deca4179b2d",
+      "gallery": [
+        "2025-11-af3fdf46262a7fcd888f2deca4179b2d",
+        "2025-11-160e086c18aadb4e7e03edc1008cbdee"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-985",
+      "shopId": "hikari888",
+      "name": "玲玲",
+      "title": "中國・00后性感萝莉学妹",
+      "date": "2026-09-06",
+      "origin": "中國",
+      "age": "22",
+      "height": "157",
+      "weight": "40kg",
+      "cup": "C-cup",
+      "tags": [
+        "中國"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "00后性感萝莉学妹",
+      "image": "2025-11-4869d0a176d21ac606f3bef9aa4f8179",
+      "gallery": [
+        "2025-11-4869d0a176d21ac606f3bef9aa4f8179",
+        "2025-11-f7f85c0399263eb6de4926b5fa83666a",
+        "2025-11-72d8c93e3eabac1aabb40c104511b07b"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "hikari888-girl-974",
+      "shopId": "hikari888",
+      "name": "爱河",
+      "title": "中國・风骚姐姐",
+      "date": "2026-09-06",
+      "origin": "中國",
+      "age": "21",
+      "height": "158",
+      "weight": "40kg",
+      "cup": "D-cup",
+      "tags": [
+        "中國"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "风骚姐姐",
+      "image": "2025-12-photo-2026-02-11-18-10-07",
+      "gallery": [
+        "2025-12-photo-2026-02-11-18-10-07",
+        "2025-12-photo-2026-02-11-18-10-05"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "ikebukuro-vip-girl-9fe7dff3627c",
+      "shopId": "ikebukuro-vip",
+      "name": "房费1000",
+      "title": "日本人・新马混血👉洋气十足👉服務一流",
+      "date": "2026-09-06",
+      "origin": "池袋",
+      "age": "未公開",
+      "height": "未公開",
+      "weight": "未公開",
+      "cup": "未公開",
+      "tags": [
+        "日本人"
+      ],
+      "price": "60 分鐘 12,000 / 14,000 / 16,000 / 18,000",
+      "summary": "新马混血👉洋气十足👉服務一流",
+      "image": "2026-09-20260904-e7cdafe2314886e26b5a8e6593a93e56-thumb",
+      "gallery": [
+        "2026-09-20260904-e7cdafe2314886e26b5a8e6593a93e56-thumb"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "ikebukuro-vip-girl-e72141351534",
+      "shopId": "ikebukuro-vip",
+      "name": "免房费",
+      "title": "日本人・马达→治愈系→正宗莞式小腰窝",
+      "date": "2026-09-06",
+      "origin": "池袋",
+      "age": "未公開",
+      "height": "未公開",
+      "weight": "未公開",
+      "cup": "未公開",
+      "tags": [
+        "日本人"
+      ],
+      "price": "60 分鐘 12,000 / 14,000 / 16,000 / 18,000",
+      "summary": "马达→治愈系→正宗莞式小腰窝",
+      "image": "2026-09-20260904-17354485722595d828ffa287bc5ca057-thumb",
+      "gallery": [
+        "2026-09-20260904-17354485722595d828ffa287bc5ca057-thumb"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "ikebukuro-vip-girl-d374be4dbcaf",
+      "shopId": "ikebukuro-vip",
+      "name": "房费1000",
+      "title": "日本人・小香港👉🏻萝莉👉🏻天花板",
+      "date": "2026-09-06",
+      "origin": "池袋",
+      "age": "未公開",
+      "height": "未公開",
+      "weight": "未公開",
+      "cup": "未公開",
+      "tags": [
+        "日本人"
+      ],
+      "price": "60 分鐘 12,000 / 14,000 / 16,000 / 18,000",
+      "summary": "小香港👉🏻萝莉👉🏻天花板",
+      "image": "2026-09-20260903-168-thumb",
+      "gallery": [
+        "2026-09-20260903-168-thumb"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "ikebukuro-vip-girl-e31efb2a5765",
+      "shopId": "ikebukuro-vip",
+      "name": "+1000 房费",
+      "title": "日本人・奶妃→s女→巨乳→拍片→本人照",
+      "date": "2026-09-06",
+      "origin": "池袋",
+      "age": "未公開",
+      "height": "未公開",
+      "weight": "未公開",
+      "cup": "未公開",
+      "tags": [
+        "日本人"
+      ],
+      "price": "60 分鐘 12,000 / 14,000 / 16,000 / 18,000",
+      "summary": "奶妃→s女→巨乳→拍片→本人照",
+      "image": "2026-06-20260612-725e4016c7d513dc6a67afa42cd07972-thumb",
+      "gallery": [
+        "2026-06-20260612-725e4016c7d513dc6a67afa42cd07972-thumb"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "ikebukuro-vip-girl-683cd07bc456",
+      "shopId": "ikebukuro-vip",
+      "name": "1000房费",
+      "title": "日本人・豆豆→马甲线→3点粉",
+      "date": "2026-09-06",
+      "origin": "池袋",
+      "age": "未公開",
+      "height": "未公開",
+      "weight": "未公開",
+      "cup": "未公開",
+      "tags": [
+        "日本人"
+      ],
+      "price": "60 分鐘 12,000 / 14,000 / 16,000 / 18,000",
+      "summary": "豆豆→马甲线→3点粉",
+      "image": "2026-09-20260902-db487241fd4678e272530c34ea98d9c0-thumb",
+      "gallery": [
+        "2026-09-20260902-db487241fd4678e272530c34ea98d9c0-thumb"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "ikebukuro-vip-girl-vip-e8a5bfe5",
+      "shopId": "ikebukuro-vip",
+      "name": "西川口",
+      "title": "日本人・天音酱→",
+      "date": "2026-09-06",
+      "origin": "池袋",
+      "age": "未公開",
+      "height": "未公開",
+      "weight": "未公開",
+      "cup": "未公開",
+      "tags": [
+        "日本人"
+      ],
+      "price": "60 分鐘 12,000 / 14,000 / 16,000 / 18,000",
+      "summary": "天音酱→",
+      "image": "2026-09-20260906-421-thumb",
+      "gallery": [
+        "2026-09-20260906-421-thumb"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "ikebukuro-vip-girl-c98d260fc48a",
+      "shopId": "ikebukuro-vip",
+      "name": "免費房間",
+      "title": "日本人・小糯米👉🏻喷水👉🏻李小璐",
+      "date": "2026-09-06",
+      "origin": "池袋",
+      "age": "未公開",
+      "height": "未公開",
+      "weight": "未公開",
+      "cup": "未公開",
+      "tags": [
+        "日本人"
+      ],
+      "price": "60 分鐘 12,000 / 14,000 / 16,000 / 18,000",
+      "summary": "小糯米👉🏻喷水👉🏻李小璐",
+      "image": "2026-09-20260901-77-thumb",
+      "gallery": [
+        "2026-09-20260901-77-thumb"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "ikebukuro-vip-girl-5a245df40224",
+      "shopId": "ikebukuro-vip",
+      "name": "➕1000房费",
+      "title": "日本人・公主→巨骚→人氣回归",
+      "date": "2026-09-06",
+      "origin": "池袋",
+      "age": "未公開",
+      "height": "未公開",
+      "weight": "未公開",
+      "cup": "未公開",
+      "tags": [
+        "日本人",
+        "推薦"
+      ],
+      "price": "60 分鐘 12,000 / 14,000 / 16,000 / 18,000",
+      "summary": "公主→巨骚→人氣回归",
+      "image": "2026-07-20260714-e374beee805c2c91a24ce74fcdae85f2-thumb",
+      "gallery": [
+        "2026-07-20260714-e374beee805c2c91a24ce74fcdae85f2-thumb"
+      ],
+      "isToday": true,
+      "lastSeen": "2026-09-06"
+    },
+    {
+      "id": "tokyo-weimi-girl-27204",
+      "shopId": "tokyo-weimi",
+      "name": "梨香",
+      "title": "日本人・日系女神・欢迎进店海选",
+      "date": "2026-08-25",
+      "origin": "東京",
+      "age": "20",
+      "height": "158",
+      "weight": "47kg",
+      "cup": "F",
+      "tags": [
+        "日本人",
+        "提供房間"
+      ],
+      "price": "60 分鐘 20,000 / 80 分鐘 30,000 / 120 分鐘 40,000",
+      "summary": "提供房間加1000。身材比例非常好。顏值超高。本人比照片还漂亮皮膚乾淨白嫩。三点粉嫩。",
+      "image": "2026-08-img-6528",
+      "gallery": [
+        "2026-08-img-6528",
+        "2026-08-img-6527",
+        "2026-08-img-6530-1"
+      ],
+      "isToday": false,
+      "lastSeen": "2026-08-27"
+    },
+    {
+      "id": "nanami",
+      "shopId": "tokyo-weimi",
+      "name": "七海",
+      "title": "新人・18歲甜美少女",
+      "date": "2026-08-22",
+      "origin": "東京",
+      "age": "18",
+      "height": "162",
+      "weight": "46kg",
+      "cup": "E",
+      "tags": [
+        "日本人",
+        "新人",
+        "甜美"
+      ],
+      "price": "60 分鐘 20,000 / 80 分鐘 30,000 / 120 分鐘 40,000",
+      "summary": "18歲新人甜美系，年輕漂亮、性格好，適合先確認當日出勤。",
+      "image": "2026-05-img-6091-3",
+      "gallery": [
+        "2026-05-img-6091-3",
+        "2026-05-img-6052",
+        "2026-05-img-6053",
+        "2026-04-img-5830"
+      ],
+      "isToday": false,
+      "lastSeen": "2026-08-27"
+    },
+    {
+      "id": "noa",
+      "shopId": "tokyo-weimi",
+      "name": "乃亞",
+      "title": "日本人・甜美系潮女",
+      "date": "2026-08-24",
+      "origin": "東京",
+      "age": "20",
+      "height": "166",
+      "weight": "48kg",
+      "cup": "E",
+      "tags": [
+        "日本人",
+        "甜美",
+        "限定"
+      ],
+      "price": "60 分鐘 20,000 / 80 分鐘 30,000 / 120 分鐘 40,000",
+      "summary": "甜美潮流感，近期出勤資訊已更新，適合先詢問 25 號前後短期檔期。",
+      "image": "2026-05-img-6087",
+      "gallery": [
+        "2026-05-img-6087",
+        "2026-05-img-6088",
+        "2026-05-img-6086-2",
+        "2026-04-img-6006"
+      ],
+      "isToday": false,
+      "lastSeen": "2026-08-27"
+    },
+    {
+      "id": "tokyo-weimi-girl-26839",
+      "shopId": "tokyo-weimi",
+      "name": "菜奈出勤。欢迎进店海选。",
+      "title": "極品推薦.日本人・菜奈欢迎进店海选",
+      "date": "2026-08-24",
+      "origin": "東京",
+      "age": "22",
+      "height": "171",
+      "weight": "46kg",
+      "cup": "E",
+      "tags": [
+        "日本人",
+        "推薦",
+        "提供房間"
+      ],
+      "price": "60 分鐘 25,000 / 80 分鐘 35,000 / 120 分鐘 50,000",
+      "summary": "提供房間加1000。模特身材。長腿女神。皮膚白嫩。身材匀称。服務用心周到。态度好。喜歡的兄弟快來預約吧。",
+      "image": "2026-08-img-6522",
+      "gallery": [
+        "2026-08-img-6522",
+        "2026-08-img-6523",
+        "2026-08-img-6524"
+      ],
+      "isToday": false,
+      "lastSeen": "2026-08-27"
+    },
+    {
+      "id": "girl-26580",
+      "shopId": "tokyo-weimi",
+      "name": "美纪",
+      "title": "推薦・日本人",
+      "date": "2026-08-24",
+      "origin": "東京",
+      "age": "20",
+      "height": "157",
+      "weight": "46kg",
+      "cup": "E",
+      "tags": [
+        "日本人",
+        "推薦"
+      ],
+      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
+      "summary": "年輕漂亮.非常水嫩 .初下海.不玩后悔一辈子。快來預約吧。。。",
+      "image": "2026-02-img-5691",
+      "gallery": [
+        "2026-02-img-5691",
+        "2026-02-img-5692",
+        "2026-04-img-5905",
+        "2026-03-img-5781",
+        "2026-03-img-5803",
+        "2025-03-img-3781",
+        "2026-04-img-5894"
+      ],
+      "isToday": false,
       "lastSeen": "2026-08-27"
     },
     {
@@ -831,615 +1704,7 @@
         "2026-07-photo-2026-07-26-16-44-35",
         "2026-07-photo-2026-07-26-16-44-31"
       ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1112",
-      "shopId": "hikari888",
-      "name": "奶娘 巨乳的诱惑",
-      "title": "日本人・巨乳的诱惑",
-      "date": "2026-08-27",
-      "origin": "新大久保",
-      "age": "23",
-      "height": "158",
-      "weight": "48kg",
-      "cup": "E-cup",
-      "tags": [
-        "日本人"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "把你的脸埋在我的两颗大白兔之间可以吗？",
-      "image": "2026-07-photo-2026-07-26-16-44-37",
-      "gallery": [
-        "2026-07-photo-2026-07-26-16-44-37",
-        "2026-07-photo-2026-07-26-16-44-38"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1135",
-      "shopId": "hikari888",
-      "name": "璐璐 服務控 声音甜美",
-      "title": "日本人・妩媚美女",
-      "date": "2026-08-27",
-      "origin": "新大久保",
-      "age": "23",
-      "height": "159",
-      "weight": "49kg",
-      "cup": "D-cup",
-      "tags": [
-        "日本人"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "服務控，声音甜美，很妩媚的小美女",
-      "image": "2026-06-photo-2026-06-09-20-48-58",
-      "gallery": [
-        "2026-06-photo-2026-06-09-20-48-58"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1144",
-      "shopId": "hikari888",
-      "name": "丸静",
-      "title": "中國・口活绝活吸附感绝佳",
-      "date": "2026-08-27",
-      "origin": "中國",
-      "age": "28",
-      "height": "159",
-      "weight": "47kg",
-      "cup": "C-cup",
-      "tags": [
-        "中國"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "反差女生，表面上高冷，床上就是个淫娃，好好玩",
-      "image": "2026-08-mmexport1786949202656",
-      "gallery": [
-        "2026-08-mmexport1786949202656"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1141",
-      "shopId": "hikari888",
-      "name": "艳妮",
-      "title": "中國・婀娜多姿服務特棒",
-      "date": "2026-08-27",
-      "origin": "中國",
-      "age": "27",
-      "height": "158",
-      "weight": "46kg",
-      "cup": "D-cup",
-      "tags": [
-        "中國"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "轻少妇，顏值身材很好，服務特别棒，科班出身，懂的都懂，别错过哦",
-      "image": "2026-08-mmexport1786949199613",
-      "gallery": [
-        "2026-08-mmexport1786949199613"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1016",
-      "shopId": "hikari888",
-      "name": "あきら",
-      "title": "中國・鲜嫩制服诱惑",
-      "date": "2026-08-27",
-      "origin": "中國",
-      "age": "22",
-      "height": "160",
-      "weight": "48kg",
-      "cup": "C-cup",
-      "tags": [
-        "中國"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "鲜嫩制服诱惑",
-      "image": "2025-10-6c6d5ed5666ced9f86f83396bbfcba90",
-      "gallery": [
-        "2025-10-6c6d5ed5666ced9f86f83396bbfcba90",
-        "2025-10-0117a74c8499c84df787becb4d8d447d",
-        "2025-10-66abd298e6a662117ba3498d5b9c7b6e"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1063",
-      "shopId": "hikari888",
-      "name": "曼妮",
-      "title": "日本人・新人来日",
-      "date": "2026-08-27",
-      "origin": "新大久保",
-      "age": "22",
-      "height": "156",
-      "weight": "kg",
-      "cup": "E-cup",
-      "tags": [
-        "日本人",
-        "新人"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "神似年輕版关之琳，千里送B的美女来日，想要尝鲜的哥哥们谁能夺得第一炮",
-      "image": "2026-07-photo-2026-07-05-16-56-32",
-      "gallery": [
-        "2026-07-photo-2026-07-05-16-56-32"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1074",
-      "shopId": "hikari888",
-      "name": "喵喵",
-      "title": "日本人・❤️邻家小妹❤️",
-      "date": "2026-08-27",
-      "origin": "新大久保",
-      "age": "23",
-      "height": "158",
-      "weight": "49kg",
-      "cup": "C-cup",
-      "tags": [
-        "日本人",
-        "女友感"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "美麗可爱的邻家小妹妹 很溫柔，很听话，很配合，要溫柔呵护怜惜哦",
-      "image": "2026-07-photo-2026-07-10-16-46-17",
-      "gallery": [
-        "2026-07-photo-2026-07-10-16-46-17"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-992",
-      "shopId": "hikari888",
-      "name": "灵灵",
-      "title": "中國・00后小妹",
-      "date": "2026-08-27",
-      "origin": "中國",
-      "age": "23",
-      "height": "157",
-      "weight": "45kg",
-      "cup": "D-cup",
-      "tags": [
-        "中國"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "00后小妹",
-      "image": "2025-12-photo-2026-02-11-18-11-43",
-      "gallery": [
-        "2025-12-photo-2026-02-11-18-11-43",
-        "2025-12-photo-2026-02-11-18-11-45"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-990",
-      "shopId": "hikari888",
-      "name": "さゆり",
-      "title": "日本人・男人导师",
-      "date": "2026-08-27",
-      "origin": "泰国",
-      "age": "24",
-      "height": "158",
-      "weight": "50kg",
-      "cup": "G-cup",
-      "tags": [
-        "日本人"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "男人导师",
-      "image": "2025-10-400b172ec6de6181dc1bda465ba60c39",
-      "gallery": [
-        "2025-10-400b172ec6de6181dc1bda465ba60c39",
-        "2025-10-f0dae20b8893bebbf3896e3a3dc44271",
-        "2025-10-bab83d5089c8ce7ac523ba7624361ce4"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1019",
-      "shopId": "hikari888",
-      "name": "娜灵",
-      "title": "中國・長腿蜜桃",
-      "date": "2026-08-27",
-      "origin": "中國",
-      "age": "23",
-      "height": "157",
-      "weight": "42kg",
-      "cup": "Ｃ-cup",
-      "tags": [
-        "中國",
-        "高挑"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "長腿蜜桃",
-      "image": "2025-12-14e49bc04b3042620f99083e111c70c4",
-      "gallery": [
-        "2025-12-14e49bc04b3042620f99083e111c70c4",
-        "2025-12-efdfb32c85b39e808d09484cb0ce4e4e"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-997",
-      "shopId": "hikari888",
-      "name": "阿笙",
-      "title": "中國・00后小妹",
-      "date": "2026-08-27",
-      "origin": "中國",
-      "age": "23",
-      "height": "156",
-      "weight": "43kg",
-      "cup": "D-cup",
-      "tags": [
-        "中國"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "00后小妹",
-      "image": "2025-12-photo-2026-02-11-18-12-58",
-      "gallery": [
-        "2025-12-photo-2026-02-11-18-12-58",
-        "2025-12-photo-2026-02-11-18-13-03"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1055",
-      "shopId": "hikari888",
-      "name": "免免",
-      "title": "日本人・極品小妞服務棒棒",
-      "date": "2026-08-27",
-      "origin": "新大久保",
-      "age": "23",
-      "height": "158",
-      "weight": "45kg",
-      "cup": "D-cup",
-      "tags": [
-        "日本人",
-        "推薦"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "很有活力的小妞妞 蜜臀美乳 身材棒棒",
-      "image": "2026-07-photo-2026-07-05-16-56-31",
-      "gallery": [
-        "2026-07-photo-2026-07-05-16-56-31",
-        "2026-07-photo-2026-07-05-16-56-29",
-        "2026-07-photo-2026-07-05-16-56-30"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-981",
-      "shopId": "hikari888",
-      "name": "春恵",
-      "title": "中國・嫩妹兼职",
-      "date": "2026-08-27",
-      "origin": "中國",
-      "age": "23",
-      "height": "158",
-      "weight": "44kg",
-      "cup": "C-cup",
-      "tags": [
-        "中國"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "嫩妹兼职",
-      "image": "2025-11-6338e8c2cc072e9e3204a5bb536ecceb",
-      "gallery": [
-        "2025-11-6338e8c2cc072e9e3204a5bb536ecceb",
-        "2025-11-6e758dbd01961a34c57aa9ba5bd3a6e5"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1087",
-      "shopId": "hikari888",
-      "name": "宁宁",
-      "title": "日本人・❤️新人推薦❤️",
-      "date": "2026-08-27",
-      "origin": "新大久保",
-      "age": "24",
-      "height": "160",
-      "weight": "45kg",
-      "cup": "D-cup",
-      "tags": [
-        "日本人",
-        "新人",
-        "推薦"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "很听话，任人摆布，请对她一定要溫柔点哦",
-      "image": "2026-07-photo-2026-07-15-14-04-58-1",
-      "gallery": [
-        "2026-07-photo-2026-07-15-14-04-58-1"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1083",
-      "shopId": "hikari888",
-      "name": "琳琳",
-      "title": "日本人・❤️新人推薦❤️",
-      "date": "2026-08-27",
-      "origin": "新大久保",
-      "age": "23",
-      "height": "158",
-      "weight": "47kg",
-      "cup": "D-cup",
-      "tags": [
-        "日本人",
-        "新人",
-        "推薦"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "来新人了，很清纯的一个小妹妹，请怜惜",
-      "image": "2026-07-photo-2026-07-15-14-04-57",
-      "gallery": [
-        "2026-07-photo-2026-07-15-14-04-57"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1018",
-      "shopId": "hikari888",
-      "name": "花花",
-      "title": "中國・前凸后翘",
-      "date": "2026-08-27",
-      "origin": "中國",
-      "age": "24",
-      "height": "163",
-      "weight": "45kg",
-      "cup": "D-cup",
-      "tags": [
-        "中國"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "前凸后翘",
-      "image": "2025-12-photo-2026-02-11-18-12-53",
-      "gallery": [
-        "2025-12-photo-2026-02-11-18-12-53",
-        "2025-12-photo-2026-02-11-18-12-43"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-929",
-      "shopId": "hikari888",
-      "name": "まい",
-      "title": "日本人・风骚少妇",
-      "date": "2026-08-27",
-      "origin": "泰国",
-      "age": "21",
-      "height": "153",
-      "weight": "49kg",
-      "cup": "d-cup",
-      "tags": [
-        "日本人"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "风骚少妇",
-      "image": "2025-10-3d832eb8925aa9c14c1430db1a42a3dd-1",
-      "gallery": [
-        "2025-10-3d832eb8925aa9c14c1430db1a42a3dd-1",
-        "2025-10-c816082fc902ed037c15531002fcc271-1",
-        "2025-10-1ebf4947eae93835c5d81a9bf89427b3"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1073",
-      "shopId": "hikari888",
-      "name": "なおこ",
-      "title": "中國・清纯美术生",
-      "date": "2026-08-27",
-      "origin": "中國",
-      "age": "25",
-      "height": "163",
-      "weight": "45kg",
-      "cup": "C-cup",
-      "tags": [
-        "中國",
-        "女友感"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "溫柔属于乖乖女類型 活泼可爱·",
-      "image": "2025-10-photo-2026-02-06-14-36-27",
-      "gallery": [
-        "2025-10-photo-2026-02-06-14-36-27",
-        "2025-10-photo-2026-02-06-14-36-24"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1020",
-      "shopId": "hikari888",
-      "name": "纱子",
-      "title": "日本人・新人入店",
-      "date": "2026-08-27",
-      "origin": "马来西亞人",
-      "age": "21",
-      "height": "157",
-      "weight": "42kg",
-      "cup": "C-cup",
-      "tags": [
-        "日本人",
-        "新人"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "新人入店",
-      "image": "2025-12-71827338a60797f7ab07c15db4fe2a21",
-      "gallery": [
-        "2025-12-71827338a60797f7ab07c15db4fe2a21",
-        "2025-12-88a40930f8897a78cfa179755f481237"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-967",
-      "shopId": "hikari888",
-      "name": "裕香",
-      "title": "中國・00后粉色美少女",
-      "date": "2026-08-27",
-      "origin": "中國",
-      "age": "23",
-      "height": "160",
-      "weight": "49kg",
-      "cup": "C-cup",
-      "tags": [
-        "中國"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "00后粉色美少女",
-      "image": "2025-11-9fdb4e0dfad9e73f00ab1c4877972cd6",
-      "gallery": [
-        "2025-11-9fdb4e0dfad9e73f00ab1c4877972cd6",
-        "2025-11-69d2e006d7d2933e9e5e6619d5f82b17"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1013",
-      "shopId": "hikari888",
-      "name": "りんちゃん",
-      "title": "日本人・溫柔御姐",
-      "date": "2026-08-27",
-      "origin": "日本",
-      "age": "20",
-      "height": "156",
-      "weight": "38kg",
-      "cup": "D-cup",
-      "tags": [
-        "日本人",
-        "女友感"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "溫柔御姐",
-      "image": "2025-10-505a84f1a6292da963d2d2c9feb5048c",
-      "gallery": [
-        "2025-10-505a84f1a6292da963d2d2c9feb5048c",
-        "2025-10-902472d5816fde8f91137f7df035d08a"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1011",
-      "shopId": "hikari888",
-      "name": "惠惠",
-      "title": "日本人・轻少妇风",
-      "date": "2026-08-27",
-      "origin": "新大久保",
-      "age": "24",
-      "height": "155",
-      "weight": "46kg",
-      "cup": "D-cup",
-      "tags": [
-        "日本人"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "/div>",
-      "image": "2026-06-photo-2026-06-09-20-49-00",
-      "gallery": [
-        "2026-06-photo-2026-06-09-20-49-00"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-1005",
-      "shopId": "hikari888",
-      "name": "小丫",
-      "title": "日本人・小萝莉",
-      "date": "2026-08-27",
-      "origin": "新大久保",
-      "age": "22",
-      "height": "153",
-      "weight": "46kg",
-      "cup": "C-cup",
-      "tags": [
-        "日本人"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "/div>",
-      "image": "2026-06-photo-2026-06-09-20-48-59-1",
-      "gallery": [
-        "2026-06-photo-2026-06-09-20-48-59-1"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-991",
-      "shopId": "hikari888",
-      "name": "加奈恵",
-      "title": "中國・大長腿",
-      "date": "2026-08-27",
-      "origin": "中國",
-      "age": "22",
-      "height": "156",
-      "weight": "42kg",
-      "cup": "C-cup",
-      "tags": [
-        "中國",
-        "高挑"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "大長腿",
-      "image": "2025-11-af3fdf46262a7fcd888f2deca4179b2d",
-      "gallery": [
-        "2025-11-af3fdf46262a7fcd888f2deca4179b2d",
-        "2025-11-160e086c18aadb4e7e03edc1008cbdee"
-      ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "hikari888-girl-985",
-      "shopId": "hikari888",
-      "name": "玲玲",
-      "title": "中國・00后性感萝莉学妹",
-      "date": "2026-08-27",
-      "origin": "中國",
-      "age": "22",
-      "height": "157",
-      "weight": "40kg",
-      "cup": "C-cup",
-      "tags": [
-        "中國"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "00后性感萝莉学妹",
-      "image": "2025-11-4869d0a176d21ac606f3bef9aa4f8179",
-      "gallery": [
-        "2025-11-4869d0a176d21ac606f3bef9aa4f8179",
-        "2025-11-f7f85c0399263eb6de4926b5fa83666a",
-        "2025-11-72d8c93e3eabac1aabb40c104511b07b"
-      ],
-      "isToday": true,
+      "isToday": false,
       "lastSeen": "2026-08-27"
     },
     {
@@ -1462,30 +1727,7 @@
       "gallery": [
         "2026-08-20260826-7d88e84feb6cc870a0f9951426101d4c-thumb"
       ],
-      "isToday": true,
-      "lastSeen": "2026-08-27"
-    },
-    {
-      "id": "ikebukuro-vip-girl-e72141351534",
-      "shopId": "ikebukuro-vip",
-      "name": "免房费",
-      "title": "日本人・马达→治愈系→正宗莞式小腰窝",
-      "date": "2026-08-27",
-      "origin": "池袋",
-      "age": "未公開",
-      "height": "未公開",
-      "weight": "未公開",
-      "cup": "未公開",
-      "tags": [
-        "日本人"
-      ],
-      "price": "60 分鐘 12,000 / 14,000 / 16,000 / 18,000",
-      "summary": "马达→治愈系→正宗莞式小腰窝",
-      "image": "2026-08-20260826-904c270bd7d11ffe8ec97084881c0b53-thumb",
-      "gallery": [
-        "2026-08-20260826-904c270bd7d11ffe8ec97084881c0b53-thumb"
-      ],
-      "isToday": true,
+      "isToday": false,
       "lastSeen": "2026-08-27"
     },
     {
@@ -1508,7 +1750,7 @@
       "gallery": [
         "2026-08-20260826-8ea3621f8dbb7720ec1c8eb8a0caf544-thumb"
       ],
-      "isToday": true,
+      "isToday": false,
       "lastSeen": "2026-08-27"
     },
     {
@@ -1531,7 +1773,7 @@
       "gallery": [
         "2026-08-20260821-f9c11997e29cdbcd0ac67775b9b76c9c-thumb"
       ],
-      "isToday": true,
+      "isToday": false,
       "lastSeen": "2026-08-27"
     },
     {
@@ -1555,7 +1797,7 @@
       "gallery": [
         "2026-08-20260825-dc1e295128d575455937abd4914a190e-thumb"
       ],
-      "isToday": true,
+      "isToday": false,
       "lastSeen": "2026-08-27"
     },
     {
@@ -1804,30 +2046,6 @@
       "lastSeen": "2026-08-21"
     },
     {
-      "id": "hikari888-girl-974",
-      "shopId": "hikari888",
-      "name": "爱河",
-      "title": "中國・风骚姐姐",
-      "date": "2026-08-20",
-      "origin": "中國",
-      "age": "21",
-      "height": "158",
-      "weight": "40kg",
-      "cup": "D-cup",
-      "tags": [
-        "中國"
-      ],
-      "price": "60 分鐘 18,000 / 80 分鐘 27,000 / 120 分鐘 36,000",
-      "summary": "风骚姐姐",
-      "image": "2025-12-photo-2026-02-11-18-10-07",
-      "gallery": [
-        "2025-12-photo-2026-02-11-18-10-07",
-        "2025-12-photo-2026-02-11-18-10-05"
-      ],
-      "isToday": false,
-      "lastSeen": "2026-08-21"
-    },
-    {
       "id": "ikebukuro-vip-girl-08a8cf3d69f7",
       "shopId": "ikebukuro-vip",
       "name": "房間费1000",
@@ -2028,31 +2246,6 @@
         "2026-08-img-6446",
         "2026-08-img-6441",
         "2026-08-img-6440"
-      ],
-      "isToday": false,
-      "lastSeen": "2026-08-15"
-    },
-    {
-      "id": "tokyo-weimi-girl-26970",
-      "shopId": "tokyo-weimi",
-      "name": "美弥",
-      "title": "日本人・日系甜妹・欢迎进店海选",
-      "date": "2026-08-12",
-      "origin": "東京",
-      "age": "20",
-      "height": "167",
-      "weight": "47kg",
-      "cup": "E",
-      "tags": [
-        "日本人",
-        "提供房間"
-      ],
-      "price": "60 分鐘 20,000 / 80 分鐘 30,000 / 120 分鐘 40,000",
-      "summary": "池袋提供房間➕1000。長項甜美。服務用心周到。身材苗条。",
-      "image": "2026-07-img-6303",
-      "gallery": [
-        "2026-07-img-6303",
-        "2026-07-img-6302"
       ],
       "isToday": false,
       "lastSeen": "2026-08-15"
@@ -3252,29 +3445,6 @@
       ],
       "isToday": false,
       "lastSeen": "2026-07-31"
-    },
-    {
-      "id": "ikebukuro-vip-girl-vip-e8a5bfe5",
-      "shopId": "ikebukuro-vip",
-      "name": "西川口",
-      "title": "日本人・天音酱→",
-      "date": "2026-07-30",
-      "origin": "池袋",
-      "age": "未公開",
-      "height": "未公開",
-      "weight": "未公開",
-      "cup": "未公開",
-      "tags": [
-        "日本人"
-      ],
-      "price": "60 分鐘 12,000 / 14,000 / 16,000 / 18,000",
-      "summary": "天音酱→",
-      "image": "2026-07-20260724-384-thumb",
-      "gallery": [
-        "2026-07-20260724-384-thumb"
-      ],
-      "isToday": false,
-      "lastSeen": "2026-07-30"
     },
     {
       "id": "tokyo-weimi-girl-27048",
