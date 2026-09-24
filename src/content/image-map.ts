@@ -560,6 +560,7 @@ export const imageMap = {
   "2026-05-img-6547": "https://tokyo-weimi.com/wp-content/uploads/2026/05/IMG_6547.jpeg",
   "2026-05-img-6548": "https://tokyo-weimi.com/wp-content/uploads/2026/05/IMG_6548.jpeg",
   "2026-05-img-6545": "https://tokyo-weimi.com/wp-content/uploads/2026/05/IMG_6545.jpeg",
+  "2026-09-20260903-168-thumb": "https://vip6969.com/wp-content/uploads/2026/09/20260903_168.thumb.jpg",
   "2026-09-20260902-db487241fd4678e272530c34ea98d9c0-thumb": "https://vip6969.com/wp-content/uploads/2026/09/20260902_db487241fd4678e272530c34ea98d9c0.thumb.jpg",
   "2026-08-20260831-6afe7f3ca269d42a6abf80addb36e16f-thumb": "https://vip6969.com/wp-content/uploads/2026/08/20260831_6afe7f3ca269d42a6abf80addb36e16f.thumb.jpg",
   "2026-09-20260901-77-thumb": "https://vip6969.com/wp-content/uploads/2026/09/20260901_77.thumb.jpg",
