@@ -88,6 +88,16 @@ export interface ProfileOverrideRow {
   updated_at: string;
 }
 
+// --- SnapshotSource (composed input for deterministic builder) ---
+
+export interface SnapshotSource {
+  profiles: ProfileRow[];
+  media: MediaRow[];
+  attendance: AttendanceRow[];
+  translations: TranslationRow[];
+  overrides: ProfileOverrideRow[];
+}
+
 // --- ContentStore interface ---
 
 export interface ContentStore {
